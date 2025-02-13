@@ -1,0 +1,43 @@
+let loader = require('../src/executionEngine');
+
+let initialState ={
+     variables: {
+        "helloWorld": "Hello World"
+     },
+    documents:{
+        "doc1": {
+            "info": {
+            "title": "Document Title",
+            "text": "Document Example",
+            "commands": ""
+            },
+            "chapter1": {
+                "title": "Chapter1",
+                "commands": "",
+                "paragraph1": {
+                    text: "Hello ",
+                    commands: "set @helloWorld %text"
+                }
+            }
+        },
+        "doc2": {
+            "chapter1": {
+                "title": "Chapter 2",
+                "commands": "",
+                "paragraph1": {
+                    text: "World",
+                    commands: "set @newHelloWorld $helloWorld %text"
+                }
+            }
+        }
+        }
+    };
+
+let space = loader.load(initialState);
+space.initialise();
+console.log(loaderInstance.getState());
+space.change("doc1", "chapter1", "paragraph1", "Hello New ");
+space.computeInvalidDependencies();
+space.rebuildInvalidDependencies();
+console.log(loaderInstance.getState());
+
