@@ -16,8 +16,6 @@ $$.throwError = throwError;
 
 
 function getNextToken(str, position){
-
-
     function makeResult(token, position, tokenType){
       // console.debug("Token:", token, "Position:", position, "Type:", tokenType);
         return {
@@ -109,21 +107,21 @@ function getNextToken(str, position){
 
 
 
-module.exports = {
-    parseCommandLine: function (commandLine) {
+
+function parseCommandLine(commandLine) {
         console.debug("Parsing command line:", commandLine);
         let outputVars = [];
         let inputVars  = [];
         let varTypes = [];
-        let commandName = "";
+        let command = "";
 
         let pos = 0;
-        let {name, position, tokenType} = getNextToken(commandLine, pos);
+        let {token, position, tokenType} = getNextToken(commandLine, pos);
         pos = position;
         if (tokenType !== "text") {
-            $$.throwError("Invalid command name ", name);
+            $$.throwError("Invalid command name ", token);
         }
-        commandName = name;
+        command = token;
 
         while(pos < commandLine.length){
             let {token, position, tokenType} = getNextToken(commandLine, pos);
@@ -156,10 +154,51 @@ module.exports = {
                     break;
             }
         }
+        //console.debug("Command:", command, "InputVars:", inputVars, "OutputVars:", outputVars, "VarTypes:", varTypes);
         return {
+            command,
             inputVars,
             outputVars,
             varTypes
         }
     }
+
+
+function findFirstDifference(str1, str2) {
+    let minLength = Math.min(str1.length, str2.length);
+    for (let i = 0; i < minLength; i++) {
+        if (str1[i] !== str2[i]) {
+            return i;
+        }
+    }
+    return str1.length !== str2.length ? minLength : -1;
+}
+
+function compareObjects (obtained, expected) {
+    for(let key in obtained){
+        let obtainedStr;
+        let expectedStr;
+        if(typeof expected[key] === "string"){
+            obtainedStr = obtained[key];
+            expectedStr = expected[key];
+        } else {
+            let obtainedStr = obtained[key].join("");
+            let expectedStr = expected[key].join("");
+        }
+
+        if(obtainedStr !== expectedStr){
+            //let diff = findFirstDifference(obtainedStr, expectedStr);
+            //let str1 = obtainedStr.substring(0, diff+1);
+            //let str2 = expectedStr.substring(0, diff+1);
+            // console.log("Difference at", diff, "obtained", str1, "expected", str2);
+            console.error("Key", key, "is different for expected", expected[key], " but result was ", obtained[key]);
+            return false;
+        }
+    }
+    return true;
+}
+
+module.exports = {
+    parseCommandLine,
+    compareObjects
 }

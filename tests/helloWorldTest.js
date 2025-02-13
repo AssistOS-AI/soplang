@@ -1,4 +1,3 @@
-let loader = require('../src/executionEngine');
 
 let initialState ={
      variables: {
@@ -29,15 +28,20 @@ let initialState ={
                     commands: "set @newHelloWorld $helloWorld %text"
                 }
             }
-        }
+          }
         }
     };
 
-let space = loader.load(initialState);
-space.initialise();
-console.log(loaderInstance.getState());
-space.change("doc1", "chapter1", "paragraph1", "Hello New ");
+let executionEngineModule = require('../src/executionEngine.js') ;
+
+let space = executionEngineModule.load();
+space.initialise(initialState);
+console.log(space.getState());
+console.log(space.getValue("doc1", "helloWorld") === "Hello World!");
+space.change("doc1", "chapter1", "paragraph1", "New Hello ");
 space.computeInvalidDependencies();
 space.rebuildInvalidDependencies();
-console.log(loaderInstance.getState());
+console.log(space.getState());
+
+console.log(space.getValue("doc1", "helloWorld") === "New Hello World!");
 

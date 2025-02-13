@@ -1,26 +1,13 @@
-require("./soplangUtils.js");
+require("./soplangUtil.js");
 
-function variableInfo(_docID, _chapterId, _paragraphId, _scope, _name, _type, _value,_timestamp, _dependencies) {
-    let docID = _docID;
-    let chapterId = _chapterId;
-    let paragraphId = _paragraphId;
-    let scope = _scope;
-    let name = _name;
-    let type = _type;
-    let value = _value;
-    let timestamp = _timestamp;
-    let dependencies = _dependencies;
-
-    this.changeValue = function (newValue) {
-        value = newValue;
-        timestamp = Date().now();
-    }
-
-    this.toJSON = function () {
-        return {
-            docID, chapterId, paragraphId, scope, name, type, value, timestamp, dependencies
-        }
-    }
+function VarContext(valueResolver, _varName, _docID, _chapterId, _paragraphId, _parsedCommand, _value, _timestamp) {
+    this.varName = _varName;
+    this.docID = _docID;
+    this.chapterId = _chapterId;
+    this.paragraphId = _paragraphId;
+    this.parsedCommand = _parsedCommand;
+    this.value = _value;
+    this.timestamp = _timestamp;
 }
 
 /*
@@ -78,33 +65,92 @@ function variableInfo(_docID, _chapterId, _paragraphId, _scope, _name, _type, _v
 
 
 
-function ExecutionEngine(workSpaceState) {
-    this.workSpaceState = workSpaceState;
+function ExecutionEngine() {
+    let workSpaceState = {};
 
     let variables = {
 
     };
 
-     function addVariable(docID, chapterId, paragraphId, scope, name, type, value, timestamp, dependencies){
-         if(!variables[docID]){
-             variables[docID] = {};
-         }
-        if(variables[docID][name]){
-            $$.throwError("Variable already exists", name, "in document", docID);
-        }
-         variables[docID][name] = new variableInfo(docID, chapterId, paragraphId, scope, name, type, value, timestamp, dependencies);
+    function detectVarsInText(text){
+
     }
 
+    function detectVarsInCommands(text, docId, chapterID, paragraphID){
+        let parseCommandLine = require("./soplangUtil.js").parseCommandLine;
+        let lines = text.split("\n");
+        lines.forEach(line => {
+            let {
+                command,
+                inputVars,
+                outputVars,
+                varTypes
+            } = parseCommandLine(line);
+
+            for(let ov of outputVars){
+                addVariable(ov, docId, chapterID, paragraphID, {
+                    command,
+                    inputVars,
+                    outputVars,
+                    varTypes
+                }, "", Date.now());
+            }
+        });
+    }
+
+    function formalCheckOfVars(commands){
+        // each var should appear only once in the output of any command in any document
+    }
+
+
+    function addVariable(varName, docID, chapterId, paragraphId, parsedCommand, value, timestamp){
+        if(!timestamp){
+            timestamp = Date.now();
+        }
+        if(!variables[docID]){
+             variables[docID] = {};
+         }
+        if(variables[docID][varName]){
+            $$.throwError("Variable already exists", name, "in document", docID);
+        }
+         variables[docID][varName] = new VarContext(varName, docID, chapterId, paragraphId, parsedCommand, value, timestamp);
+    }
+
+    this.initialise = function(initialState){
+        for(let docID in initialState.documents){
+            let doc = initialState.documents[docID];
+            workSpaceState[docID] = {};
+            addVariable("title"+docID, docID, "", "", "$docTitle", doc.info.title);
+            detectVarsInCommands(initialState.commands);
+            for(let chapterId in doc){
+                addVariable("title"+docID+chapterId, docID, chapterId, "", "$chapterTitle", doc[chapterId].title);
+                let chapter = doc[chapterId];
+                workSpaceState[docID][chapterId] = {};
+                detectVarsInCommands(chapter.commands);
+                for(let paragraphId in chapter){
+                    let paragraph = chapter[paragraphId];
+                    addVariable("text"+docID+chapterId+paragraphId, docID, chapterId, paragraphId, "$text", paragraph.text);
+                    workSpaceState[docID][chapterId][paragraphId] = {
+                        text: paragraph.text,
+                        commands: paragraph.commands
+                    }
+                    detectVarsInText(paragraph.text);
+                    detectVarsInCommands(paragraph.commands);
+                }
+            }
+        }
+        console.log('Initialising');
+    }
+
+
     this.changeText = function(docID, chapterId, paragraphId, newValue){
-        this.workSpaceState[docID][chapterId][paragraphId]["text"] = newValue;
+        workSpaceState[docID][chapterId][paragraphId]["text"] = newValue;
+        detectVarsInText(newValue);
     }
 
     this.changeCommands = function(docID, chapterId, paragraphId, newValue){
-        this.workSpaceState[docID][chapterId][paragraphId]["commands"] = newValue;
-    }
-
-    this.initialise = function(){
-        console.log('Initialising');
+        workSpaceState[docID][chapterId][paragraphId]["commands"] = newValue;
+        detectVarsInCommands(newValue);
     }
 
     let currentInvalidDependencies = [];
@@ -117,6 +163,10 @@ function ExecutionEngine(workSpaceState) {
 
     this.getState = function(){
         return this.workSpaceState;
+    }
+
+    this.getValue = function(docID, name){
+        return variables[docID][name];
     }
 }
 
