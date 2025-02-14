@@ -198,7 +198,30 @@ function compareObjects (obtained, expected) {
     return true;
 }
 
+let internalClock = 0;
+
+function LocalSafeTimestamp(){
+    internalClock++;
+    this.timestamp = Date.now();
+    this.clock = this.timestamp + internalClock;
+}
+
+LocalSafeTimestamp.prototype.isOlder = function(dc1, dc2) {
+    if(dc1 === undefined){
+        return false;
+    }
+    if(dc2 === undefined){
+        return true;
+    }
+    if(dc1.timestamp === dc2.timestamp){
+        return dc1.clock < dc2.clock;
+    }
+    return dc1.timestamp < dc2.timestamp;
+}
+
+
 module.exports = {
     parseCommandLine,
-    compareObjects
+    compareObjects,
+    LocalSafeTimestamp
 }
