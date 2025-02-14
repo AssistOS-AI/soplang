@@ -40,12 +40,15 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
     }
 }
 
-function VarsGraph(){
+function VarsGraph(commandsRegistry) {
       let variables = {};
       let variablesIndex = {};
       let graph = {};
       let self = this;
 
+      if(!commandsRegistry){
+          $$.throwError("Commands Registry is mandatory");
+      }
 
     this.addVariable = function(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp){
         if(!paragraphId){
@@ -143,6 +146,19 @@ function VarsGraph(){
       //  console.debug("Layers", layers);
         return layers;
     }
+      async function runCommand(parsedCommand) {
+          let inputValues = []
+          for(let i = 0; i < parsedCommand.inputVars.length; i++){
+              let value = parsedCommand.inputVars[i];
+              if(parsedCommand.varTypes[i] === "var"){
+                  let varContext = lookUpVariable(value);
+                  inputValues.push(varContext.value);
+              } else {
+                  inputValues.push(value);
+              }
+          }
+         return await commandsRegistry.runCommand(parsedCommand.command, inputValues);
+      }
 
     this.printGraph = function(){
         let layers = self.getLayers();
@@ -152,40 +168,6 @@ function VarsGraph(){
         }
         console.log("--------------------------------");
     }
-
-    async function runCommand(parsedCommand){
-        switch(parsedCommand.command){
-            case "define":
-                let inputValues = []
-                for(let i = 0; i < parsedCommand.inputVars.length; i++){
-                    let value = parsedCommand.inputVars[i];
-                    if(parsedCommand.varTypes[i] === "var"){
-                        let varContext = lookUpVariable(value);
-                        inputValues.push(varContext.value);
-                    } else {
-                        inputValues.push(value);
-                    }
-                }
-                return inputValues.join(" ");
-            case "import":
-                return "Imported value";
-            case "table":
-                return "Table value";
-            case "line":
-                return "Line value";
-            case "set":
-                return "Set value";
-            case "sum":
-                return "Sum value";
-            case "ask":
-                return "Ask value";
-            case "tableFrom":
-                return "Table from value";
-            default:
-                $$.throwError("Unknown command", parsedCommand.command);
-        }
-    }
-
     function lookUpVariable(varName){
         return variablesIndex[varName];
     }
@@ -215,21 +197,21 @@ function VarsGraph(){
 
         let value = varContext.value;
         if(mustRecompute){
-           value = await runCommand(varContext.parsedCommand);
+            value = await runCommand(varContext.parsedCommand);
         }
         return value;
     }
         
     this.buildAll = async function(){
         let layers = self.getLayers();
-        console.debug("Building all layers", layers);
+        //console.debug("Building all layers", layers);
         for(let i = 0; i < layers.length; i++){
             let layer = layers[i];
-            console.debug("Building layer", i, ":", layer);
+            //console.debug("Building layer", i, ":", layer);
             for(let j = 0; j < layer.length; j++){
                 let varName = layer[j];
                 let varContext = lookUpVariable(varName);
-                console.debug("Computing value for", varName);
+                //console.debug("Computing value for", varName);
                 let value = await computeValue(varName);
                 varContext.setNewValue(value);
             }
@@ -250,11 +232,17 @@ function VarsGraph(){
         }
         return result;
     }
+
+    this.getVariable = function(docID, varName){
+        let varContext = variables[docID][varName];
+        return varContext.value;
+    }
+
 }
 
 module.exports = {
     VarContext,
-    createVarsGraph: function () {
-            return new VarsGraph();
+    createVarsGraph: function (commandsRegistry) {
+            return new VarsGraph(commandsRegistry);
     }
 }
