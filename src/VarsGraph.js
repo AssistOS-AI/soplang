@@ -9,33 +9,55 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
     this.chapterId = _chapterId;
     this.paragraphId = _paragraphId;
     this.parsedCommand = _parsedCommand;
-    this.value = _value;
+
     this.safeTimestamp = _safeTimestamp;
+
+    this.getValue = function(){
+        return _value;
+    }
+
+    if(_parsedCommand.command === "alias" ){
+        console.debug(">>>Alias ",
+                _parsedCommand.outputVars[0], " as ",  _parsedCommand.inputVars[0],
+                "Input Types", _parsedCommand.varTypes[0],
+            "Initial value ", _value);
+    }
 
     this.id = getVarID(_docID , _varName);
 
     this.setNewValue = function(newValue){
-        this.value = newValue;
+        _value = newValue;
         this.safeTimestamp = new LocalSafeTimestamp();
     }
 
-    this.parsedCommand.inputVars = this.parsedCommand.inputVars ? Array.from(this.parsedCommand.inputVars) : [];
-    for(let i = 0; i < this.parsedCommand.inputVars.length; i++){
-        let inputVar = this.parsedCommand.inputVars[i];
-        if(this.parsedCommand.varTypes[i] === "var"){
-            this.parsedCommand.inputVars[i] = getVarID(_docID, inputVar);
+    if(this.parsedCommand){
+        this.parsedCommand.inputVars = this.parsedCommand.inputVars ? Array.from(this.parsedCommand.inputVars) : [];
+        for(let i = 0; i < this.parsedCommand.inputVars.length; i++){
+            let inputVar = this.parsedCommand.inputVars[i];
+            if(this.parsedCommand.varTypes[i] === "var"){
+                this.parsedCommand.inputVars[i] = getVarID(_docID, inputVar);
+            }
         }
     }
+
     this.getDependencies = function(){
         let deps = [];
         if(this.parsedCommand && this.parsedCommand.inputVars.length > 0){
             for(let i = 0; i < this.parsedCommand.inputVars.length; i++){
                 let inputVar = this.parsedCommand.inputVars[i];
+                if(this.parsedCommand.varTypes[i] == "alias"){
+                    deps.push(inputVar);
+                }
                 if(this.parsedCommand.varTypes[i] === "var"){
                     deps.push(inputVar);
                 }
             }
         }
+        /*if(this.parsedCommand === "alias"){
+            console.debug(">>>>>>>>>>")
+            deps.push(this.parsedCommand.value);
+        } */
+        console.debug("Dependencies of ", _docID + "|"+ this.varName, ":", deps);
         return deps;
     }
 }
@@ -70,7 +92,27 @@ function VarsGraph(commandsRegistry) {
         if(variables[docID][varName]){
             $$.throwError("Variable already exists", name, "in document", docID);
         }
-         let myVar = variables[docID][varName] = new VarContext(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp);
+
+        if(parsedCommand.command === "alias"){
+            let docId = parsedCommand.inputVars[0];
+            let varId = parsedCommand.inputVars[1];
+            let initialVariable = variables[docId][varId];
+            if(!initialVariable){
+                initialVariable = new VarContext(varId,
+                            docId,
+                            undefined,
+                 undefined,
+                    undefined,
+                    undefined,
+                    undefined);
+                variables[docId][varId] = initialVariable;
+                variablesIndex[initialVariable.id] = initialVariable;
+            }
+            parsedCommand.inputVars = [initialVariable.id];
+            parsedCommand.varTypes = ["alias"];
+         }
+
+        let myVar = variables[docID][varName] = new VarContext(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp);
         variablesIndex[myVar.id] = myVar;
         if(!graph[myVar.id]) {
             graph[myVar.id] = {
@@ -146,16 +188,28 @@ function VarsGraph(commandsRegistry) {
       //  console.debug("Layers", layers);
         return layers;
     }
+      function resolveValue(varName){
+          let varContext = lookUpVariable(varName);
+          if(varContext.parsedCommand.command === "alias"){
+              return resolveValue(varContext.getValue());
+          }
+          return varContext.getValue();
+      }
+
       async function runCommand(parsedCommand) {
           let inputValues = []
           for(let i = 0; i < parsedCommand.inputVars.length; i++){
               let value = parsedCommand.inputVars[i];
-              if(parsedCommand.varTypes[i] === "var"){
-                  let varContext = lookUpVariable(value);
-                  inputValues.push(varContext.value);
-              } else {
-                  inputValues.push(value);
+              switch(parsedCommand.varTypes[i]){
+                  case "var":
+                      inputValues.push(resolveValue(value));
+                      break;
+                  default:
+                      inputValues.push(value);
               }
+          }
+          if(parsedCommand.command === "alias"){
+              return inputValues[0];
           }
          return await commandsRegistry.runCommand(parsedCommand.command, inputValues, parsedCommand.outputVars);
       }
@@ -195,7 +249,7 @@ function VarsGraph(commandsRegistry) {
             }
         }
 
-        let value = varContext.value;
+        let value = varContext.getValue();
         if(mustRecompute){
             value = await runCommand(varContext.parsedCommand);
         }
@@ -225,8 +279,10 @@ function VarsGraph(commandsRegistry) {
             for (let varName in variables[doc]) {
                 let varContext = variables[doc][varName];
                 result[doc][varName] = {
-                    value: varContext.value,
-                    safeTimestamp: varContext.safeTimestamp
+                    command: varContext.parsedCommand.command,
+                    value: varContext.getValue(),
+                    safeTimestamp: varContext.safeTimestamp.toString(),
+                    deps: varContext.getDependencies().join(",")
                 };
             }
         }
@@ -235,7 +291,7 @@ function VarsGraph(commandsRegistry) {
 
     this.getVariable = function(docID, varName){
         let varContext = variables[docID][varName];
-        return varContext.value;
+        return varContext.getValue();
     }
 
 }

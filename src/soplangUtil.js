@@ -215,6 +215,9 @@ function LocalSafeTimestamp(){
     internalClock++;
     this.timestamp = Date.now();
     this.clock = this.timestamp + internalClock;
+    this.toString = function(){
+        return "st:"+ this.timestamp + ":" + this.clock;
+    }
 }
 
 LocalSafeTimestamp.prototype.isOlder = function(dc1, dc2) {

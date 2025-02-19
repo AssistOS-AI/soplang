@@ -7,6 +7,21 @@ Variables Syntax:
     %internalVar is a variable in the text of a paragraph, it still has to be unique at the level of a document
     @internalVar is allowed to be used in commands as an output and will change the text of the paragraphs
     %text is a special variable that represents the text of the paragraph
+    
+
+    $docId      : URI with current document
+    $document   : object with chapterIDs, title and array of paragraphs, commands
+    $docTitle   : title of the current document
+    $docCommands : array with commands at the level of current chapter
+
+    $chapterId  : URI with current chapter
+    $chapter    : array of paragraphs
+    $chapterTitle  : title of the current chapter
+    $chapterCommands : array with commands at the level of document
+
+    $parId      : URI with current paragraph
+    $text       : text of the current paragraph
+    $commands   : array with commands at the level of paragraph
 
 Special Commands
     #set the value of output by concatenating the values of inputs. Inputs could be also strings and numbers
@@ -20,7 +35,7 @@ Special Commands
         attach @localName type attachmentURI
 
     #link a variable in the current document with a variable in another document
-        link localVariable $variableRepresentingOtherDocument variableInOtherDocument
+        alias localVariable otherDocId variableInOtherDocument
 
     #defining a command as javascript code. Is executed as a function that takes context and args as arguments
         define @output string | attachmentURI
