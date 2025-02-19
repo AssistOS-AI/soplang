@@ -12,9 +12,6 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.safeTimestamp = _safeTimestamp;
 
-    this.getValue = function(){
-        return _value;
-    }
 
     if(_parsedCommand.command === "alias" ){
         console.debug(">>>Alias ",
@@ -25,7 +22,22 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.id = getVarID(_docID , _varName);
 
+    this.getValue = function(){
+        if(_parsedCommand.command === "special"){
+            let newValue = _parsedCommand.get();
+            if(newValue !== _value){
+                this.safeTimestamp = new LocalSafeTimestamp();
+                _value = newValue;
+                console.debug("Special command", _parsedCommand.command, "changed value to", _value);
+            }
+        }
+        return _value;
+    }
+
     this.setNewValue = function(newValue){
+        if(_parsedCommand.command === "special"){
+            return _parsedCommand.set(newValue);
+        }
         _value = newValue;
         this.safeTimestamp = new LocalSafeTimestamp();
     }
@@ -57,7 +69,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
             console.debug(">>>>>>>>>>")
             deps.push(this.parsedCommand.value);
         } */
-        console.debug("Dependencies of ", _docID + "|"+ this.varName, ":", deps);
+        //console.debug("Dependencies of ", _docID + "|"+ this.varName, ":", deps);
         return deps;
     }
 }
@@ -251,7 +263,11 @@ function VarsGraph(commandsRegistry) {
 
         let value = varContext.getValue();
         if(mustRecompute){
-            value = await runCommand(varContext.parsedCommand);
+            if(varContext.parsedCommand.command === "special"){
+                value = varContext.getValue();
+            } else {
+                value = await runCommand(varContext.parsedCommand);
+            }
         }
         return value;
     }

@@ -22,6 +22,11 @@ function CommandsRegistry( workSpace) {
         $$.throwError("Alias command should not be executed as normal commands");
     }
 
+    commands.special = async function (inputValues, outputValues) {
+        $$.throwError("'special' variables should not be initialised as normal variables by running commands");
+    }
+
+
     this.runCommand =  async function (commandName, inputValues, outputValues ) {
         let commandFunction = commands[commandName];
         if(!commandFunction){
