@@ -157,7 +157,7 @@ function VarsGraph(commandsRegistry) {
                   inputValues.push(value);
               }
           }
-         return await commandsRegistry.runCommand(parsedCommand.command, inputValues);
+         return await commandsRegistry.runCommand(parsedCommand.command, inputValues, parsedCommand.outputVars);
       }
 
     this.printGraph = function(){

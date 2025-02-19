@@ -107,7 +107,6 @@ function getNextToken(str, position){
 
 
 
-
 function parseCommandLine(commandLine) {
         console.debug("Parsing command line:", commandLine);
         let outputVars = [];

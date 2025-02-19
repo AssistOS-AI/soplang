@@ -32,7 +32,7 @@ let initialState ={
         }
     };
 
-let executionEngineModule = require('../src/executionEngine.js') ;
+let executionEngineModule = require('../../src/executionEngine.js') ;
 
 let space = executionEngineModule.load();
 space.initialise(initialState);

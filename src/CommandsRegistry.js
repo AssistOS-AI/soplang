@@ -11,13 +11,18 @@ function CommandsRegistry( workSpace) {
 
     commands.set = commands.cat;
     commands.concat = commands.cat;
+    commands.def = commands.define = async function (inputValues, outputValues) {
+        let code = "(function(args){" + inputValues[0] + "})";
+        console.debug("Define:", outputValues[0], inputValues[0], code);
+        commands[outputValues[0]] = eval(code);
+    };
 
-    this.runCommand =  async function (commandName, inputValues ) {
+    this.runCommand =  async function (commandName, inputValues, outputValues ) {
         let commandFunction = commands[commandName];
         if(!commandFunction){
             $$.throwError("Unknown command '" + commandName + "'");
         }
-        return await commandFunction(inputValues);
+        return await commandFunction(inputValues, outputValues);
     }
 
     this.registerCommand = function (commandName, commandFunction) {

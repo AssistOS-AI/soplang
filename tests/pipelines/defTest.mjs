@@ -1,0 +1,31 @@
+import {parseCommandLine,compareObjects} from "../../src/soplangUtil.js";
+import {createVarsGraph} from "../../src/VarsGraph.js";
+import {createRegistry} from "../../src/CommandsRegistry.js";
+
+let allOk = true;
+
+let graph = createVarsGraph(createRegistry());
+
+let functionDefinition = 'return args.join("|")';
+
+graph.addVariable("pipeConcat", "doc1","ch1", "p1",
+    parseCommandLine("def @pipeConcat '"+ functionDefinition+"'"));
+
+graph.addVariable("v1", "doc1","ch2", "p2",
+    parseCommandLine("set @v1 Hello "));
+
+graph.addVariable("v2", "doc1","ch2", "p2",
+    parseCommandLine("@v2: pipeConcat $v1 World !"));
+
+graph.topologicalSort();
+graph.printGraph();
+
+await graph.buildAll();
+
+console.log("Graph dump:", graph.dump());
+
+
+allOk &&= graph.getVariable("doc1","v1") === "Hello";
+allOk &&= graph.getVariable("doc1","v2") === "Hello|World|!";
+
+console.log("All tests passed:", allOk? "true" : "false");

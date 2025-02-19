@@ -16,6 +16,6 @@ await graph.buildAll();
 
 console.log("Graph dump:", graph.dump());
 
-allOk |= graph.getVariable("doc1","v2").value === "Hello World!";
+allOk &&= graph.getVariable("doc1","v2") === "Hello World!";
 
 console.log("All tests passed:", allOk? "true" : "false");
