@@ -7,7 +7,7 @@ let allOk = true;
 let graph = createVarsGraph(createRegistry());
 
 graph.addVariable("v1", "doc1","ch1", "p1",parseCommandLine("set @v1 Hello"));
-graph.addVariable("v2", "doc1","ch2", "p2",parseCommandLine("set @v2 $v1 World!"));
+graph.addVariable("v2", "doc1","ch2", "p2",parseCommandLine("@v2 = cat $v1 World!"));
 
 graph.topologicalSort();
 graph.printGraph();

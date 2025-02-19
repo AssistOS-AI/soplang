@@ -1,7 +1,7 @@
 
 function CommandsRegistry( workSpace) {
     let commands = {
-        set: async function (inputValues ) {
+        cat: async function (inputValues ) {
             return inputValues.join(" ");
         },
         list : async function (inputValues) {
@@ -9,10 +9,13 @@ function CommandsRegistry( workSpace) {
         }
     };
 
+    commands.set = commands.cat;
+    commands.concat = commands.cat;
+
     this.runCommand =  async function (commandName, inputValues ) {
         let commandFunction = commands[commandName];
         if(!commandFunction){
-            $$.throwError("Unknown command" + commandName);
+            $$.throwError("Unknown command '" + commandName + "'");
         }
         return await commandFunction(inputValues);
     }

@@ -118,8 +118,20 @@ function parseCommandLine(commandLine) {
         let pos = 0;
         let {token, position, tokenType} = getNextToken(commandLine, pos);
         pos = position;
+        if(tokenType === "output"){
+            outputVars.push(token);
+            let nextToken = {};
+            tokenType = "whitespaces";
+            while(tokenType === "whitespaces" || token === "=" || token === ":"){
+                nextToken = getNextToken(commandLine, pos);
+                token = nextToken.token;
+                pos = position = nextToken.position;
+                tokenType = nextToken.tokenType;
+            }
+        }
+
         if (tokenType !== "text") {
-            $$.throwError("Invalid command name ", token);
+            $$.throwError("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
         }
         command = token;
 
