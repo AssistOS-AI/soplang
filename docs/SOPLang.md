@@ -23,9 +23,13 @@ Variables Syntax:
     $text       : text of the current paragraph
     $commands   : array with commands at the level of paragraph
 
-Special Commands
-    #set the value of output by concatenating the values of inputs. Inputs could be also strings and numbers
+Predefined Commands
+    #set the value of output by concatenating the values of inputs. 
+    #Inputs could be also strings and numbers. Spaces are added between inputs.
         set @output $input1 $input2  ... $inputN
+        @output = concat $input1 $input2  ... $inputN
+        @output : concat $input1 $input2  ... $inputN    
+        @output  concat $input1 $input2  ... $inputN
 
     #attaching a file or an external document to a variable called localName. If the attachmentURI is empty, a new file will be created
         # type could be adoc, image, video, text, json, csv, blob, pdf, ppt, xls, docx, pptx, xlsx
@@ -48,15 +52,18 @@ Special Commands
 
     # variables could be lists (tables) tha contains multiple lines of records (with columns)
         #declare a table and the names of the columns
-        table @table  column1 column2 ... columnN
+            table @table  column1 column2 ... columnN
+        
         #select a line from a table and assign it to a variable. Changes of the variable will change the table
-        line @variableName @table
+            line @variableName @table
         #special syntax with . to select a column from a table or a specific field
-        set @variableName.columnName input1 input2 ... inputN
+            set @variableName.columnName input1 input2 ... inputN
+    
         #sum all the values of a column of a table
-        sum @results $table.columnName
+            sum @results $table.columnName
+
         #define a table based on  other table and calling function to define the columns
-        tableFrom @tableName $inputTable newTableCol1[sum column1 column2 column3]  newTableCol2[set column5 a b ]
+            tableFrom @tableName $inputTable newTableCol1[sum column1 column2 column3]  newTableCol2[set column5 a b ]
 
     #mantain generated documents starting from a template given as title, chapters titles and execution of commands
         generate @documentIdentifier "Document Title" "Chapter 1"[command arguments]  "Chapter 2"[command arguments] ... "Chapter N" [command arguments]

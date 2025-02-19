@@ -1,0 +1,50 @@
+import {parseCommandLine,compareObjects} from "../../src/soplangUtil.js";
+import {createVarsGraph} from "../../src/VarsGraph.js";
+import {createRegistry} from "../../src/CommandsRegistry.js";
+
+import assert from "assert";
+
+let allOk = true;
+
+let graph = createVarsGraph(createRegistry());
+
+graph.addVariable("v1", "doc1","c1", "p1", parseCommandLine("@t1 table c1 c2 c3"));
+
+graph.setVariable("doc1", "t1",
+    [{c1:'a', c2:1, c3:10},
+          {c1:'b', c2:100, c3:1000},
+          {c1:'c', c2:10000, c3:100000},
+    ]);
+
+
+graph.addVariable("area1", "doc1","ch1", "p1",parseCommandLine("@area1: area $t1 2-3 2-3"));
+graph.addVariable("s1", "doc1","ch1", "p1",parseCommandLine("@s1: sum $area1"));
+graph.addVariable("sarea1", "doc1","ch1", "p1",parseCommandLine("@s1: sum $t1 2-3 2-3"));
+graph.addVariable("sarea1_cn", "doc1","ch1", "p1",parseCommandLine("@s1: sum $t1 2-3 c2,c3"));
+
+
+graph.addVariable("area2", "doc1","ch1", "p1",parseCommandLine("@area1: area $t1 3 2-3"));
+graph.addVariable("s2", "doc1","ch1", "p1",parseCommandLine("@s2: sum $area2"));
+
+graph.addVariable("area3", "doc1","ch1", "p1",parseCommandLine("@area3: area $t1 2-3 3"));
+graph.addVariable("s3", "doc1","ch1", "p1",parseCommandLine("@s2: sum $area3"));
+
+
+graph.addVariable("sc2", "doc1","ch1", "p1",parseCommandLine("@sc2: sum $t1 c2"));
+
+graph.addVariable("col_c2", "doc1","ch1", "p1",parseCommandLine("@col_c2: line $t1 c2"));
+graph.addVariable("s_col_c2", "doc1","ch1", "p1",parseCommandLine("@s_col_c2: sum $col_c2"));
+
+
+graph.topologicalSort();
+graph.printGraph();
+
+await graph.buildAll();
+assert(graph.getVariable("doc1","s1") === 1000);
+
+console.log("Graph dump:", graph.dump());
+
+
+allOk &&= graph.getVariable("doc1","v3") === "Hello World !";
+
+console.log("All tests passed:", allOk? "true" : "false");

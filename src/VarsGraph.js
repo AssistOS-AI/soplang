@@ -24,7 +24,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.getValue = function(){
         if(_parsedCommand.command === "special"){
-            let newValue = _parsedCommand.get();
+            let newValue = _parsedCommand.get(_varName, _docID, _chapterId, _paragraphId);
             if(newValue !== _value){
                 this.safeTimestamp = new LocalSafeTimestamp();
                 _value = newValue;
@@ -36,7 +36,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.setNewValue = function(newValue){
         if(_parsedCommand.command === "special"){
-            return _parsedCommand.set(newValue);
+            return _parsedCommand.set(newValue, _varName, _docID, _chapterId, _paragraphId);
         }
         _value = newValue;
         this.safeTimestamp = new LocalSafeTimestamp();
@@ -83,6 +83,23 @@ function VarsGraph(commandsRegistry) {
       if(!commandsRegistry){
           $$.throwError("Commands Registry is mandatory");
       }
+
+    this.getVariable = function(docID, varName){
+        let varContext = variables[docID][varName];
+        return varContext.getValue();
+    }
+
+    this.setVariable = function(docID, varName, value){
+        let varContext = variables[docID][varName];
+        if(!varContext){
+            $$.throwError("Variable '" + varName + "' not found in document " + docID);
+        }
+        if(varContext.parsedCommand.command === "alias"){
+            $$.throwError("Cannot set value of alias", varName);
+        }
+
+        varContext.setNewValue(value);
+    }
 
     this.addVariable = function(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp){
         if(!paragraphId){
@@ -305,10 +322,6 @@ function VarsGraph(commandsRegistry) {
         return result;
     }
 
-    this.getVariable = function(docID, varName){
-        let varContext = variables[docID][varName];
-        return varContext.getValue();
-    }
 
 }
 
