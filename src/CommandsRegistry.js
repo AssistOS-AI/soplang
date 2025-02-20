@@ -33,7 +33,7 @@ function CommandsRegistry( workSpace) {
         if(!commandFunction){
             $$.throwError("Unknown command '" + commandName + "'");
         }
-        console.debug(">>>>>>> Running command", commandName);
+       // console.debug(">>>>>>> Running command", commandName);
         return await commandFunction(inputValues, outputValues, varContext, varGraph);
     }
 

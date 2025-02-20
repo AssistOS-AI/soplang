@@ -39,6 +39,9 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
                 console.debug("Special command", _parsedCommand.command, "changed value to", _value);
             }
         }
+        if(_parsedCommand.command === "table"){
+            return { tableHeader: _parsedCommand.inputVars, tableData: _value};
+        }
         return _value;
     }
 
@@ -261,11 +264,11 @@ function VarsGraph(commandsRegistry) {
 
     this.printGraph = function(){
         let layers = self.getLayers();
-        console.log("Graph --------------------------");
+        console.log("------------- GRAPH PRINT -------------");
         for(let i = 0; i < layers.length; i++){
-            console.log("\tLayer", i, ":", layers[i]);
+            console.log("Level '"+ i+ "':", layers[i].join(", "));
         }
-        console.log("--------------------------------");
+        console.log("----------- END GRAPH PRINT ---------------------");
     }
     function lookUpVariable(varName){
         return variablesIndex[varName];

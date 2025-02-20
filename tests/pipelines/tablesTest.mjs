@@ -8,12 +8,14 @@ let allOk = true;
 
 let graph = createVarsGraph(createRegistry());
 
-graph.addVariable("t1", "doc1","c1", "p1", parseCommandLine("@t1 : table c1 c2 c3"));
+graph.addVariable("t1", "doc1","c1", "p1", parseCommandLine("@t1 : table c1 c2 c3 c4 c5"));
 
 graph.setVariable("doc1", "t1",
-    [{c1:'a', c2:1, c3:10},
-          {c1:'b', c2:100, c3:1000},
-          {c1:'c', c2:10000, c3:100000},
+    [{c1:'a', c2:1, c3:10, c4:0, c5:1},
+          {c1:'b', c2:100, c3:1000, c4:0, c5:1},
+          {c1:'c', c2:10000, c3:100000, c4:0, c5:1},
+          {c1:'d', c2:1000000, c3:10000000, c4:0, c5:1},
+          {c1:'3', c2:"xxx", c3:"yyy", c4:"0", c5:"1"}
     ]);
 
 

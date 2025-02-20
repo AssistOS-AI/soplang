@@ -18,14 +18,12 @@ function Table(definition, data){
         return !definition || definition.length === 0;
     }
 
-    function getColNo(colDescription){
-        if(Number.isInteger(colDescription) && colDescription >= 0 && colDescription < definition.length){
-            return colDescription;
+    function getColName(colNumber){
+        colNumber = parseInt(colNumber)
+        if(isNaN(colNumber) || colNumber < 0 || colNumber > definition.length){
+            $$.throwError("Invalid column number: " + colNumber);
         }
-        if(typeof colDescription === 'string' && columnsNumber[colDescription] !== undefined){
-            return columnsNumber[colDescription];
-        }
-        $$.throwError("Unknown column description '" + colDescription + "'");
+        return definition[colNumber];
     }
 
     function createLambda(argsString, JSCodeAsString){
@@ -36,6 +34,7 @@ function Table(definition, data){
 
     function extractArea(lines_range, columns_range){
         let res = [];
+        console.debug(">>>>> Extracting area", lines_range, columns_range);
         //lines_range could be a single number or number1 - number2
         let firstLine;
         let lastLine;
@@ -45,21 +44,32 @@ function Table(definition, data){
             let range = lines_range.split("-");
             firstLine = parseInt(range[0]);
             lastLine = parseInt(range[1]);
+            if(isNaN(firstLine) || isNaN(lastLine) || firstLine > lastLine || firstLine < 0 || lastLine > clonedData.length){
+                $$.throwError("Invalid line range: " + lines_range + "Max range is between 0 and " + clonedData.length );
+            }
         } else{
             let value = parseInt(lines_range);
+            if(isNaN(value)){
+                $$.throwError("Invalid line range: " + lines_range);
+            }
             firstLine = value;
             lastLine = value;
         }
 
         if(columns_range.includes(",")){
-
+            columns_range.split(",").forEach(col => {
+                columns.push(col);
+            })
         }
         else if(columns_range.includes("-")){
             let range = columns_range.split("-");
-            let firstColumn = range[0];
-            let lastColumn = range[1];
+            let firstColumn = parseInt(range[0]);
+            let lastColumn = parseInt(range[1]);
+            if(isNaN(firstColumn) || isNaN(lastColumn) || firstColumn > lastColumn || firstColumn < 0 || lastColumn >= definition.length){
+                $$.throwError("Invalid column range: " + columns_range);
+            }
              for(let col = firstColumn; col <= lastColumn; col++){
-                 columns.push(getColNo(col));
+                 columns.push(getColName(col));
              }
         } else {
             let colNo = parseInt(columns_range);
@@ -70,6 +80,7 @@ function Table(definition, data){
             }
         }
 
+        console.debug("Extracting area", lines_range, columns_range, "Columns", columns);
         for(let line = firstLine; line <= lastLine; line++){
             for(let col of columns){
                 res.push(clonedData[line][col]);
@@ -92,16 +103,19 @@ function Table(definition, data){
     /******************************** public functions *********************************/
     this.area = function( lines_range, columns_range){
         assertIsTable();
+        return extractArea(lines_range, columns_range);
     }
 
     /* extracts a column as an array value*/
     this.column = function(columnNameOrNumber){
         assertIsTable();
+        return extractArea(-1, columnNameOrNumber)
     }
 
     /* extracts a row as an array value*/
     this.row = function(lineNumber){
         assertIsTable();
+        return extractArea(lineNumber, undefined)
     }
 
     this.line = this.row;
@@ -129,6 +143,7 @@ function Table(definition, data){
 
     this.sum = function(lines_range, columns_range){
         let lambda = function(acc, item){
+            item = parseFloat(item);
             return acc + item;
         };
         return internalReduce(lambda, 0, lines_range, columns_range);
@@ -136,6 +151,7 @@ function Table(definition, data){
 
     this.min = function(lines_range, columns_range){
         let lambda = function(acc, item){
+            item = parseFloat(item);
             return (acc === undefined || item < acc) ? item : acc;
         };
         return internalReduce(lambda, undefined, lines_range, columns_range);
@@ -143,6 +159,7 @@ function Table(definition, data){
 
     this.max = function(lines_range, columns_range){
         let lambda = function(acc, item){
+            item = parseFloat(item);
             return (acc === undefined || item > acc) ? item : acc;
         };
         return internalReduce(lambda, undefined, lines_range, columns_range);
@@ -163,14 +180,16 @@ function Table(definition, data){
         $$.throwError("Not implemented");
     }
 
-
     this.setAt = function(lineNo, columnDesc, value){
         assertIsTable();
         let line = clonedData[lineNo];
-        line[getColNo(columnDesc)] = value;
+        let colName = parseInt(columnDesc);
+        if(isNaN(colName)){
+            colName = columnDesc;
+        }
+        line[getColName(colName)] = value;
         return clonedData;
     }
-
 
     this.fresher = function(otherTable){
 
@@ -186,52 +205,84 @@ function Table(definition, data){
     }
 }
 
+function createTable(inputValues){
+    if(!inputValues[0]){
+        $$.throwError("Not a proper table or array");
+    }
+    let value = inputValues[0].tableData;
+    let header = inputValues[0].tableHeader;
+    if(!value){
+        value = inputValues[0];
+    }
+    return  new Table(value, header);
+}
 
 let tableCommands = {
     table: async function (inputValues, outputValues, varContext) {
         //input variables represents the table's description
         console.debug(">>>>>Table definition:", inputValues, varContext);
-        throw "Not implemented";
-        this.table = new Table(inputValues, varContext.getDescription());
+        throw "Mush be never called as it is just a definition ";
     },
     area: async function (inputValues) {
         console.debug(">>>>>Inputs:", inputValues);
+        if(!inputValues[0] || !inputValues[0].tableHeader){
+            $$.throwError("Not a proper table ");
+        }
+        let table = new Table(inputValues[0].tableData, inputValues[0].tableHeader);
+        return table.area(inputValues[1], inputValues[2]);
     },
     row: async function (inputValues) {
-
+        console.debug(">>>>>Inputs:", inputValues);
+        if(!inputValues[0] || !inputValues[0].tableHeader){
+            $$.throwError("Not a proper table ");
+        }
+        let table = new Table(inputValues[0].tableData, inputValues[0].tableHeader);
+        return Table.row(inputValues[1]);
     },
     column: async function (inputValues) {
-
+        console.debug(">>>>>Inputs:", inputValues);
+        if(!inputValues[0] || !inputValues[0].tableHeader){
+            $$.throwError("Not a proper table ");
+        }
+        let table = new Table(inputValues[0].tableData, inputValues[0].tableHeader);
+        return Table.column(inputValues[1]);
     },
-    filter: async function (inputValues, outputValues) {
-
+    filter: async function (inputValues) {
+        let table = createTable(inputValues);
+        return table.filter(inputValues[1], inputValues[2], inputValues[3]);
     },
     reduce: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.reduce(inputValues[1], inputValues[2], inputValues[3]);
     },
     sort: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.sort(inputValues[1], inputValues[2], inputValues[3]);
     },
     sum: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.sum(inputValues[1], inputValues[2], inputValues[3]);
     },
     avg: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.avg(inputValues[1], inputValues[2], inputValues[3]);
     },
     max: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.max(inputValues[1], inputValues[2], inputValues[3]);
     },
     min: async function (inputValues, outputValues) {
-
+        let table = createTable(inputValues);
+        return table.min(inputValues[1], inputValues[2], inputValues[3]);
     },
     setCell: async function (inputValues, outputValues) {
-
+        $$.throwError("Not implemented");
     },
     getCell: async function (inputValues, outputValues) {
-
+        $$.throwError("Not implemented");
     },
     append: async function (inputValues, outputValues) {
-
+        $$.throwError("Not implemented");
     }
 }
 
