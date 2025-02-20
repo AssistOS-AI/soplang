@@ -1,6 +1,6 @@
 async function throwError(error, ...args) {
     if(typeof error === "string"){
-        error = new Error(error);
+        error = new Error(error + " " + args.join(" "));
     }
     let errStr = args.join(" ");
     console.debug("Throwing err:", error, errStr);
@@ -17,7 +17,7 @@ $$.throwError = throwError;
 
 function getNextToken(str, position){
     function makeResult(token, position, tokenType){
-      // console.debug("Token:", token, "Position:", position, "Type:", tokenType);
+       //console.debug("Token:'"+ token, "'Position:", position, "Type:", tokenType);
         return {
             token: token,
             position: position,
@@ -25,9 +25,21 @@ function getNextToken(str, position){
         }
     }
 
+    function isWhiteSpace(char){
+       return " \t:=".includes(char);
+    }
+
+    function isSeparator(char){
+        return " \t:=\"'[]()".includes(char);
+    }
     function eatWhitespaces(){
-        while(str[position] === " " || str[position] === "\t"){
+        if(position >= str.length){
+            return "end";
+        }
+        let currentChar = str[position];
+        while(isWhiteSpace(currentChar)){
             position++;
+            currentChar = str[position]
             if(position >= str.length){
                 return "end";
             }
@@ -54,7 +66,7 @@ function getNextToken(str, position){
     let tokenType = "empty";
     let currentChar = str[position];
 
-    if(currentChar === " " || currentChar === "\t"){
+    if(isWhiteSpace(currentChar)){
         if(eatWhitespaces() === "end"){
             return makeResult(token, position, "end");
         }
@@ -94,7 +106,7 @@ function getNextToken(str, position){
             break;
     }
 
-    while(currentChar !== " " && currentChar !== "\t" && currentChar !== "'" && currentChar !== '"' && currentChar !== '['){
+    while(!isSeparator(currentChar)){
         token += currentChar;
         position++;
         currentChar = str[position];

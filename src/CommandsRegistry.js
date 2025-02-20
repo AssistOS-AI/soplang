@@ -18,32 +18,39 @@ function CommandsRegistry( workSpace) {
         commands[outputValues[0]] = eval(code);
     };
 
-    commands.alias = async function (inputValues, outputValues) {
+    commands.alias = async function () {
         $$.throwError("Alias command should not be executed as normal commands");
     }
 
-    commands.special = async function (inputValues, outputValues) {
+    commands.special = async function () {
         $$.throwError("'special' variables should not be initialised as normal variables by running commands");
     }
 
 
-    this.runCommand =  async function (commandName, inputValues, outputValues ) {
+
+    this.runCommand =  async function (commandName, inputValues, outputValues, varGraph, varContext  ) {
         let commandFunction = commands[commandName];
         if(!commandFunction){
             $$.throwError("Unknown command '" + commandName + "'");
         }
-        return await commandFunction(inputValues, outputValues);
+        console.debug(">>>>>>> Running command", commandName);
+        return await commandFunction(inputValues, outputValues, varContext, varGraph);
     }
 
     this.registerCommand = function (commandName, commandFunction) {
-        console.log("Registering command", commandName);
         commands[commandName] = commandFunction;
     }
 
 }
 
+let tableCommands = require("./tableUtil.js").tableCommands;
+
 module.exports = {
     createRegistry: function (workspace) {
-        return new CommandsRegistry(workspace);
+        let registry = new CommandsRegistry(workspace);
+        for(let commandName in tableCommands){
+            registry.registerCommand(commandName, tableCommands[commandName]);
+        }
+        return registry;
     }
 }

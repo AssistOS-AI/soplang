@@ -12,6 +12,14 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.safeTimestamp = _safeTimestamp;
 
+    if(_parsedCommand.outputVars.length > 1){
+        $$.throwError("Command", _parsedCommand.command, "has more than one output variable. This is not supported!");
+    }
+
+    if(_parsedCommand.outputVars[0] !== _varName){
+        $$.throwError("Command", _parsedCommand.command, "has output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
+    }
+
 
     if(_parsedCommand.command === "alias" ){
         console.debug(">>>Alias ",
@@ -92,6 +100,7 @@ function VarsGraph(commandsRegistry) {
     this.setVariable = function(docID, varName, value){
         let varContext = variables[docID][varName];
         if(!varContext){
+            console.debug("All Variables", variables, "in document", docID, "are", Object.keys(variables[docID]));
             $$.throwError("Variable '" + varName + "' not found in document " + docID);
         }
         if(varContext.parsedCommand.command === "alias"){
@@ -225,7 +234,8 @@ function VarsGraph(commandsRegistry) {
           return varContext.getValue();
       }
 
-      async function runCommand(parsedCommand) {
+      async function runCommand(targetVar) {
+          let parsedCommand = targetVar.parsedCommand;
           let inputValues = []
           for(let i = 0; i < parsedCommand.inputVars.length; i++){
               let value = parsedCommand.inputVars[i];
@@ -240,7 +250,13 @@ function VarsGraph(commandsRegistry) {
           if(parsedCommand.command === "alias"){
               return inputValues[0];
           }
-         return await commandsRegistry.runCommand(parsedCommand.command, inputValues, parsedCommand.outputVars);
+         return await commandsRegistry.runCommand(
+                parsedCommand.command,
+                inputValues,
+                parsedCommand.outputVars,
+                targetVar,
+                self
+                );
       }
 
     this.printGraph = function(){
@@ -283,7 +299,7 @@ function VarsGraph(commandsRegistry) {
             if(varContext.parsedCommand.command === "special"){
                 value = varContext.getValue();
             } else {
-                value = await runCommand(varContext.parsedCommand);
+                value = await runCommand(varContext);
             }
         }
         return value;

@@ -164,7 +164,7 @@ function Table(definition, data){
     }
 
 
-    this.replace = function(lineNo, columnDesc, value){
+    this.setAt = function(lineNo, columnDesc, value){
         assertIsTable();
         let line = clonedData[lineNo];
         line[getColNo(columnDesc)] = value;
@@ -187,7 +187,58 @@ function Table(definition, data){
 }
 
 
+let tableCommands = {
+    table: async function (inputValues, outputValues, varContext) {
+        //input variables represents the table's description
+        console.debug(">>>>>Table definition:", inputValues, varContext);
+        throw "Not implemented";
+        this.table = new Table(inputValues, varContext.getDescription());
+    },
+    area: async function (inputValues) {
+        console.debug(">>>>>Inputs:", inputValues);
+    },
+    row: async function (inputValues) {
+
+    },
+    column: async function (inputValues) {
+
+    },
+    filter: async function (inputValues, outputValues) {
+
+    },
+    reduce: async function (inputValues, outputValues) {
+
+    },
+    sort: async function (inputValues, outputValues) {
+
+    },
+    sum: async function (inputValues, outputValues) {
+
+    },
+    avg: async function (inputValues, outputValues) {
+
+    },
+    max: async function (inputValues, outputValues) {
+
+    },
+    min: async function (inputValues, outputValues) {
+
+    },
+    setCell: async function (inputValues, outputValues) {
+
+    },
+    getCell: async function (inputValues, outputValues) {
+
+    },
+    append: async function (inputValues, outputValues) {
+
+    }
+}
+
+tableCommands.line = tableCommands.row;
+
 module.exports = {
+    tableCommands: tableCommands,
     getTable: function(definition, data){
         return new Table();
     }
