@@ -227,23 +227,12 @@ function LocalSafeTimestamp(){
     internalClock++;
     this.timestamp = Date.now();
     this.clock = this.timestamp + internalClock;
+    this.internalClock = internalClock;
     this.toString = function(){
-        return "st:"+ this.timestamp + ":" + this.clock;
+        return JSON.stringify(this);
     }
 }
 
-LocalSafeTimestamp.prototype.isOlder = function(dc1, dc2) {
-    if(dc1 === undefined){
-        return false;
-    }
-    if(dc2 === undefined){
-        return true;
-    }
-    if(dc1.timestamp === dc2.timestamp){
-        return dc1.clock < dc2.clock;
-    }
-    return dc1.timestamp < dc2.timestamp;
-}
 
 
 module.exports = {

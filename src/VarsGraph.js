@@ -59,8 +59,8 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
                 newValue = newValue.tableData;
             }
         }
-        _value = newValue;
         this.safeTimestamp = new LocalSafeTimestamp();
+        _value = newValue;
     }
 
     if(this.parsedCommand){
@@ -110,7 +110,7 @@ function VarsGraph(commandsRegistry) {
         return varContext.getVarValue();
     }
 
-    this.setVariable = function(docID, varName, value){
+    this.setNewValue = function(docID, varName, value){
         let varContext = variables[docID][varName];
         if(!varContext){
             console.debug("All Variables", variables, "in document", docID, "are", Object.keys(variables[docID]));
@@ -284,6 +284,20 @@ function VarsGraph(commandsRegistry) {
         return variablesIndex[varName];
     }
     async function computeValue(varName){
+
+         function  isOlder(ts1, ts2) {
+            if(ts1 === undefined){
+                return false;
+            }
+            if(ts2 === undefined){
+                return true;
+            }
+            if(ts1.timestamp === ts1.timestamp){
+                return ts1.clock < ts1.clock;
+            }
+            return ts1.timestamp < ts1.timestamp;
+        }
+
         let varContext = lookUpVariable(varName);
         let deps = varContext.getDependencies();
         let myTimestamp = varContext.safeTimestamp;
@@ -295,9 +309,9 @@ function VarsGraph(commandsRegistry) {
         } else {
             for(let i = 0; i < deps.length; i++){
                 let depName = deps[i];
-                let depContext = variables[depName];
+                let depContext = variablesIndex[depName];
                 if(depContext){
-                    if(LocalSafeTimestamp.isOlder(myTimestamp, depContext.safeTimestamp)){
+                    if(isOlder(myTimestamp, depContext.safeTimestamp)){
                         mustRecompute = true;
                         break;
                     }
@@ -334,7 +348,7 @@ function VarsGraph(commandsRegistry) {
         }
     }
 
-    this.dump = function(){
+    this.dump = function(dontPrintGraph = false){
         let result = {};
         for(let doc in variables) {
             result[doc] = {};
@@ -344,10 +358,13 @@ function VarsGraph(commandsRegistry) {
                     command: varContext.parsedCommand.command,
                     inputVars: varContext.parsedCommand.inputVars.join(" "),
                     value: JSON.stringify(varContext.getVarValue()),
-                    safeTimestamp: varContext.safeTimestamp.toString(),
+                    safeTimestamp: varContext.safeTimestamp? varContext.safeTimestamp.toString(): "Not Initialized",
                     deps: varContext.getDependencies().join(",")
                 };
             }
+        }
+        if(!dontPrintGraph){
+            console.debug("Graph dump:", result);
         }
         return result;
     }
