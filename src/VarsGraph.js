@@ -30,7 +30,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
 
     this.id = getVarID(_docID , _varName);
 
-    this.getValue = function(){
+    this.getVarValue = function(){
         if(_parsedCommand.command === "special"){
             let newValue = _parsedCommand.get(_varName, _docID, _chapterId, _paragraphId);
             if(newValue !== _value){
@@ -40,6 +40,10 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
             }
         }
         if(_parsedCommand.command === "table"){
+            //console.debug("Adding the header to the actual value", _value, "for table", _parsedCommand.inputVars, "in document", _docID, "chapter", _chapterId, "paragraph", _paragraphId);
+            if(_value.tableHeader !== undefined){
+                $$.throwError("Table variable has already has a header. Why?");
+            }
             return { tableHeader: _parsedCommand.inputVars, tableData: _value};
         }
         return _value;
@@ -48,6 +52,12 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
     this.setNewValue = function(newValue){
         if(_parsedCommand.command === "special"){
             return _parsedCommand.set(newValue, _varName, _docID, _chapterId, _paragraphId);
+        }
+        if(_parsedCommand.command === "table"){
+            if(newValue.tableHeader !== undefined){
+                //$$.throwError("Table variable has already has a header. It is forbidden to set a new value for it");
+                newValue = newValue.tableData;
+            }
         }
         _value = newValue;
         this.safeTimestamp = new LocalSafeTimestamp();
@@ -68,7 +78,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
         if(this.parsedCommand && this.parsedCommand.inputVars.length > 0){
             for(let i = 0; i < this.parsedCommand.inputVars.length; i++){
                 let inputVar = this.parsedCommand.inputVars[i];
-                if(this.parsedCommand.varTypes[i] == "alias"){
+                if(this.parsedCommand.varTypes[i] === "alias"){
                     deps.push(inputVar);
                 }
                 if(this.parsedCommand.varTypes[i] === "var"){
@@ -97,7 +107,7 @@ function VarsGraph(commandsRegistry) {
 
     this.getVariable = function(docID, varName){
         let varContext = variables[docID][varName];
-        return varContext.getValue();
+        return varContext.getVarValue();
     }
 
     this.setVariable = function(docID, varName, value){
@@ -232,9 +242,9 @@ function VarsGraph(commandsRegistry) {
       function resolveValue(varName){
           let varContext = lookUpVariable(varName);
           if(varContext.parsedCommand.command === "alias"){
-              return resolveValue(varContext.getValue());
+              return resolveValue(varContext.getVarValue());
           }
-          return varContext.getValue();
+          return varContext.getVarValue();
       }
 
       async function runCommand(targetVar) {
@@ -297,10 +307,10 @@ function VarsGraph(commandsRegistry) {
             }
         }
 
-        let value = varContext.getValue();
+        let value = varContext.getVarValue();
         if(mustRecompute){
             if(varContext.parsedCommand.command === "special"){
-                value = varContext.getValue();
+                value = varContext.getVarValue();
             } else {
                 value = await runCommand(varContext);
             }
@@ -332,7 +342,8 @@ function VarsGraph(commandsRegistry) {
                 let varContext = variables[doc][varName];
                 result[doc][varName] = {
                     command: varContext.parsedCommand.command,
-                    value: varContext.getValue(),
+                    inputVars: varContext.parsedCommand.inputVars.join(" "),
+                    value: JSON.stringify(varContext.getVarValue()),
                     safeTimestamp: varContext.safeTimestamp.toString(),
                     deps: varContext.getDependencies().join(",")
                 };
@@ -340,8 +351,6 @@ function VarsGraph(commandsRegistry) {
         }
         return result;
     }
-
-
 }
 
 module.exports = {

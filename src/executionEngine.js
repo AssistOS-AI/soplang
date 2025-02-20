@@ -102,13 +102,13 @@ function ExecutionEngine() {
         return this.workSpaceState;
     }
 
-    this.getValue = function(docID, name){
+    this.getVarValue = function(docID, name){
         return variables[docID][name];
     }
 }
 
 module.exports = {
-    load: function (module) {
+    load: function () {
         return new ExecutionEngine();
     }
 }
