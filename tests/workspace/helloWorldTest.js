@@ -14,8 +14,8 @@ let initialState ={
                 "title": "Chapter1",
                 "commands": "",
                 "paragraph1": {
-                    text: "Hello ",
-                    commands: "set @helloWorld %text"
+                    text: " dasd  da d %text Hello % das",
+                    commands: "@helloWorld set $text"
                 }
             }
         },
@@ -25,14 +25,14 @@ let initialState ={
                 "commands": "",
                 "paragraph1": {
                     text: "World",
-                    commands: "set @newHelloWorld $helloWorld %text"
+                    commands: "@newHelloWorld set $helloWorld %text"
                 }
             }
           }
         }
     };
 
-let executionEngineModule = require('../../src/executionEngine.js') ;
+let executionEngineModule = require('../../src/SpaceGraph/executionEngine.js') ;
 
 let space = executionEngineModule.load();
 space.initialise(initialState);

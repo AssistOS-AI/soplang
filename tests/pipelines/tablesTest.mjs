@@ -1,6 +1,6 @@
-import {parseCommandLine} from "../../src/soplangUtil.js";
-import {createVarsGraph} from "../../src/VarsGraph.js";
-import {createRegistry} from "../../src/CommandsRegistry.js";
+import {parseCommandLine} from "../../src/SpaceGraph/soplangUtil.js";
+import {createVarsGraph} from "../../src/SpaceGraph/VarsGraph.js";
+import {createRegistry} from "../../src/SpaceGraph/CommandsRegistry.js";
 
 import assert from "assert";
 
@@ -23,7 +23,7 @@ graph.addVariable("sarea1", "doc1","ch1", "p1",parseCommandLine("@sarea1 :sum $t
 graph.addVariable("sarea1_cn", "doc1","ch1", "p1",parseCommandLine("@sarea1_cn =  sum $t1 2-3 c2,c3,c4"));
 
 
-graph.addVariable("area2", "doc1","ch1", "p1",parseCommandLine("@area2:area $t1 3 2-4"));
+graph.addVariable("area2", "doc1","ch1", "p1",parseCommandLine("@area2 area $t1 3 2-4"));
 graph.addVariable("s2", "doc1","ch1", "p1",parseCommandLine("@s2 sum $area2"));
 
 graph.addVariable("area3", "doc1","ch1", "p1",parseCommandLine("@area3 area $t1 2-3 4"));
