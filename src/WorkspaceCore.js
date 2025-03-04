@@ -232,16 +232,32 @@ function WorkspaceCore(persistence){
         return await persistence.listCategories();
     }
 
-    this.listPersonalities = async function () {
-        return await persistence.listIndexPersonality();
+    this.getPersonalityByName = async function (name) {
+        return await persistence.getPersonalityByName(name);
     }
 
-    this.listUsers = async function (role) {
-        return await persistence.listMindexUser(role);
+    this.getDocumentsByCategory = async function (category) {
+        return await persistence.getDocumentsByCategory(category);
     }
 
-    this.listDocumentSnapshots = async function (documentId) {
-        return await persistence.listSindexDocument(documentId);
+    this.getUserByEmail = async function (email) {
+        return await persistence.getUserByEmail(email);
+    }
+
+    this.getDocumentSnapshots = async function (documentId) {
+        return await persistence.getSnapshotByDocument(documentId);
+    }
+
+    this.getAllUsers = async function () {
+        return await persistence.getAllUser();
+    }
+
+    this.getAllDocuments = async function () {
+        return await persistence.getAllDocument();
+    }
+
+    this.getAllPersonalities = async function () {
+        return await persistence.getAllPersonality();
     }
 
     this.forceSave = async function () {
@@ -269,19 +285,11 @@ module.exports = {
                 name: "string",
                 description: "string"
             },
-            personalities: {
-                id: "singleton workspacePersonalities",
-                index: "index personality name"
-            },
             user: {
                 id: "random",
                 email: "string",
                 displayName: "string",
                 role: "string"
-            },
-            spaceUsers: {
-                id: "singleton workspaceUsers",
-                index: "index user email",
             },
             paragraph: {
                 id: "random",
@@ -309,13 +317,10 @@ module.exports = {
                 chapters: "array chapter",
                 lastChangeClock: "integer"
             },
-            snapshots: {
+            snapshot: {
                 id: "random",
-                sindex: "sindex document"
-            },
-            categories: {
-                id: "singleton documentCategories",
-                mindex: "mindex document category",
+                document: "string",
+                data: "any",
             },
             variable: {
                 id: "custom",
@@ -329,12 +334,15 @@ module.exports = {
                 timestamp: "timestamp",
                 valueFUnction: "string",
                 clockFUnction: "string"
-            },
-            variables: {
-                id: "singleton workspaceVariables",
-                index: "index variable name"
-            },
+            }
         });
+
+        await persistence.createIndex("user", "email");
+        await persistence.createIndex("personality", "name");
+        await persistence.createIndex("variable", "name");
+
+        await persistence.createCollection("documents", "document", "category");
+        await persistence.createCollection("snapshots", "snapshot", "document");
 
         return new WorkspaceCore(persistence);
     }

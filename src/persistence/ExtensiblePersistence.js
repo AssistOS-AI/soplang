@@ -48,6 +48,14 @@ function ExtensiblePersistence(smartStorage, config) {
         self[funcName] = func.bind(self);
     }
 
+    function addIndexFunctionToSelf( selfTypeName, fieldName, func) {
+        let funcName = "get" + upCaseFirstLetter(selfTypeName) + "By"+upCaseFirstLetter(fieldName);
+        console.debug("Adding function " + funcName + " to object of type: " + selfTypeName);
+        if (self[funcName] !== undefined) {
+            throw new Error("Function " + funcName + " already exists! Refusing to overwrite, change your configurations!");
+        }
+        self[funcName] = func.bind(self);
+    }
     function nextObjectID(itemType) {
         let firstLetter = itemType[0].toUpperCase();
         let currentNumber = smartStorage.getNextObjectId();
@@ -76,6 +84,7 @@ function ExtensiblePersistence(smartStorage, config) {
                 obj[key] = values[key];
             }
             await smartStorage.updateObject(objectID, obj);
+            await smartStorage.updateIndexesAndCollections(itemType, objectID);
             return obj;
         });
         addFunctionToSelf("get", itemType, "", async function (objectID) {
@@ -148,6 +157,26 @@ function ExtensiblePersistence(smartStorage, config) {
 
     this.forceSave = async function () {
         return await smartStorage.forceSave();
+    }
+
+
+    this.createIndex = async function (typeName, fieldName) {
+        addIndexFunctionToSelf(typeName, fieldName, async function (value) {
+            return await smartStorage.getObjectByField(typeName, fieldName, value);
+        });
+
+        addFunctionToSelf("getAll", typeName, "", async function () {
+            return await smartStorage.getAllObjects(typeName);
+        });
+        return await smartStorage.createIndex(typeName, fieldName);
+    }
+
+    this.createCollection = async function (collectionName, typeName, fieldName) {
+        addIndexFunctionToSelf(collectionName, fieldName, async function (value) {
+            return await smartStorage.getCollectionByField(collectionName, value);
+        });
+        return await smartStorage.createCollection(collectionName, typeName, fieldName);
+
     }
 }
 

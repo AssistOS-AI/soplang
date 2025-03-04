@@ -17,9 +17,9 @@ function SimpleFSStorageStrategy() {
     }
 
     function getFilePath(input){
-        const regex = /^[a-zA-Z0-9]+$/;
+        const regex = /^[a-zA-Z0-9_]+$/;
         if (!regex.test(input)) {
-            throw new Error("For security reasons only letters and numbers are allowed in object IDs!");
+            throw new Error("For security reasons only letters and numbers are allowed in object IDs!" + " Provided id is: " + input);
         }
         return path.join(process.env.PERSISTENCE_FOLDER, input);
     }
@@ -87,9 +87,9 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         setForSave(id);
         return obj;
     }
-    async function loadWithCache(id){
+    async function loadWithCache(id, allowMissing= false){
         if(!cache[id]){
-            cache[id] = await storageStrategy.loadObject(id, false);
+            cache[id] = await storageStrategy.loadObject(id, allowMissing);
         }
         return new Promise((resolve) => setImmediate(() => resolve(cache[id])));
     }
@@ -124,6 +124,88 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         //console.debug(">>> Update object", id, "with", values, "Current cache is", cache);
         setForSave(id);
     }
+
+    let _indexes = {};
+    let _collections = {};
+
+     this.updateIndexesAndCollections = async function (typeName, objId){
+         let obj = await loadWithCache(objId);
+         let indexFieldName = _indexes[typeName];
+         if(indexFieldName){
+             let indexId = typeName + "_" + indexFieldName;
+             let index = await loadWithCache(indexId);
+             if(index.ids[obj[indexFieldName]] === undefined){
+                 index.ids[obj[indexFieldName]] = objId;
+                 setForSave(indexId);
+             }
+             if(index.ids[obj[indexFieldName]] !== objId){
+                    $$.throwError(new Error("Duplicate value for field " + indexFieldName + " in type " + typeName));
+                }
+            }
+
+          let collectionName = _collections[typeName].collectionName;
+          let fieldName = _collections[typeName].fieldName;
+          let collection = await loadWithCache(collectionName);
+          if(!collection.items[obj[fieldName]]){
+                collection.items[obj[fieldName]] = [];
+          }
+          if(collection.items[obj[fieldName]].indexOf(objId) === -1){
+                collection.items[obj[fieldName]].push(objId);
+                setForSave(collectionName);
+        }
+     }
+
+    this.createIndex = async function (typeName, fieldName) {
+        if(_indexes[typeName]){
+            $$.throwError(new Error("Index for type " + typeName + " already exists!"));
+        }
+        _indexes[typeName] = fieldName;
+
+        let objId = typeName + "_" + fieldName;
+        let obj = await loadWithCache(objId, true);
+        if(!obj){
+            await self.createObject(objId, { ids: {}});
+            setForSave(objId);
+        }
+    }
+
+    this.getAllObjects = async function (typeName) {
+        let fieldName = indexes[typeName];
+        let objId = typeName + "_" + fieldName;
+        let obj = await loadWithCache(objId);
+        return obj.values();
+    }
+
+    this.getObjectByField = async function (typeName, fieldName, fieldValue) {
+        let objId = typeName + "_" + fieldName;
+        let index = await loadWithCache(objId);
+        let indexValueAsId = index.ids[fieldValue];
+        if(indexValueAsId === undefined){
+            console.debug(">>> Object of type '" + typeName + "' not found for field '"+ fieldName+"' with value '"+ fieldValue + "'");
+            return undefined;
+        }
+        return await self.loadObject(indexValueAsId);
+    }
+
+    this.createCollection = async function (collectionName, typeName, fieldName) {
+        if(_collections[typeName]){
+            $$.throwError(new Error("Collection for type " + typeName + " already exists!"));
+        }
+        _collections[typeName] = {collectionName,fieldName};
+
+        let obj = await loadWithCache(collectionName, true);
+        if(!obj){
+            await self.createObject(collectionName, { items: {}});
+            setForSave(collectionName);
+        }
+
+    }
+
+    this.getCollectionByField = async function (collectionName, fieldValue) {
+        let collection = await loadWithCache(collectionName);
+        return collection.items[fieldValue];
+    }
+
     async function saveAll (){
         for(let id in modified){
             delete modified[id];
@@ -143,7 +225,6 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
     this.forceSave = async function(){
         await saveAll();
     }
-
 }
 
 module.exports = {
