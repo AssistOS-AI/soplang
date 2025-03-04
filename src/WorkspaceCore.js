@@ -224,13 +224,6 @@ function WorkspaceCore(persistence){
         return await persistence.restore(documentId, snapshotId);
     }
 
-    this.listDocuments = async function (category) {
-        return await persistence.listDocuments(category);
-    }
-
-    this.listCategories = async function () {
-        return await persistence.listCategories();
-    }
 
     this.getPersonalityByName = async function (name) {
         return await persistence.getPersonalityByName(name);
