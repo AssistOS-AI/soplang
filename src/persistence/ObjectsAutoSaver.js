@@ -1,11 +1,11 @@
 const process = require("process");
 let fs = require("fs").promises;
 let path = require("path");
-let coreUtils = require("../util/CoreUtil.js");
+let coreUtils = require("../util/sopUtil.js");
 function SimpleFSStorageStrategy() {
     if(process.env.PERSISTENCE_FOLDER === undefined) {
-        console.error("LOGS_FOLDER environment variable is not set. Please set it to the path where the logs should be stored. Defaults to './data/'");
-        process.env.PERSISTENCE_FOLDER = "./data/"
+        console.error("PERSISTENCE_FOLDER environment variable is not set. Please set it to the path where the logs should be stored. Defaults to './work_space_data/'");
+        process.env.PERSISTENCE_FOLDER = "./work_space_data/"
     }
 
     this.init = async function(){
@@ -59,10 +59,9 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
     let modified = {};
 
     this.init = async function(){
-        await storageStrategy.init();
         let systemObject = await storageStrategy.loadObject("system", true);
         if(!systemObject || !systemObject.currentNumber === undefined){
-            systemObject = await self.createObject("system", { currentNumber: 1024 , availableBalance: 0, lockedBalance: 0});
+            systemObject = await self.createObject("system", { currentNumber: 1});
         }
         cache["system"] = systemObject;
         //console.debug(">>> Initialised cache", cache);
@@ -141,15 +140,21 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         await saveAll();
     }
 
+    this.forceSave = async function(){
+        await saveAll();
+    }
+
 }
 
 module.exports = {
-    getAutoSaverPersistence: function (storageStrategy) {
+    getAutoSaverPersistence: async function (storageStrategy) {
         if(!storageStrategy) {
             console.debug("No storage strategy provided, using SimpleFSStorageStrategy");
             storageStrategy = new SimpleFSStorageStrategy();
         }
-        return new AutoSaverPersistence(storageStrategy);
+        let autoSaver = new AutoSaverPersistence(storageStrategy);
+        await autoSaver.init()
+        return autoSaver;
     },
     getSimpleFSStorageStrategy: function () {
         return new SimpleFSStorageStrategy();

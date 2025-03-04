@@ -1,10 +1,11 @@
 
 
-let autoSaverModule = require('../../src/persistence/ObjectsAutoSaver.js');
-let extensiblePersistenceModule = require('../../src/persistence/ExtensiblePersistence.js');
+let autoSaverModule = require('./persistence/ObjectsAutoSaver.js');
+let extensiblePersistenceModule = require('./persistence/ExtensiblePersistence.js');
 
 
 function WorkspaceCore(persistence){
+    let self = this;
 
     this.createWorkspace = async function (workspaceName, ownerId) {
         return await persistence.createWorkspace( {
@@ -52,12 +53,9 @@ function WorkspaceCore(persistence){
     this.createDocument = async function (documentName, documentCategory) {
         return await persistence.createDocument({
             title: documentName,
-            category: documentCategory
-        });
-    }
-
-    this.getDocumentInfo = async function (documentId) {
-        return await persistence.getDocument(documentId);
+            category: documentCategory,
+            chapters: []
+            });
     }
 
     this.dumpDocument = async function (documentId) {
@@ -100,38 +98,105 @@ function WorkspaceCore(persistence){
     }
 
     this.applyTemplate = async function (documentId, template) {
-        return await persistence.applyDocumentTemplate(documentId, template);
+        let doc = await persistence.getDocument(documentId);
+        if(doc.chapters.length > 0){
+            throw new Error("Document already has content");
+        }
+        await persistence.updateDocument(documentId, {title: template.title, category: template.category, infoText: template.infoText, commands: template.commands, comments: template.comments});
+        for(let chapter of template.chapters){
+            //console.debug(">>>> Creating chapter", chapter);
+            let newChapter = await self.createChapter(documentId,  chapter.title, chapter.commands, chapter.comments);
+            for(let paragraph of chapter.paragraphs){
+                //console.debug(">>>> Creating paragraph", paragraph);
+                await self.createParagraph(newChapter.id, paragraph.text,paragraph.commands,paragraph.comments);
+            }
+        }
+        doc = await persistence.getDocument(documentId);
+        return doc;
     }
 
-    this.createChapter = async function (documentId, chapterTitle) {
-        return await persistence.createChapter(documentId,{
-            title: chapterTitle
+    this.createChapter = async function (documentId, chapterTitle, commands, comments) {
+        //console.debug(">>>> Creating chapter", chapterTitle, "for document", documentId);
+        let document = await persistence.getDocument(documentId);
+        let chapter =  await persistence.createChapter({
+            title: chapterTitle,
+            commands,
+            comments,
+            paragraphs: []
         });
+
+        let chapters = document.chapters.concat(chapter.id);
+        await persistence.updateDocument(documentId, {chapters});
+        return await persistence.getChapter(chapter.id);
     }
 
     this.createParagraph = async function (chapterId, paragraphText, commands, comments) {
-        return await persistence.createParagraph(chapterId, {
+        //console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId);
+        let chapter = await persistence.getChapter(chapterId);
+        let par = await persistence.createParagraph({
             text: paragraphText,
             commands,
             comments
         });
+        let paragraphs = chapter.paragraphs.concat(par.id);
+        //console.debug("!!!!! Created paragraph", chapter, "for chapter", chapter, "new chapters", paragraphs);
+        await persistence.updateChapter(chapterId, {paragraphs});
+        return await persistence.getParagraph(par.id);
     }
 
-    this.changeOrderParagraphs = async function (chapterId, paragraphId, newPosition) {
-        return await persistence.changeOrderParagraphs(chapterId, paragraphId, newPosition);
+    this.changeParagraphOrder = async function (chapterId, paragraphId, newPosition) {
+        let chapter = await persistence.getChapter(chapterId);
+        let paragraphs = chapter.paragraphs;
+        let index = paragraphs.indexOf(paragraphId);
+        if(index === -1){
+            throw new Error("Paragraph not found in chapter");
+        }
+        paragraphs.splice(index, 1);
+        paragraphs.splice(newPosition, 0, paragraphId);
+        return await persistence.updateChapter(chapterId, {paragraphs});
     }
 
-    this.changeOrderChapters = async function (documentId, chapterId, newPosition) {
-        return await persistence.changeOrderChapters(documentId, chapterId, newPosition);
+    this.changeChapterOrder = async function (documentId, chapterId, newPosition) {
+        let doc = await persistence.getDocument(documentId);
+        let chapters = doc.chapters;
+        let index = chapters.indexOf(chapterId);
+        if(index === -1){
+            throw new Error("Chapter not found in document");
+        }
+        chapters.splice(index, 1);
+        chapters.splice(newPosition, 0, chapterId);
+        return await persistence.updateDocument(documentId, {chapters});
     }
 
-    this.updateDocument = async function (documentId, title, category, infoText, commands) {
+    this.updateDocumentInfo = async function (documentId, title, category, infoText, commands) {
+        if(!title || !category || !infoText || !commands){
+            throw new Error("All fields are required to be defined");
+        }
         return await persistence.updateDocument(documentId,{
             title,
             category,
             infoText,
             commands
         });
+    }
+
+    this.getChapterAt = async function (documentId, position) {
+        let doc = await persistence.getDocument(documentId);
+        let chapterId = doc.chapters[position];
+        //console.debug(">>>> Getting chapter at position", position, "chapterId", chapterId, "from doc", doc);
+        if(!chapterId){
+          return undefined;
+        }
+        return await persistence.getChapter(chapterId);
+    }
+
+    this.getParagraphAt = async function (documentId, chapterPosition, paragraphPosition) {
+        let doc = await persistence.getDocument(documentId);
+        console.debug(">>>> Getting paragraph at position", paragraphPosition, "from chapter at position", chapterPosition, "from doc", doc);
+        let chapterId = doc.chapters[chapterPosition];
+        let chapter = await persistence.getChapter(chapterId);
+        let paragraphId = chapter.paragraphs[paragraphPosition];
+        return await persistence.getParagraph(paragraphId);
     }
 
     this.updateChapter = async function (chapterId, title, comments, commands) {
@@ -179,15 +244,22 @@ function WorkspaceCore(persistence){
         return await persistence.listSindexDocument(documentId);
     }
 
+    this.forceSave = async function () {
+        return await persistence.forceSave();
+    }
+
+    this.shutDown = async function () {
+        return await persistence.shutDown();
+    }
+
 }
 
 module.exports = {
-    getCore: function (baseFolder) {
-
-        let autoSaver = autoSaverModule.getAutoSaverPersistence(baseFolder);
-        let persistence = extensiblePersistenceModule.getPersistentStorage(autoSaver, {
+    getCore: async function () {
+        let autoSaver = await autoSaverModule.getAutoSaverPersistence();
+        let persistence = await extensiblePersistenceModule.getPersistentStorage(autoSaver, {
             workspace: {
-            id: "singleton workspace",
+                id: "singleton workspace",
                 documents: "array document",
                 clock : "integer",
                 permissions: "any"
@@ -263,6 +335,7 @@ module.exports = {
                 index: "index variable name"
             },
         });
+
         return new WorkspaceCore(persistence);
     }
 }

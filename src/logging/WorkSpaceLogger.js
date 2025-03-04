@@ -5,7 +5,7 @@ const process = require("process");
 function WorkSpaceLogger(flushInterval = 1, logDir) {
     if (!logDir) {
         if (process.env.LOGS_FOLDER === undefined) {
-            console.error("LOGS_FOLDER environment variable is not set. Please set it to the path where the logs should be stored. Defaults to './coredata/'");
+            console.error("LOGS_FOLDER environment variable is not set. Please set it to the path where the logs should be stored. Defaults to './logs/'");
             process.env.LOGS_FOLDER = "./logs/"
         }
     }
@@ -107,6 +107,6 @@ function WorkSpaceLogger(flushInterval = 1, logDir) {
 
 module.exports = {
     getSystemLogger: function (flushInterval, logDir) {
-        return new SystemLogger(flushInterval, logDir);
+        return new WorkSpaceLogger(flushInterval, logDir);
     }
 }

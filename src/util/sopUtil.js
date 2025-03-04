@@ -52,8 +52,8 @@ if(typeof globalThis.$$.throwError === "undefined"){
  * @returns {string} - The base-36 representation of the number.
  */
 function convertToBase36Id(prefix, numericValue) {
-    const alphanumericChars = 'X1234567890VURKLSTWEJCZIDMBNQOYFAGHP';  //bijective obfuscation of base36
-    if (numericValue === 0) return 'X';
+    const alphanumericChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (numericValue === 0) return '0';
 
     let base36Result = '';
     let currentValue = numericValue;
@@ -63,7 +63,8 @@ function convertToBase36Id(prefix, numericValue) {
         base36Result = alphanumericChars[modulus] + base36Result;
         currentValue = Math.floor(currentValue / 36);
     }
-    return "ID-"+ prefix+"-"+base36Result;
+    prefix = prefix.toUpperCase().substring(0,4);
+    return "ID"+ prefix+base36Result;
 }
 
 function parseObjectAndConvert(typeName, JSONSerialisationAsString){
@@ -113,6 +114,7 @@ module.exports = {
          */
         return expandSchemaWithTypeDetails(schema);
     },
+    convertToBase36Id,
     parseObjectAndConvert,
     newObject: function(typeName, optionalId){
        let typeSchema = typesRegistry[typeName];
