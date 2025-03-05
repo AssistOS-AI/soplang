@@ -64,6 +64,9 @@ function ExtensiblePersistence(smartStorage, config) {
 
     function getCreationFunction(itemType) {
         return async function (initialValues) {
+            if(await smartStorage.hasCreationConflicts(itemType, initialValues)){
+                throw new Error("Creation conflicts detected! Refusing to create object of type " + itemType + " with values " + JSON.stringify(initialValues));
+            }
             let id = nextObjectID(itemType);
             let obj = {};
             for (let property in initialValues) {
@@ -72,6 +75,7 @@ function ExtensiblePersistence(smartStorage, config) {
             //console.debug(">>>> Created object of type " + itemType + " with id " + id, JSON.stringify(obj));
             obj = await smartStorage.createObject(id, obj);
             auditLog(AUDIT_EVENTS.CREATE_OBJECT, undefined, itemType, id);
+            await smartStorage.updateIndexesAndCollections(itemType, obj.id);
             return obj;
         }
     }

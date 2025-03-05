@@ -132,6 +132,7 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
          let obj = await loadWithCache(objId);
          let indexFieldName = _indexes[typeName];
          if(indexFieldName){
+             console.debug(">>> Found index" + indexFieldName + " for type " + typeName);
              let indexId = typeName + "_" + indexFieldName;
              let index = await loadWithCache(indexId);
              if(index.ids[obj[indexFieldName]] === undefined){
@@ -143,16 +144,32 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
                 }
             }
 
-          let collectionName = _collections[typeName].collectionName;
-          let fieldName = _collections[typeName].fieldName;
-          let collection = await loadWithCache(collectionName);
-          if(!collection.items[obj[fieldName]]){
-                collection.items[obj[fieldName]] = [];
-          }
-          if(collection.items[obj[fieldName]].indexOf(objId) === -1){
-                collection.items[obj[fieldName]].push(objId);
-                setForSave(collectionName);
-        }
+         if(_collections[typeName]){
+             let collectionName = _collections[typeName].collectionName;
+             console.debug(">>> Found collection" + collectionName + " grouped by field " + _collections[typeName].fieldName + " for type " + typeName);
+             let fieldName = _collections[typeName].fieldName;
+             let collection = await loadWithCache(collectionName);
+             if(!collection.items[obj[fieldName]]){
+                 collection.items[obj[fieldName]] = [];
+             }
+             if(collection.items[obj[fieldName]].indexOf(objId) === -1){
+                 collection.items[obj[fieldName]].push(objId);
+                 setForSave(collectionName);
+             }
+         }
+     }
+
+     this.hasCreationConflicts = async function(typeName, values){
+         let indexFieldName = _indexes[typeName];
+         if(indexFieldName){
+             console.debug(">>> Found index" + indexFieldName + " for type " + typeName);
+             let indexId = typeName + "_" + indexFieldName;
+             let index = await loadWithCache(indexId);
+             if(index.ids[values[indexFieldName]] !== undefined){
+                 return true;
+             }
+         }
+         return false;
      }
 
     this.createIndex = async function (typeName, fieldName) {

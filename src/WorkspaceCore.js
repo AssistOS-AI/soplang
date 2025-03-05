@@ -215,7 +215,6 @@ function WorkspaceCore(persistence){
         });
     }
 
-
     this.snapshot = async function (documentId) {
         return await persistence.snapshot(documentId);
     }
@@ -223,7 +222,6 @@ function WorkspaceCore(persistence){
     this.restore = async function (documentId, snapshotId) {
         return await persistence.restore(documentId, snapshotId);
     }
-
 
     this.getPersonalityByName = async function (name) {
         return await persistence.getPersonalityByName(name);
