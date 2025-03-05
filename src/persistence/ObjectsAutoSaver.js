@@ -145,7 +145,7 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
     this.updateIndexedField = async function (id, typeName, fieldName, newValue, duringCreation = false) {
         let obj = await loadWithCache(id);
         let oldValue = obj[fieldName];
-        console.debug(">>> Updating field " + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
+        //console.debug(">>> Updating field " + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
         if(oldValue === newValue){
             if(!duringCreation) return;
         }
@@ -156,7 +156,7 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         if(index.ids[newValue] !== undefined) {
             $$.throwError(new Error("Index for field " + fieldName + " already exists for value " + newValue));
         }
-        console.debug(">>> Updating index" + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
+        //console.debug(">>> Updating index" + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
         if(oldValue !== newValue){
             delete index.ids[oldValue];
         }
@@ -171,7 +171,7 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
          let obj = await loadWithCache(objId);
          let indexFieldName = _indexes[typeName];
          if(indexFieldName){
-             console.debug(">>> Found index " + indexFieldName + " for type " + typeName);
+             //console.debug(">>> Found index " + indexFieldName + " for type " + typeName);
              await self.updateIndexedField(objId, typeName, indexFieldName, obj[indexFieldName], duringCreation);
             }
 
