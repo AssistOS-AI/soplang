@@ -3,9 +3,31 @@
 let autoSaverModule = require('./persistence/ObjectsAutoSaver.js');
 let extensiblePersistenceModule = require('./persistence/ExtensiblePersistence.js');
 
+let {createVarsGraph} = require("./SpaceGraph/VarsGraph.js");
+let {createRegistry} = require("./SpaceGraph/CommandsRegistry.js");
 
 function WorkspaceCore(persistence){
     let self = this;
+
+    let commandsRegistry = createRegistry();
+    let graph = createVarsGraph(commandsRegistry, persistence);
+
+    this.buildAll = async function () {
+        graph.topologicalSort();
+        return await graph.buildAll();
+    }
+
+    this.getValue = async function (documentId, variableName) {
+        return graph.getValue(documentId, variableName);
+    }
+
+    this.registerCommand = function (commandName, commandFunction) {
+        commandsRegistry.addCommand(commandName, commandFunction);
+    }
+
+    this.runScript = async function (script) {
+        return await graph.runScript(script);
+    }
 
     this.createWorkspace = async function (workspaceName, ownerId) {
         return await persistence.createWorkspace( {
@@ -53,6 +75,7 @@ function WorkspaceCore(persistence){
     this.createDocument = async function (documentName, documentCategory) {
         return await persistence.createDocument({
             title: documentName,
+            docId: documentName,
             category: documentCategory,
             chapters: []
             });
@@ -62,6 +85,7 @@ function WorkspaceCore(persistence){
         let res = {};
         let doc = await persistence.getDocument(documentId);
         res.id = doc.id;
+        res.dodId = doc.docId;
         res.title = doc.title;
         res.category = doc.category;
         res.infoText = doc.infoText;
@@ -103,12 +127,16 @@ function WorkspaceCore(persistence){
             throw new Error("Document already has content");
         }
         await persistence.updateDocument(documentId, {title: template.title, category: template.category, infoText: template.infoText, commands: template.commands, comments: template.comments});
-        for(let chapter of template.chapters){
-            //console.debug(">>>> Creating chapter", chapter);
-            let newChapter = await self.createChapter(documentId,  chapter.title, chapter.commands, chapter.comments);
-            for(let paragraph of chapter.paragraphs){
-                //console.debug(">>>> Creating paragraph", paragraph);
-                await self.createParagraph(newChapter.id, paragraph.text,paragraph.commands,paragraph.comments);
+        if(template.chapters){
+            for(let chapter of template.chapters){
+                //console.debug(">>>> Creating chapter", chapter);
+                let newChapter = await self.createChapter(documentId,  chapter.title, chapter.commands, chapter.comments);
+                if(chapter.paragraphs){
+                    for(let paragraph of chapter.paragraphs){
+                        //console.debug(">>>> Creating paragraph", paragraph);
+                        await self.createParagraph(newChapter.id, paragraph.text,paragraph.commands,paragraph.comments);
+                    }
+                }
             }
         }
         doc = await persistence.getDocument(documentId);
@@ -240,15 +268,15 @@ function WorkspaceCore(persistence){
     }
 
     this.getAllUsers = async function () {
-        return await persistence.getAllUser();
+        return await persistence.getEveryUser();
     }
 
     this.getAllDocuments = async function () {
-        return await persistence.getAllDocument();
+        return await persistence.getEveryDocument();
     }
 
     this.getAllPersonalities = async function () {
-        return await persistence.getAllPersonality();
+        return await persistence.getEveryPersonality();
     }
 
     this.forceSave = async function () {
@@ -331,6 +359,7 @@ module.exports = {
         await persistence.createIndex("user", "email");
         await persistence.createIndex("personality", "name");
         await persistence.createIndex("variable", "name");
+        await persistence.createIndex("document", "docId");
 
         await persistence.createCollection("documents", "document", "category");
         await persistence.createCollection("snapshots", "snapshot", "document");

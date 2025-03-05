@@ -234,9 +234,29 @@ function LocalSafeTimestamp(){
 }
 
 
+function parseTextVars (text){
+    // in the text section we can have embedded variables with names prefixed with % and ends with %.
+    // Example 'some ignored text  %commandName some value% more ignored text %anotherCommand some string as value %'
+    // The function returns an array with the variables found in the text and their values.
+    let result = [];
+    let embeddedVars = text.match(/%[^%]+%/g);
+    embeddedVars.forEach(fulltext => {
+        //take the first position of a space and this is the variable name
+        let firstSpacePos = fulltext.indexOf(" ");
+        if(firstSpacePos === -1){
+            console.warn("Invalid embedded variable:", fulltext);
+            return ;
+        }
+        let variable = fulltext.substring(1, firstSpacePos);
+        let value = fulltext.substring(embeddedVars+1, fulltext.length-1);
+        result.push({variable, value});
+    });
+    return result;
+}
 
 module.exports = {
     parseCommandLine,
     compareObjects,
-    LocalSafeTimestamp
+    LocalSafeTimestamp,
+    parseTextVars
 }

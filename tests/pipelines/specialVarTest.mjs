@@ -1,4 +1,4 @@
-import {parseCommandLine,compareObjects} from "../../src/SpaceGraph/soplangUtil.js";
+import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
 import {createVarsGraph} from "../../src/SpaceGraph/VarsGraph.js";
 import {createRegistry} from "../../src/SpaceGraph/CommandsRegistry.js";
 
@@ -8,7 +8,7 @@ let graph = createVarsGraph(createRegistry());
 
 let specialVarValue = "Special Hello";
 
-graph.addVariable("v1", "doc1","ch1", "p1",
+graph.defineVariable("v1", "doc1","ch1", "p1",
     {
         command: "special",
         outputVars: ["v1"],
@@ -22,7 +22,7 @@ graph.addVariable("v1", "doc1","ch1", "p1",
         }
     });
 
-graph.addVariable("v2", "doc1","ch2", "p2",
+graph.defineVariable("v2", "doc1","ch2", "p2",
     parseCommandLine("@v2: cat $v1 World !")
 );
 

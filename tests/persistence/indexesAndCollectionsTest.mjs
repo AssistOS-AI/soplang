@@ -1,21 +1,7 @@
+import {} from "../deps/clean.mjs"
 
-console.log("Start initialisation...");
-import { promises as fs } from "fs";
-import assert from "assert";
-
-export async function deleteFolder(folderPath) {
-    try {
-        await fs.rm(folderPath, { recursive: true, force: true });
-        console.log(`Folder deleted: ${folderPath}`);
-    } catch (error) {
-        console.error(`Error deleting folder: ${error.message}`);
-    }
-}
-await deleteFolder("./work_space_data/");
-await fs.mkdir("./work_space_data/");
-
-import {getCore} from "../../src/WorkspaceCore.js";
-let workSpaceCore = await getCore();
+import WorkspaceCoreModule from "../../src/WorkspaceCore.js";
+let workSpaceCore = await WorkspaceCoreModule.getCore();
 
 let ownerId = await workSpaceCore.createUser("user1@email.com", "User 1 1", "owner").id;
 await workSpaceCore.createWorkspace("Test Workspace", ownerId);
@@ -39,7 +25,7 @@ console.assert(allDocumentInCategory1.length === 2, "Expected 2 documents in cat
 try{
     await workSpaceCore.createUser("user2@email.com", "User 3", "guest");
 } catch(error){
-    console.debug("Expected error:", error.message);
+    console.debug("Expected exception:", error.message);
 }
 
 await workSpaceCore.shutDown();

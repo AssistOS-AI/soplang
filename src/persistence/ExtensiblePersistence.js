@@ -41,7 +41,7 @@ function ExtensiblePersistence(smartStorage, config) {
 
     function addFunctionToSelf(methodCategory, selfTypeName, name, func) {
         let funcName = methodCategory + upCaseFirstLetter(selfTypeName) + (name !== "" ? upCaseFirstLetter(name) : "");
-        console.debug("Adding function " + funcName + " to object of type: " + selfTypeName);
+        console.debug("Adding function " + funcName);
         if (self[funcName] !== undefined) {
             throw new Error("Function " + funcName + " already exists! Refusing to overwrite, change your configurations!");
         }
@@ -50,7 +50,7 @@ function ExtensiblePersistence(smartStorage, config) {
 
     function addIndexFunctionToSelf( selfTypeName, fieldName, func) {
         let funcName = "get" + upCaseFirstLetter(selfTypeName) + "By"+upCaseFirstLetter(fieldName);
-        console.debug("Adding function " + funcName + " to object of type: " + selfTypeName);
+        console.debug("Adding function " + funcName);
         if (self[funcName] !== undefined) {
             throw new Error("Function " + funcName + " already exists! Refusing to overwrite, change your configurations!");
         }
@@ -169,7 +169,7 @@ function ExtensiblePersistence(smartStorage, config) {
             return await smartStorage.getObjectByField(typeName, fieldName, value);
         });
 
-        addFunctionToSelf("getAll", typeName, "", async function () {
+        addFunctionToSelf("getEvery", typeName, "", async function () {
             return await smartStorage.getAllObjects(typeName);
         });
         return await smartStorage.createIndex(typeName, fieldName);
@@ -180,7 +180,6 @@ function ExtensiblePersistence(smartStorage, config) {
             return await smartStorage.getCollectionByField(collectionName, value);
         });
         return await smartStorage.createCollection(collectionName, typeName, fieldName);
-
     }
 }
 

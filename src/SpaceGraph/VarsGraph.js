@@ -1,4 +1,4 @@
-let LocalSafeTimestamp = require("./soplangUtil").LocalSafeTimestamp;
+let {parseCommandLine,compareObjects, LocalSafeTimestamp, parsetextVars} = require("./SpaceGraph/soplangUtil.js");
 
 function getVarID(docID, varName){
     return docID + "|" + varName;
@@ -55,7 +55,6 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
         }
         if(_parsedCommand.command === "table"){
             if(newValue.tableHeader !== undefined){
-                //$$.throwError("Table variable has already has a header. It is forbidden to set a new value for it");
                 newValue = newValue.tableData;
             }
         }
@@ -95,7 +94,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
     }
 }
 
-function VarsGraph(commandsRegistry) {
+function VarsGraph(commandsRegistry, varPersistence) {
       let variables = {};
       let variablesIndex = {};
       let graph = {};
@@ -105,9 +104,54 @@ function VarsGraph(commandsRegistry) {
           $$.throwError("Commands Registry is mandatory");
       }
 
-    this.getVariable = function(docID, varName){
+      function makeNameForSpecialVars(chapterId, paragraphId, varName){
+          switch(varName){
+                case "docID":
+                case "text":
+                case "title":
+                    return [chapterId, paragraphId,varName].join("_");
+          }
+          return varName;
+      }
+
+      this.updateCommandSection = function(docID, chapterId, paragraphId, commandTextSeparatedByNewLine){
+          let lines = commandTextSeparatedByNewLine.split("\n");
+            for(let i = 0; i < lines.length; i++){
+                let line = lines[i];
+                let parsedCommand = parseCommandLine(line);
+                 self.defineVariable(makeNameForSpecialVars(parsedCommand.command), docID, chapterId, paragraphId, parsedCommand);
+            }
+      }
+
+      this.updateTextSection = function(docID, chapterId, paragraphId, text){
+
+            let specialTextVarName = makeNameForSpecialVars(chapterId, paragraphId, "text");
+            self.defineVariable(specialTextVarName, docID, chapterId, paragraphId,
+                    {command: "assign", inputVars: [text], outputVars: [specialTextVarName]}, text);
+
+            let embeddedVars = parsetextVars(text);
+            if(embeddedVars){
+                for(let i = 0; i < embeddedVars.length; i++){
+                    let varName = embeddedVars[i].variable;
+                    let varValue = embeddedVars[i].value;
+                    self.defineVariable(varName, docID, chapterId, paragraphId,
+                        {command: "assign", inputVars: [varValue], outputVars: [varName] , varTypes:["text"]}, varValue);
+                }
+            }
+      }
+
+
+    this.getValue = async function(docID, varName){
+          if(!variables[docID]){
+                console.warn("Document", docID , " not found when trying to get a value for variable", varName);
+                return undefined;
+          }
         let varContext = variables[docID][varName];
-        return varContext.getVarValue();
+        if(!varContext){
+            console.warn("Variable not found", varName, "in document", docID)
+            return undefined;
+        }
+        return await varContext.getVarValue();
     }
 
     this.setNewValue = function(docID, varName, value){
@@ -123,7 +167,9 @@ function VarsGraph(commandsRegistry) {
         varContext.setNewValue(value);
     }
 
-    this.addVariable = function(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp){
+
+
+    this.defineVariable = function(varName, docID, chapterId, paragraphId, parsedCommand, value, safeTimestamp){
         if(!paragraphId){
             paragraphId = "";
         }
@@ -372,7 +418,7 @@ function VarsGraph(commandsRegistry) {
 
 module.exports = {
     VarContext,
-    createVarsGraph: function (commandsRegistry) {
-            return new VarsGraph(commandsRegistry);
+    createVarsGraph: function (commandsRegistry, varPersistence) {
+            return new VarsGraph(commandsRegistry,varPersistence);
     }
 }

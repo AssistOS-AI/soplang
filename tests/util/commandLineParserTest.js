@@ -1,4 +1,4 @@
-let util =require("../../src/SpaceGraph/soplangUtil.js")
+let util =require("../../src/util/soplangUtil.js")
 let parseCommandLine = util.parseCommandLine;
 let compareObjects = util.compareObjects;
 let assert = require("assert");

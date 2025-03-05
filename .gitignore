@@ -1,2 +1,4 @@
 /tests/persistence/logs/
 /tests/persistence/work_space_data/
+/tests/workspace/logs/
+/tests/workspace/work_space_data/

@@ -1,4 +1,4 @@
-import {parseCommandLine,compareObjects} from "../../src/SpaceGraph/soplangUtil.js";
+import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
 import {createVarsGraph} from "../../src/SpaceGraph/VarsGraph.js";
 import {createRegistry} from "../../src/SpaceGraph/CommandsRegistry.js";
 
@@ -20,7 +20,7 @@ let script = `
     @storeResult if [equal? $yesno 'yes'] then [append $result in $arg3 $arg6];    
 `;
 
-graph.addVariable("v1", "doc1","ch1", "p1",parseCommandLine("set @v1 Hello"));
+graph.defineVariable("v1", "doc1","ch1", "p1",parseCommandLine("set @v1 Hello"));
 
 graph.topologicalSort();
 graph.printGraph();
