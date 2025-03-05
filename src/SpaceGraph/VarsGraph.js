@@ -1,4 +1,4 @@
-let {parseCommandLine,compareObjects, LocalSafeTimestamp, parsetextVars} = require("./SpaceGraph/soplangUtil.js");
+let {parseCommandLine,compareObjects, LocalSafeTimestamp, parseTextVars} = require("../util/soplangUtil.js");
 
 function getVarID(docID, varName){
     return docID + "|" + varName;
@@ -99,6 +99,12 @@ function VarsGraph(commandsRegistry, varPersistence) {
       let variablesIndex = {};
       let graph = {};
       let self = this;
+
+
+    function lookUpVariable(varName){
+        varPersistence.loadVariable(varName);
+        return variablesIndex[varName];
+    }
 
       if(!commandsRegistry){
           $$.throwError("Commands Registry is mandatory");
@@ -326,9 +332,7 @@ function VarsGraph(commandsRegistry, varPersistence) {
         }
         console.log("----------- END GRAPH PRINT ---------------------");
     }
-    function lookUpVariable(varName){
-        return variablesIndex[varName];
-    }
+
     async function computeValue(varName){
 
          function  isOlder(ts1, ts2) {

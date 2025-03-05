@@ -72,20 +72,28 @@ function WorkspaceCore(persistence){
         return await persistence.getPersonality(personalityId);
     }
 
-    this.createDocument = async function (documentName, documentCategory) {
+    this.createDocument = async function (docId, documentCategory) {
         return await persistence.createDocument({
-            title: documentName,
-            docId: documentName,
+            title: docId,
+            docId: docId,
             category: documentCategory,
             chapters: []
             });
+    }
+
+    this.updateDocId = async function (documentId, docId) {
+        return await persistence.setDocIdForDocument(documentId, docId);
+    }
+
+    this.getDocument = async function (docId) {
+        return await persistence.getDocument(docId);
     }
 
     this.dumpDocument = async function (documentId) {
         let res = {};
         let doc = await persistence.getDocument(documentId);
         res.id = doc.id;
-        res.dodId = doc.docId;
+        res.docId = doc.docId;
         res.title = doc.title;
         res.category = doc.category;
         res.infoText = doc.infoText;
@@ -278,6 +286,11 @@ function WorkspaceCore(persistence){
     this.getAllPersonalities = async function () {
         return await persistence.getEveryPersonality();
     }
+
+    this.getAllVariables = async function () {
+        return await persistence.getEveryVariable();
+    }
+
 
     this.forceSave = async function () {
         return await persistence.forceSave();

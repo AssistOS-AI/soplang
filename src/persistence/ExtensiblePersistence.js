@@ -62,6 +62,23 @@ function ExtensiblePersistence(smartStorage, config) {
         return convertToBase36Id(itemType, currentNumber);
     }
 
+    async function getObjectFromIdOrKey(itemType, objectID) {
+        //first try to treat the objectID as index value
+        let res = await smartStorage.getObjectByField(itemType, undefined, objectID);
+        if(!res){
+            try {
+                if(await smartStorage.objectExists(objectID)){
+                    return await smartStorage.loadObject(objectID);
+                }
+                return undefined;
+            } catch (e) {
+                console.warn("Unknown errors loading object with id " + objectID, e);
+                return undefined;
+            }
+        }
+        return res;
+    }
+
     function getCreationFunction(itemType) {
         return async function (initialValues) {
             if(await smartStorage.hasCreationConflicts(itemType, initialValues)){
@@ -75,7 +92,7 @@ function ExtensiblePersistence(smartStorage, config) {
             //console.debug(">>>> Created object of type " + itemType + " with id " + id, JSON.stringify(obj));
             obj = await smartStorage.createObject(id, obj);
             auditLog(AUDIT_EVENTS.CREATE_OBJECT, undefined, itemType, id);
-            await smartStorage.updateIndexesAndCollections(itemType, obj.id);
+            await smartStorage.updateIndexesAndCollections(itemType, obj.id, true);
             return obj;
         }
     }
@@ -91,8 +108,11 @@ function ExtensiblePersistence(smartStorage, config) {
             await smartStorage.updateIndexesAndCollections(itemType, objectID);
             return obj;
         });
+
+
+
         addFunctionToSelf("get", itemType, "", async function (objectID) {
-            return await smartStorage.loadObject(objectID);
+            return await getObjectFromIdOrKey(itemType, objectID);
         });
     }
 
@@ -100,59 +120,6 @@ function ExtensiblePersistence(smartStorage, config) {
         return await systemLogger.getUserLogs(userID);
     }
 
-    this.addController = async function (objectId, newController, role) {
-        let controllers = smartStorage.getProperty(objectId, "controllers");
-        if (controllers === undefined) {
-            controllers = {};
-        }
-        //only one owner is allowed
-        if (role === "owner") {
-            for (let controller in controllers) {
-                if (controllers[controller] === "owner") {
-                    throw new Error("Only one owner is allowed! Delete the current owner before adding a new one!");
-                }
-            }
-        }
-
-        controllers[newController] = role;
-        await smartStorage.setProperty(objectId, "controllers", controllers);
-    }
-
-    this.deleteController = async function (objectId, controller) {
-        let controllers = smartStorage.getProperty(objectId, "controllers");
-        if (controllers === undefined) {
-            console.debug("No controllers for object " + objectId);
-            return;
-        }
-        controllers[controller] = undefined;
-        delete controllers[controller];
-        await smartStorage.setProperty(objectId, "controllers", controllers);
-    }
-
-    this.getControllers = async function (objectId) {
-        return await smartStorage.getProperty(objectId, "controllers");
-    }
-
-    this.hasRole = async function (objectId, controller, role) {
-        let controllers = await smartStorage.getProperty(objectId, "controllers");
-        if (controllers === undefined) {
-            return false;
-        }
-        return controllers[controller] === role;
-    }
-
-    this.getOwner = async function (objectId) {
-        let controllers = await smartStorage.getProperty(objectId, "controllers");
-        if (controllers === undefined) {
-            return undefined;
-        }
-        for (let controller in controllers) {
-            if (controllers[controller] === "owner") {
-                return controller;
-            }
-        }
-        return undefined;
-    }
 
     this.shutDown = async function () {
         return await smartStorage.shutDown();
@@ -169,9 +136,21 @@ function ExtensiblePersistence(smartStorage, config) {
             return await smartStorage.getObjectByField(typeName, fieldName, value);
         });
 
+
         addFunctionToSelf("getEvery", typeName, "", async function () {
             return await smartStorage.getAllObjects(typeName);
         });
+
+        addFunctionToSelf("set",
+                        upCaseFirstLetter(fieldName),
+                  "For"+ upCaseFirstLetter(typeName),
+                    async function (objectId, value) {
+                            if(await smartStorage.hasCreationConflicts(typeName, {fieldName, value})){
+                            throw new Error("Index conflict detected! Refusing to update object of type " + typeName + " on key  " + fieldName + " and value " + value);
+                            }
+                        let obj = await getObjectFromIdOrKey(typeName, objectId);
+                        return await smartStorage.updateIndexedField(obj.id, typeName, fieldName, value);
+                    });
         return await smartStorage.createIndex(typeName, fieldName);
     }
 
