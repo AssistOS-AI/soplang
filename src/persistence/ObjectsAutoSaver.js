@@ -42,11 +42,13 @@ function SimpleFSStorageStrategy() {
     }
 
     this.objectExists = async function (id) {
+
         try{
             const filePath = getFilePath(id);
             await fs.access(filePath);
             return true;
         } catch (error) {
+            //console.debug(">>> Object with ID", id, "does not exist in file at path: " + getFilePath(id) + " " + error.message + " CWD is: " + process.cwd());
             return false;
         }
     }
@@ -114,6 +116,9 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
     }
 
     this.objectExists = async function (id) {
+        if(cache[id]){
+            return true;
+        }
         return await storageStrategy.objectExists(id);
     }
 
@@ -142,14 +147,37 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
     let _indexes = {};
     let _collections = {};
 
-    this.updateIndexedField = async function (id, typeName, fieldName, newValue, duringCreation = false) {
+    this.preventIndexUpdate = async function (typeName, values) {
+        let indexFieldName = _indexes[typeName];
+        if(typeof indexFieldName === "undefined"){
+            return;
+        }
+        delete values[indexFieldName];
+        return values;
+    }
+
+    this.updateIndexedField = async function (id, typeName, fieldName, oldValue, newValue) {
         let obj = await loadWithCache(id);
-        let oldValue = obj[fieldName];
+        let indexFieldName = _indexes[typeName];
+        if(!indexFieldName) {
+            return ; //no index exists
+        }
+        else {
+            if(!fieldName){
+                fieldName = indexFieldName;
+                oldValue = undefined;
+                newValue = obj[fieldName];
+            }
+        }
+        if(fieldName !== indexFieldName){
+            $$.throwError(new Error("Field " + fieldName + " is not indexed for type " + typeName));
+        }
+
         //console.debug(">>> Updating field " + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
         if(oldValue === newValue){
-            if(!duringCreation) return;
+             return; //nothing to do
         }
-        let indexFieldName = _indexes[typeName];
+
         let indexId = typeName + "_" + indexFieldName;
         let index = await loadWithCache(indexId);
 
@@ -158,7 +186,9 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         }
         //console.debug(">>> Updating index" + fieldName + " for type " + typeName + " from " + oldValue + " to " + newValue);
         if(oldValue !== newValue){
-            delete index.ids[oldValue];
+            if(oldValue !== undefined){
+                delete index.ids[oldValue];
+            }
         }
         index.ids[newValue] = id;
         setForSave(indexId);
@@ -166,15 +196,8 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         setForSave(id);
     }
 
-
-     this.updateIndexesAndCollections = async function (typeName, objId, duringCreation = false) {
+     this.updateCollection = async function (typeName, objId) {
          let obj = await loadWithCache(objId);
-         let indexFieldName = _indexes[typeName];
-         if(indexFieldName){
-             //console.debug(">>> Found index " + indexFieldName + " for type " + typeName);
-             await self.updateIndexedField(objId, typeName, indexFieldName, obj[indexFieldName], duringCreation);
-            }
-
          if(_collections[typeName]){
              let collectionName = _collections[typeName].collectionName;
              //console.debug(">>> Found collection" + collectionName + " grouped by field " + _collections[typeName].fieldName + " for type " + typeName);
@@ -236,7 +259,6 @@ function AutoSaverPersistence(storageStrategy, periodicInterval) {
         let index = await loadWithCache(objId);
         let indexValueAsId = index.ids[fieldValue];
         if(indexValueAsId === undefined){
-            console.debug(">>> Object of type '" + typeName + "' not found for field '"+ fieldName+"' with value '"+ fieldValue + "'");
             return undefined;
         }
         return await self.loadObject(indexValueAsId);

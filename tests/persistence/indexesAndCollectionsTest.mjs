@@ -1,34 +1,34 @@
 import {} from "../deps/clean.mjs"
 
-import WorkspaceCoreModule from "../../src/WorkspaceCore.js";
-let workSpaceCore = await WorkspaceCoreModule.getCore();
+let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
 
-let ownerId = await workSpaceCore.createUser("user1@email.com", "User 1 1", "owner").id;
-await workSpaceCore.createWorkspace("Test Workspace", ownerId);
+let ownerId = await WorkspacePlugin.createUser("user1@email.com", "User 1 1", "owner").id;
+await WorkspacePlugin.createWorkspace("Test Workspace", ownerId);
 
-await workSpaceCore.createUser("user2@email.com", "User 2", "read");
+await WorkspacePlugin.createUser("user2@email.com", "User 2", "read");
 
 
-await workSpaceCore.createPersonality("personality1", "Default Personality in workspace Test Workspace. Be short and polite");
-await workSpaceCore.createPersonality("personality2", "Default Personality in workspace Test Workspace. Be short and polite");
-await workSpaceCore.createDocument("doc1", "category1");
-await workSpaceCore.createDocument("doc2", "category1");
-await workSpaceCore.createDocument("doc3", "category2");
+await WorkspacePlugin.createPersonality("personality1", "Default Personality in workspace Test Workspace. Be short and polite");
+await WorkspacePlugin.createPersonality("personality2", "Default Personality in workspace Test Workspace. Be short and polite");
+await WorkspacePlugin.createDocument("doc1", "category1");
+await WorkspacePlugin.createDocument("doc2", "category1");
+await WorkspacePlugin.createDocument("doc3", "category2");
 
-let personalityByName = await workSpaceCore.getPersonalityByName("personality1");
+let personalityByName = await WorkspacePlugin.getPersonalityByName("personality1");
 console.assert(personalityByName.name === "personality1", "Expected personality1");
 
-let allDocumentInCategory1 = await workSpaceCore.getDocumentsByCategory("category1");
+let allDocumentInCategory1 = await WorkspacePlugin.getDocumentsByCategory("category1");
 
 console.assert(allDocumentInCategory1.length === 2, "Expected 2 documents in category1");
 
 try{
-    await workSpaceCore.createUser("user2@email.com", "User 3", "guest");
+    await WorkspacePlugin.createUser("user2@email.com", "User 3", "guest");
+    console.assert(false);
 } catch(error){
-    console.debug("Expected exception:", error.message);
+    //console.assert(true,"Expected exception:", error.message);
 }
 
-await workSpaceCore.shutDown();
+await WorkspacePlugin.shutDown();
 
 console.debug("End of indexes and collection tests");
 

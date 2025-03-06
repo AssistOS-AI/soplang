@@ -1,5 +1,7 @@
 
 console.log("Start initialisation...");
+import {} from "../../src/util/soplangUtil.js";
+
 import { promises as fs } from "fs";
 import assert from "assert";
 
@@ -13,3 +15,6 @@ export async function deleteFolder(folderPath) {
 }
 await deleteFolder("./work_space_data/");
 await fs.mkdir("./work_space_data/");
+
+await $$.registerPlugin("DefaultPersistence", "../../plugins/StandardPersistencePlugin.js");
+await $$.registerPlugin("WorkspacePlugin", "../../plugins/WorkspacePlugin.js");

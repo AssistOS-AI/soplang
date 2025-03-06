@@ -63,20 +63,11 @@ function ExtensiblePersistence(smartStorage, config) {
     }
 
     async function getObjectFromIdOrKey(itemType, objectID) {
-        //first try to treat the objectID as index value
-        let res = await smartStorage.getObjectByField(itemType, undefined, objectID);
-        if(!res){
-            try {
-                if(await smartStorage.objectExists(objectID)){
-                    return await smartStorage.loadObject(objectID);
-                }
-                return undefined;
-            } catch (e) {
-                console.warn("Unknown errors loading object with id " + objectID, e);
-                return undefined;
-            }
+        if(await smartStorage.objectExists(objectID)){
+            return await smartStorage.loadObject(objectID);
         }
-        return res;
+        // try to treat the objectID as index value
+        return  await smartStorage.getObjectByField(itemType, undefined, objectID);
     }
 
     function getCreationFunction(itemType) {
@@ -92,7 +83,8 @@ function ExtensiblePersistence(smartStorage, config) {
             //console.debug(">>>> Created object of type " + itemType + " with id " + id, JSON.stringify(obj));
             obj = await smartStorage.createObject(id, obj);
             auditLog(AUDIT_EVENTS.CREATE_OBJECT, undefined, itemType, id);
-            await smartStorage.updateIndexesAndCollections(itemType, obj.id, true);
+            await smartStorage.updateIndexedField(obj.id, itemType, undefined, undefined, undefined);
+            await smartStorage.updateCollection(itemType, obj.id);
             return obj;
         }
     }
@@ -100,12 +92,13 @@ function ExtensiblePersistence(smartStorage, config) {
     for (let itemType in config) {
         addFunctionToSelf("create", itemType, "", getCreationFunction(itemType));
         addFunctionToSelf("update", itemType, "", async function (objectID, values) {
+            values = await smartStorage.preventIndexUpdate(itemType, values);
             let obj = await smartStorage.loadObject(objectID);
             for(let key in values){
                 obj[key] = values[key];
             }
             await smartStorage.updateObject(objectID, obj);
-            await smartStorage.updateIndexesAndCollections(itemType, objectID);
+            await smartStorage.updateCollection(itemType, objectID);
             return obj;
         });
 
@@ -146,10 +139,10 @@ function ExtensiblePersistence(smartStorage, config) {
                   "For"+ upCaseFirstLetter(typeName),
                     async function (objectId, value) {
                             if(await smartStorage.hasCreationConflicts(typeName, {fieldName, value})){
-                            throw new Error("Index conflict detected! Refusing to update object of type " + typeName + " on key  " + fieldName + " and value " + value);
+                                throw new Error("Index conflict detected! Refusing to update object of type " + typeName + " on key  " + fieldName + " and value " + value);
                             }
                         let obj = await getObjectFromIdOrKey(typeName, objectId);
-                        return await smartStorage.updateIndexedField(obj.id, typeName, fieldName, value);
+                        return await smartStorage.updateIndexedField(obj.id, typeName, fieldName, obj[fieldName], value);
                     });
         return await smartStorage.createIndex(typeName, fieldName);
     }

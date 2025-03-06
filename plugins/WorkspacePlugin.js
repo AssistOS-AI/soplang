@@ -1,35 +1,36 @@
 
 
-let autoSaverModule = require('./persistence/ObjectsAutoSaver.js');
-let extensiblePersistenceModule = require('./persistence/ExtensiblePersistence.js');
+let autoSaverModule = require('../src/persistence/ObjectsAutoSaver.js');
+let extensiblePersistenceModule = require('../src/persistence/ExtensiblePersistence.js');
 
-let {createVarsGraph} = require("./SpaceGraph/VarsGraph.js");
-let {createRegistry} = require("./SpaceGraph/CommandsRegistry.js");
+let {createVarsGraph} = require("../src/SpaceGraph/VarsGraph.js");
+let {createRegistry} = require("../src/SpaceGraph/CommandsRegistry.js");
 
-function WorkspaceCore(persistence){
-    let self = this;
+async function WorkspacePlugin(){
+    let self = {};
+    let persistence = await $$.loadPlugin("DefaultPersistence");
 
     let commandsRegistry = createRegistry();
     let graph = createVarsGraph(commandsRegistry, persistence);
 
-    this.buildAll = async function () {
+    self.buildAll = async function () {
         graph.topologicalSort();
         return await graph.buildAll();
     }
 
-    this.getValue = async function (documentId, variableName) {
+    self.getValue = async function (documentId, variableName) {
         return graph.getValue(documentId, variableName);
     }
 
-    this.registerCommand = function (commandName, commandFunction) {
+    self.registerCommand = function (commandName, commandFunction) {
         commandsRegistry.addCommand(commandName, commandFunction);
     }
 
-    this.runScript = async function (script) {
+    self.runScript = async function (script) {
         return await graph.runScript(script);
     }
 
-    this.createWorkspace = async function (workspaceName, ownerId) {
+    self.createWorkspace = async function (workspaceName, ownerId) {
         return await persistence.createWorkspace( {
             id: workspaceName,
             ownerId: ownerId,
@@ -37,14 +38,14 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.createPersonality = async function (name, description) {
+    self.createPersonality = async function (name, description) {
         return await persistence.createPersonality({
             name: name,
             description: description
         });
     }
 
-    this.createUser = async function (email, displayName, role) {
+    self.createUser = async function (email, displayName, role) {
         return await persistence.createUser({
             email: email,
             displayName: displayName,
@@ -52,7 +53,7 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.updateUser = async function (userId, email, displayName, role) {
+    self.updateUser = async function (userId, email, displayName, role) {
         return await persistence.updateUser(userId,{
             email: email,
             displayName: displayName,
@@ -60,7 +61,7 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.updatePersonality = async function (personalityId, name, description, values) {
+    self.updatePersonality = async function (personalityId, name, description, values) {
         return await persistence.updatePersonality(personalityId, {
             name: name,
             description: description,
@@ -68,11 +69,11 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.getPersonalityInfo = async function (personalityId) {
+    self.getPersonalityInfo = async function (personalityId) {
         return await persistence.getPersonality(personalityId);
     }
 
-    this.createDocument = async function (docId, documentCategory) {
+    self.createDocument = async function (docId, documentCategory) {
         return await persistence.createDocument({
             title: docId,
             docId: docId,
@@ -81,15 +82,15 @@ function WorkspaceCore(persistence){
             });
     }
 
-    this.updateDocId = async function (documentId, docId) {
+    self.updateDocId = async function (documentId, docId) {
         return await persistence.setDocIdForDocument(documentId, docId);
     }
 
-    this.getDocument = async function (docId) {
+    self.getDocument = async function (docId) {
         return await persistence.getDocument(docId);
     }
 
-    this.dumpDocument = async function (documentId) {
+    self.dumpDocument = async function (documentId) {
         let res = {};
         let doc = await persistence.getDocument(documentId);
         res.id = doc.id;
@@ -129,7 +130,7 @@ function WorkspaceCore(persistence){
         return res;
     }
 
-    this.applyTemplate = async function (documentId, template) {
+    self.applyTemplate = async function (documentId, template) {
         let doc = await persistence.getDocument(documentId);
         if(doc.chapters.length > 0){
             throw new Error("Document already has content");
@@ -151,7 +152,7 @@ function WorkspaceCore(persistence){
         return doc;
     }
 
-    this.createChapter = async function (documentId, chapterTitle, commands, comments) {
+    self.createChapter = async function (documentId, chapterTitle, commands, comments) {
         //console.debug(">>>> Creating chapter", chapterTitle, "for document", documentId);
         let document = await persistence.getDocument(documentId);
         let chapter =  await persistence.createChapter({
@@ -166,7 +167,7 @@ function WorkspaceCore(persistence){
         return await persistence.getChapter(chapter.id);
     }
 
-    this.createParagraph = async function (chapterId, paragraphText, commands, comments) {
+    self.createParagraph = async function (chapterId, paragraphText, commands, comments) {
         //console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId);
         let chapter = await persistence.getChapter(chapterId);
         let par = await persistence.createParagraph({
@@ -180,7 +181,7 @@ function WorkspaceCore(persistence){
         return await persistence.getParagraph(par.id);
     }
 
-    this.changeParagraphOrder = async function (chapterId, paragraphId, newPosition) {
+    self.changeParagraphOrder = async function (chapterId, paragraphId, newPosition) {
         let chapter = await persistence.getChapter(chapterId);
         let paragraphs = chapter.paragraphs;
         let index = paragraphs.indexOf(paragraphId);
@@ -192,7 +193,7 @@ function WorkspaceCore(persistence){
         return await persistence.updateChapter(chapterId, {paragraphs});
     }
 
-    this.changeChapterOrder = async function (documentId, chapterId, newPosition) {
+    self.changeChapterOrder = async function (documentId, chapterId, newPosition) {
         let doc = await persistence.getDocument(documentId);
         let chapters = doc.chapters;
         let index = chapters.indexOf(chapterId);
@@ -204,7 +205,7 @@ function WorkspaceCore(persistence){
         return await persistence.updateDocument(documentId, {chapters});
     }
 
-    this.updateDocumentInfo = async function (documentId, title, category, infoText, commands) {
+    self.updateDocumentInfo = async function (documentId, title, category, infoText, commands) {
         if(!title || !category || !infoText || !commands){
             throw new Error("All fields are required to be defined");
         }
@@ -216,7 +217,7 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.getChapterAt = async function (documentId, position) {
+    self.getChapterAt = async function (documentId, position) {
         let doc = await persistence.getDocument(documentId);
         let chapterId = doc.chapters[position];
         //console.debug(">>>> Getting chapter at position", position, "chapterId", chapterId, "from doc", doc);
@@ -226,16 +227,15 @@ function WorkspaceCore(persistence){
         return await persistence.getChapter(chapterId);
     }
 
-    this.getParagraphAt = async function (documentId, chapterPosition, paragraphPosition) {
+    self.getParagraphAt = async function (documentId, chapterPosition, paragraphPosition) {
         let doc = await persistence.getDocument(documentId);
-        console.debug(">>>> Getting paragraph at position", paragraphPosition, "from chapter at position", chapterPosition, "from doc", doc);
         let chapterId = doc.chapters[chapterPosition];
         let chapter = await persistence.getChapter(chapterId);
         let paragraphId = chapter.paragraphs[paragraphPosition];
         return await persistence.getParagraph(paragraphId);
     }
 
-    this.updateChapter = async function (chapterId, title, comments, commands) {
+    self.updateChapter = async function (chapterId, title, comments, commands) {
         return await persistence.updateChapter(chapterId,{
             title,
             comments,
@@ -243,7 +243,7 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.updateParagraph = async function (chapterId, paragraphId, text, commands, comments) {
+    self.updateParagraph = async function (chapterId, paragraphId, text, commands, comments) {
         return await persistence.updateParagraph(paragraphId,{
             text,
             commands,
@@ -251,132 +251,69 @@ function WorkspaceCore(persistence){
         });
     }
 
-    this.snapshot = async function (documentId) {
+    self.snapshot = async function (documentId) {
         return await persistence.snapshot(documentId);
     }
 
-    this.restore = async function (documentId, snapshotId) {
+    self.restore = async function (documentId, snapshotId) {
         return await persistence.restore(documentId, snapshotId);
     }
 
-    this.getPersonalityByName = async function (name) {
+    self.getPersonalityByName = async function (name) {
         return await persistence.getPersonalityByName(name);
     }
 
-    this.getDocumentsByCategory = async function (category) {
+    self.getDocumentsByCategory = async function (category) {
         return await persistence.getDocumentsByCategory(category);
     }
 
-    this.getUserByEmail = async function (email) {
+    self.getUserByEmail = async function (email) {
         return await persistence.getUserByEmail(email);
     }
 
-    this.getDocumentSnapshots = async function (documentId) {
+    self.getDocumentSnapshots = async function (documentId) {
         return await persistence.getSnapshotByDocument(documentId);
     }
 
-    this.getAllUsers = async function () {
+    self.getAllUsers = async function () {
         return await persistence.getEveryUser();
     }
 
-    this.getAllDocuments = async function () {
+    self.getAllDocuments = async function () {
         return await persistence.getEveryDocument();
     }
 
-    this.getAllPersonalities = async function () {
+    self.getAllPersonalities = async function () {
         return await persistence.getEveryPersonality();
     }
 
-    this.getAllVariables = async function () {
+    self.getAllVariables = async function () {
         return await persistence.getEveryVariable();
     }
 
 
-    this.forceSave = async function () {
+    self.forceSave = async function () {
         return await persistence.forceSave();
     }
 
-    this.shutDown = async function () {
+    self.shutDown = async function () {
         return await persistence.shutDown();
     }
-
+    return self;
 }
 
+let singletonInstance = undefined;
+
 module.exports = {
-    getCore: async function () {
-        let autoSaver = await autoSaverModule.getAutoSaverPersistence();
-        let persistence = await extensiblePersistenceModule.getPersistentStorage(autoSaver, {
-            workspace: {
-                id: "singleton workspace",
-                documents: "array document",
-                clock : "integer",
-                permissions: "any"
-            },
-            personality: {
-                id: "random",
-                name: "string",
-                description: "string"
-            },
-            user: {
-                id: "random",
-                email: "string",
-                displayName: "string",
-                role: "string"
-            },
-            paragraph: {
-                id: "random",
-                text: "string",
-                commands: "string",
-                comments: "string",
-                lastChangeClock: "integer"
-            },
-            chapter: {
-                id: "random",
-                title: "string",
-                text: "string",
-                commands: "string",
-                comments: "string",
-                paragraphs: "array paragraph",
-                lastChangeClock: "integer"
-            },
-            document: {
-                id: "random",
-                title: "string",
-                category: "string",
-                infoText: "string",
-                commands: "string",
-                comments: "string",
-                chapters: "array chapter",
-                lastChangeClock: "integer"
-            },
-            snapshot: {
-                id: "random",
-                document: "string",
-                data: "any",
-            },
-            variable: {
-                id: "custom",
-                name: "string",
-                value: "any",
-                expression: "string",
-                documentId: "string",
-                chapterId: "string",
-                paragraphId: "string",
-                clock: "integer",
-                timestamp: "timestamp",
-                valueFUnction: "string",
-                clockFUnction: "string"
+    getInstance: async function () {
+        if(!singletonInstance){
+            singletonInstance = await WorkspacePlugin();
+        }
+        return singletonInstance;
+    },
+    getAllow: function(){
+            return async function(userId, command, ...args){
+                return true;
             }
-        });
-
-        await persistence.createIndex("user", "email");
-        await persistence.createIndex("personality", "name");
-        await persistence.createIndex("variable", "name");
-        await persistence.createIndex("document", "docId");
-
-        await persistence.createCollection("documents", "document", "category");
-        await persistence.createCollection("snapshots", "snapshot", "document");
-
-        return new WorkspaceCore(persistence);
     }
 }

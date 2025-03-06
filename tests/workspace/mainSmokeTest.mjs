@@ -2,7 +2,7 @@
 
 import {} from "../deps/clean.mjs";
 
-import {getCore} from "../../src/WorkspaceCore.js";
+import {getCore} from "../../plugins/WorkspacePlugin.js";
 let workSpaceCore = await getCore();
 
 let ownerId = await workSpaceCore.createUser("user1@email.com", "User 1 1", "owner").id;

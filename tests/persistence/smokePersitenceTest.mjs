@@ -14,7 +14,7 @@ export async function deleteFolder(folderPath) {
 await deleteFolder("./work_space_data/");
 await fs.mkdir("./work_space_data/");
 
-import {getCore} from "../../src/WorkspaceCore.js";
+import {getCore} from "../../plugins/WorkspacePlugin.js";
 let workSpaceCore = await getCore();
 
 let ownerId = await workSpaceCore.createUser("user1@email.com", "Owner 1", "owner").id;
@@ -57,13 +57,13 @@ await workSpaceCore.applyTemplate(doc1.id, {
 await workSpaceCore.forceSave();
 
 let chapter = await workSpaceCore.getChapterAt(doc1.id, 1);
-console.debug(chapter);
+
 assert(chapter.title === "Chapter 2", "Chapter title is not correct");
 
 await workSpaceCore.changeChapterOrder(doc1.id, chapter.id, "paragraph1", 0);
 
 let paragraph = await workSpaceCore.getParagraphAt(doc1.id, 1, 0);
-
+console.debug(chapter , paragraph);
 assert(paragraph.text === "hello", "Paragraph text is not correct");
 
 await workSpaceCore.shutDown();
