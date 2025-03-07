@@ -1,7 +1,5 @@
 
 
-let autoSaverModule = require('../src/persistence/ObjectsAutoSaver.js');
-let extensiblePersistenceModule = require('../src/persistence/ExtensiblePersistence.js');
 
 let {createVarsGraph} = require("../src/SpaceGraph/VarsGraph.js");
 let {createRegistry} = require("../src/SpaceGraph/CommandsRegistry.js");
