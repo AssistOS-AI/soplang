@@ -1,13 +1,9 @@
 
-
-let extensiblePersistenceModule = require('../ExtensiblePersistence/ExtensiblePersistence.js');
+const extensiblePersistenceModule = require('../ExtensiblePersistence');
 let systemLogger = require("../src/logging/WorkSpaceLogger.js").getSystemLogger();
-let autoSaverModule = require('../ExtensiblePersistence/ObjectsAutoSaver.js');
 
-//let autoSaverModule = require('../src/persistence/ObjectsAutoSaver.js');
-//let extensiblePersistenceModule = require('../src/persistence/ExtensiblePersistence.js');
 async function createStandardPersistencePlugin(){
-    let autoSaver = await autoSaverModule.getAutoSaverPersistence();
+    const autoSaver = await extensiblePersistenceModule.getAutoSaverPersistence();
     let persistence = await extensiblePersistenceModule.getPersistentStorage(autoSaver, systemLogger, {
         workspace: {
             id: "singleton workspace",
