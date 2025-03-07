@@ -90,7 +90,7 @@ module.exports = {
         return singleton;
     },
     getAllow: function(){
-        return async function(userId, command, ...args){
+        return async function(globalUserId, email, command, ...args){
             return true;
         }
     }
