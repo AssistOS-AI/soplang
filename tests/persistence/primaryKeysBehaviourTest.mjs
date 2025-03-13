@@ -16,7 +16,7 @@ let docId_id = doc.id;
 let docId_docId = doc.docId;
 
 
-await WorkspacePlugin.updateDocId(docId_docId, "_doc1");
+await WorkspacePlugin.updatedocId(docId_docId, "_doc1");
 
 doc = await WorkspacePlugin.getDocument(docId_id);
 console.assert(doc.id === docId_id, "I was not able to get document by the artificial id");

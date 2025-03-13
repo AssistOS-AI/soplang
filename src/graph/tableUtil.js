@@ -1,14 +1,14 @@
 function Table(headerArray, data){
 
     if(data.tableHeader ){
-        await $$.throwError("Data should not contain the table header");
+        $$.throwErrorSync("Data should not contain the table header");
     }
     let clonedData = structuredClone(data);
 
     /******************************** private functions */
     function assertIsTable(){
         if(!headerArray || headerArray.length === 0){
-            await $$.throwError("Not a good table definition: empty definition");
+            $$.throwErrorSync("Not a good table definition: empty definition");
         }
     }
 
@@ -19,7 +19,7 @@ function Table(headerArray, data){
     function getColName(colNumber){
         colNumber = parseInt(colNumber)
         if(isNaN(colNumber) || colNumber < 0 || colNumber >= headerArray.length){
-            await $$.throwError("Invalid column number: " + colNumber);
+            $$.throwErrorSync("Invalid column number: " + colNumber);
         }
         return headerArray[colNumber];
     }
@@ -49,10 +49,10 @@ function Table(headerArray, data){
 
         function registerColumn(colName){
             if(columns.includes(colName)){
-                await $$.throwError("Column " + colName + " already registered");
+                $$.throwErrorSync("Column " + colName + " already registered");
             }
             if(colName === undefined || colName === "" || colName === null) {
-                await $$.throwError("Invalid column name: " + colName);
+                $$.throwErrorSync("Invalid column name: " + colName);
             }
             columns.push(colName);
         }
@@ -67,12 +67,12 @@ function Table(headerArray, data){
                 }
 
                 if(isNaN(firstLine) || firstLine > lastLine){
-                    await $$.throwError("Invalid line range: " + lines_range + "Max range is between 0 and " + clonedData.length );
+                     $$.throwErrorSync("Invalid line range: " + lines_range + "Max range is between 0 and " + clonedData.length );
                 }
             } else{
                 let value = parseInt(lines_range);
                 if(isNaN(value)){
-                    await $$.throwError("Invalid line range: " + lines_range);
+                    $$.throwErrorSync("Invalid line range: " + lines_range);
                 }
                 firstLine = value;
                 lastLine = value;
@@ -95,7 +95,7 @@ function Table(headerArray, data){
                 let lastColumn = parseInt(range[1]);
 
                 if(isNaN(firstColumn) || isNaN(lastColumn) || firstColumn > lastColumn || firstColumn < 0 || lastColumn >= headerArray.length){
-                    await $$.throwError("Invalid column range: " + columns_range);
+                    $$.throwErrorSync("Invalid column range: " + columns_range);
                 }
                 for(let col = firstColumn; col <= lastColumn; col++){
                     registerColumn(getColName(col));
@@ -113,12 +113,12 @@ function Table(headerArray, data){
             if(typeof columns_range === "number"){
                 registerColumn(headerArray[columns_range]);
             } else {
-                await $$.throwError("Invalid column range: " + columns_range);
+                $$.throwErrorSync("Invalid column range: " + columns_range);
             }
         }
 
         if(columns.length === 0 || columns[0] === undefined){
-            await $$.throwError("Invalid column range: " + columns_range + columns.join("|"));
+            $$.throwErrorSync("Invalid column range: " + columns_range + columns.join("|"));
         }
 
         if(lastLine >= clonedData.length){
@@ -127,7 +127,7 @@ function Table(headerArray, data){
 
         for(let line = firstLine; line <= lastLine; line++){
             if(clonedData[line] === undefined){
-                await $$.throwError("Invalid line number: " + line);
+                $$.throwErrorSync("Invalid line number: " + line);
             }
             for(let col of columns){
                 res.push(clonedData[line][col]);
@@ -225,7 +225,7 @@ function Table(headerArray, data){
 
     /* takes all values and apply JSMapCode, return values for a new table*/
     this.map = function(JSMapCode, lines_range, columns_range ){
-        await $$.throwError("Not implemented");
+        $$.throwErrorSync("Not implemented");
     }
 
     this.setAt = function(lineNo, columnDesc, value){
@@ -255,7 +255,7 @@ function Table(headerArray, data){
 
 function createTable(inputValues){
     if(!inputValues[0]){
-        await $$.throwError("Not a proper table or array");
+        $$.throwErrorSync("Not a proper table or array");
     }
     let value = inputValues[0].tableData;
     let header = inputValues[0].tableHeader;

@@ -1,4 +1,4 @@
-let loader = require('../../src/SpaceGraph/executionEngine');
+let loader = require('../../src/graph/executionEngine');
 
 let initialState ={
 

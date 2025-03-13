@@ -1,8 +1,8 @@
 
 
 
-let {createVarsGraph} = require("../src/SpaceGraph/VarsGraph.js");
-let {createRegistry} = require("../src/SpaceGraph/CommandsRegistry.js");
+let {createVarsGraph} = require("../src/graph/VarsGraph.js");
+let {createRegistry} = require("../src/graph/CommandsRegistry.js");
 
 async function WorkspacePlugin(){
     let self = {};
@@ -10,6 +10,10 @@ async function WorkspacePlugin(){
 
     let commandsRegistry = createRegistry();
     let graph = createVarsGraph(commandsRegistry, persistence);
+
+    self.getGraph = function(){
+        return graph;
+    }
 
     self.buildAll = async function () {
         graph.topologicalSort();
@@ -80,8 +84,8 @@ async function WorkspacePlugin(){
             });
     }
 
-    self.updateDocId = async function (documentId, docId) {
-        return await persistence.setDocIdForDocument(documentId, docId);
+    self.updatedocId = async function (documentId, docId) {
+        return await persistence.setdocIdForDocument(documentId, docId);
     }
 
     self.getDocument = async function (docId) {

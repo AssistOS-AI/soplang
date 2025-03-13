@@ -3,7 +3,6 @@ const persistoModule = require('../Persisto');
 let systemLogger = require("../src/logging/WorkSpaceLogger.js").getSystemLogger();
 
 async function createStandardPersistencePlugin(){
-
     let persistence = await persistoModule.initialisePersisto( systemLogger);
     await persistence.configureTypes({
         workspace: {
@@ -56,26 +55,46 @@ async function createStandardPersistencePlugin(){
         },
         variable: {
             id: "custom",
-            name: "string",
+            varId: "string",
+            varName: "string",
             value: "any",
-            expression: "string",
+            _parsedCommand: "string",
             documentId: "string",
             chapterId: "string",
             paragraphId: "string",
             clock: "integer",
-            timestamp: "timestamp",
             valueFUnction: "string",
             clockFUnction: "string"
+        },
+        graph:{
+            id: "singleton GRAPH",
+            alis: "string",
+            state: "any"
         }
     });
 
     await persistence.createIndex("user", "email");
+
     await persistence.createIndex("personality", "name");
-    await persistence.createIndex("variable", "name");
+    await persistence.createIndex("variable", "varId");
     await persistence.createIndex("document", "docId");
 
-    await persistence.createCollection("documents", "document", "category");
-    await persistence.createCollection("snapshots", "snapshot", "document");
+    await persistence.createGrouping("documents", "document", "category");
+    await persistence.createGrouping("snapshots", "snapshot", "document");
+
+    await persistence.createIndex("graph", "alias");
+
+    try{
+        console.debug("Checking if GRAPH exists!");
+        if(! await persistence.hasGraph("GRAPH")){
+            console.debug("Creating graph");
+            await persistence.createGraph({alias: "GRAPH", state: {}});
+        } else{
+            console.debug("GRAPH already exists!");
+        }
+    } catch (err){
+        await $$.throwError("Could not create graph", err);
+    }
 
     return persistence;
 }

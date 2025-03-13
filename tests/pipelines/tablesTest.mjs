@@ -1,14 +1,14 @@
 import {parseCommandLine} from "../../src/util/soplangUtil.js";
-import {createVarsGraph} from "../../src/SpaceGraph/VarsGraph.js";
-import {createRegistry} from "../../src/SpaceGraph/CommandsRegistry.js";
+import {createVarsGraph} from "../../src/graph/VarsGraph.js";
+import {createRegistry} from "../../src/graph/CommandsRegistry.js";
 
 import assert from "assert";
 
 let graph = createVarsGraph(createRegistry());
 
-graph.defineVariable("t1", "doc1","c1", "p1", parseCommandLine("@t1 : table c1 c2 c3 c4 c5"));
+await graph.defineVariable("t1", "doc1","c1", "p1", parseCommandLine("@t1 : table c1 c2 c3 c4 c5"));
 
-graph.setNewValue("doc1", "t1",
+await graph.setNewValue("doc1", "t1",
     [{c1:'a', c2:1, c3:10, c4:0, c5:1},
           {c1:'b', c2:100, c3:1000, c4:0, c5:1},
           {c1:'c', c2:10000, c3:100000, c4:0, c5:1},

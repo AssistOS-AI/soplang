@@ -39,7 +39,7 @@ Predefined Commands
         attach @localName type attachmentURI
 
     #link a variable in the current document with a variable in another document
-        alias localVariable otherDocId variableInOtherDocument
+        alias localVariable otherdocId variableInOtherDocument
 
     #defining a command as javascript code. Is executed as a function that takes context and args as arguments
         define @output string | attachmentURI

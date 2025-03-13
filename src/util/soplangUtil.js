@@ -1,46 +1,3 @@
-
-
-let plugins = {};
-
-if(typeof globalThis.$$ === "undefined"){
-    globalThis.$$ = {};
-}
-
-if(typeof globalThis.await $$.throwError === "undefined"){
-    async function throwError(error, ...args) {
-        if(typeof error === "string"){
-            error = new Error(error + " " + args.join(" "));
-        }
-        let errStr = args.join(" ");
-        console.debug("Throwing err:", error, errStr);
-        throw error;
-    }
-
-    if(typeof globalThis.$$ === "undefined"){
-        globalThis.$$ = {
-        }
-    }
-    await $$.throwError = throwError;
-}
-if (typeof globalThis.$$.registerPlugin === "undefined") {
-    async function registerPlugin(pluginName, path){
-        let pluginInstance = await require(path).getInstance();
-        if(typeof pluginInstance === "undefined"){
-            await $$.throwError("Invalid plugin. getInstance() method returned undefined for plugin", pluginName);
-        }
-        plugins[pluginName] = pluginInstance;
-    }
-    $$.registerPlugin = registerPlugin;
-}
-if (typeof globalThis.$$.loadPlugin === "undefined") {
-    function loadPlugin(pluginName){
-        return plugins[pluginName];
-    }
-    $$.loadPlugin = loadPlugin;
-}
-
-
-
 function getNextToken(str, position){
     function makeResult(token, position, tokenType){
        //console.debug("Token:'"+ token, "'Position:", position, "Type:", tokenType);
@@ -52,11 +9,11 @@ function getNextToken(str, position){
     }
 
     function isWhiteSpace(char){
-       return " \t:=".includes(char);
+       return " \t".includes(char);
     }
 
     function isSeparator(char){
-        return " \t:=\"'[]()".includes(char);
+        return " \t\"'[]()".includes(char);
     }
     function eatWhitespaces(){
         if(position >= str.length){
@@ -146,6 +103,9 @@ function getNextToken(str, position){
 
 
 function parseCommandLine(commandLine) {
+        // replace the first occurrence of = or :  with ' set '
+        commandLine = commandLine.replace(':=', ' concat ');
+
         console.debug("Parsing command line:", commandLine);
         let outputVars = [];
         let inputVars  = [];
@@ -159,7 +119,7 @@ function parseCommandLine(commandLine) {
             outputVars.push(token);
             let nextToken = {};
             tokenType = "whitespaces";
-            while(tokenType === "whitespaces" || token === "=" || token === ":"){
+            while(tokenType === "whitespaces" /*|| token === "=" || token === ":" */){
                 nextToken = getNextToken(commandLine, pos);
                 token = nextToken.token;
                 pos = position = nextToken.position;
@@ -168,7 +128,7 @@ function parseCommandLine(commandLine) {
         }
 
         if (tokenType !== "text") {
-            await $$.throwError("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
+             $$.throwErrorSync("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
         }
         command = token;
 
@@ -199,7 +159,7 @@ function parseCommandLine(commandLine) {
                     varTypes.push("embeddedCommand");
                     break;
                 case "unexpectedEnd":
-                    await $$.throwError("Unexpected end of line. Invalid Syntax");
+                     $$.throwErrorSync("Unexpected end of line. Invalid Syntax");
                     break;
             }
         }

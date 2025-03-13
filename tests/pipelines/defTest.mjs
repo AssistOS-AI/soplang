@@ -1,6 +1,6 @@
 import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
-import {createVarsGraph} from "../../src/SpaceGraph/VarsGraph.js";
-import {createRegistry} from "../../src/SpaceGraph/CommandsRegistry.js";
+import {createVarsGraph} from "../../src/graph/VarsGraph.js";
+import {createRegistry} from "../../src/graph/CommandsRegistry.js";
 
 let allOk = true;
 
@@ -22,7 +22,7 @@ graph.printGraph();
 
 await graph.buildAll();
 
-console.log("Graph dump:", graph.dump());
+console.log("Vars dump:", graph.varsDump());
 
 
 allOk &&= graph.getVariable("doc1","v1") === "Hello";

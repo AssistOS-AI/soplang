@@ -28,45 +28,6 @@ function expandSchemaWithTypeDetails(schema){
     return true;
 }
 
-
-if(typeof globalThis.$$ === "undefined"){
-    globalThis.$$ = {
-    }
-}
-if(typeof globalThis.await $$.throwError === "undefined"){
-    async function throwError(error, ...args) {
-        if(typeof error === "string"){
-            error = new Error(error);
-        }
-        let errStr = args.join(" ");
-        console.debug("Throwing err:", error, errStr);
-        throw error;
-    }
-    await $$.throwError = throwError;
-}
-/**
- * Converts a decimal integer to its base-36 representation,
- * using the characters 0-9 and A-Z.
- * @param prefix string - The prefix to be added to the base-36 representation.
- * @param {number} numericValue - The decimal integer to convert.
- * @returns {string} - The base-36 representation of the number.
- */
-function convertToBase36Id(prefix, numericValue) {
-    const alphanumericChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (numericValue === 0) return '0';
-
-    let base36Result = '';
-    let currentValue = numericValue;
-
-    while (currentValue > 0) {
-        const modulus = currentValue % 36;
-        base36Result = alphanumericChars[modulus] + base36Result;
-        currentValue = Math.floor(currentValue / 36);
-    }
-    prefix = prefix.toUpperCase().substring(0,4);
-    return "ID"+ prefix+base36Result;
-}
-
 function parseObjectAndConvert(typeName, JSONSerialisationAsString){
     let obj;
     if(typeof JSONSerialisationAsString === "string") {
@@ -97,7 +58,7 @@ function parseObjectAndConvert(typeName, JSONSerialisationAsString){
         }else if(type.type === "any"){
             res[fieldName] = obj[fieldName];
         }else{
-            await $$.throwError("Unknown type", type.type);
+            $$.throwErrorSync("Unknown type", type.type);
         }
     }
     return res;
@@ -126,7 +87,7 @@ module.exports = {
                       if(typeof optionalId !== "number"){
                           optionalId = parseInt(optionalId);
                           if(isNaN(optionalId)){
-                                await $$.throwError("ID must be a number or a string that can be converted to a number", optionalId);
+                                 $$.throwErrorSync("ID must be a number or a string that can be converted to a number", optionalId);
                           }
                       }
                       res.id = convertToBase36Id(typeName,optionalId);
@@ -134,7 +95,7 @@ module.exports = {
                       if(typeDesc.type === "singleton") {
                           res.id = "singleton";
                       } else {
-                          await $$.throwError("ID is required for creating an object of typeDesc", typeName);
+                          $$.throwErrorSync("ID is required for creating an object of typeDesc", typeName);
                       }
                   }
                   continue;
@@ -170,7 +131,7 @@ module.exports = {
                         };
                       break;
                 default:
-                    await $$.throwError("Unknown typeDesc", typeDesc.type);
+                    $$.throwErrorSync("Unknown typeDesc", typeDesc.type);
               }
          }
     }
