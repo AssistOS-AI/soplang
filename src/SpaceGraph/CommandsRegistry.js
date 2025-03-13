@@ -19,11 +19,11 @@ function CommandsRegistry( workSpace) {
     };
 
     commands.alias = async function () {
-        $$.throwError("Alias command should not be executed as normal commands");
+        await $$.throwError("Alias command should not be executed as normal commands");
     }
 
     commands.special = async function () {
-        $$.throwError("'special' variables should not be initialised as normal variables by running commands");
+        await $$.throwError("'special' variables should not be initialised as normal variables by running commands");
     }
 
 
@@ -31,7 +31,7 @@ function CommandsRegistry( workSpace) {
     this.runCommand =  async function (commandName, inputValues, outputValues, varGraph, varContext  ) {
         let commandFunction = commands[commandName];
         if(!commandFunction){
-            $$.throwError("Unknown command '" + commandName + "'");
+            await $$.throwError("Unknown command '" + commandName + "'");
         }
        // console.debug(">>>>>>> Running command", commandName);
         return await commandFunction(inputValues, outputValues, varContext, varGraph);

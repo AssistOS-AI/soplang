@@ -1,10 +1,11 @@
 
-const extensiblePersistenceModule = require('../ExtensiblePersistence');
+const persistoModule = require('../Persisto');
 let systemLogger = require("../src/logging/WorkSpaceLogger.js").getSystemLogger();
 
 async function createStandardPersistencePlugin(){
-    const autoSaver = await extensiblePersistenceModule.getAutoSaverPersistence();
-    let persistence = await extensiblePersistenceModule.getPersistentStorage(autoSaver, systemLogger, {
+
+    let persistence = await persistoModule.initialisePersisto( systemLogger);
+    await persistence.configureTypes({
         workspace: {
             id: "singleton workspace",
             documents: "array document",

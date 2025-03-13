@@ -33,7 +33,7 @@ if(typeof globalThis.$$ === "undefined"){
     globalThis.$$ = {
     }
 }
-if(typeof globalThis.$$.throwError === "undefined"){
+if(typeof globalThis.await $$.throwError === "undefined"){
     async function throwError(error, ...args) {
         if(typeof error === "string"){
             error = new Error(error);
@@ -42,7 +42,7 @@ if(typeof globalThis.$$.throwError === "undefined"){
         console.debug("Throwing err:", error, errStr);
         throw error;
     }
-    $$.throwError = throwError;
+    await $$.throwError = throwError;
 }
 /**
  * Converts a decimal integer to its base-36 representation,
@@ -97,7 +97,7 @@ function parseObjectAndConvert(typeName, JSONSerialisationAsString){
         }else if(type.type === "any"){
             res[fieldName] = obj[fieldName];
         }else{
-            $$.throwError("Unknown type", type.type);
+            await $$.throwError("Unknown type", type.type);
         }
     }
     return res;
@@ -126,7 +126,7 @@ module.exports = {
                       if(typeof optionalId !== "number"){
                           optionalId = parseInt(optionalId);
                           if(isNaN(optionalId)){
-                                $$.throwError("ID must be a number or a string that can be converted to a number", optionalId);
+                                await $$.throwError("ID must be a number or a string that can be converted to a number", optionalId);
                           }
                       }
                       res.id = convertToBase36Id(typeName,optionalId);
@@ -134,7 +134,7 @@ module.exports = {
                       if(typeDesc.type === "singleton") {
                           res.id = "singleton";
                       } else {
-                          $$.throwError("ID is required for creating an object of typeDesc", typeName);
+                          await $$.throwError("ID is required for creating an object of typeDesc", typeName);
                       }
                   }
                   continue;
@@ -170,7 +170,7 @@ module.exports = {
                         };
                       break;
                 default:
-                    $$.throwError("Unknown typeDesc", typeDesc.type);
+                    await $$.throwError("Unknown typeDesc", typeDesc.type);
               }
          }
     }

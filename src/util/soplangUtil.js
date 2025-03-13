@@ -6,7 +6,7 @@ if(typeof globalThis.$$ === "undefined"){
     globalThis.$$ = {};
 }
 
-if(typeof globalThis.$$.throwError === "undefined"){
+if(typeof globalThis.await $$.throwError === "undefined"){
     async function throwError(error, ...args) {
         if(typeof error === "string"){
             error = new Error(error + " " + args.join(" "));
@@ -20,13 +20,13 @@ if(typeof globalThis.$$.throwError === "undefined"){
         globalThis.$$ = {
         }
     }
-    $$.throwError = throwError;
+    await $$.throwError = throwError;
 }
 if (typeof globalThis.$$.registerPlugin === "undefined") {
     async function registerPlugin(pluginName, path){
         let pluginInstance = await require(path).getInstance();
         if(typeof pluginInstance === "undefined"){
-            $$.throwError("Invalid plugin. getInstance() method returned undefined for plugin", pluginName);
+            await $$.throwError("Invalid plugin. getInstance() method returned undefined for plugin", pluginName);
         }
         plugins[pluginName] = pluginInstance;
     }
@@ -168,7 +168,7 @@ function parseCommandLine(commandLine) {
         }
 
         if (tokenType !== "text") {
-            $$.throwError("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
+            await $$.throwError("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
         }
         command = token;
 
@@ -199,7 +199,7 @@ function parseCommandLine(commandLine) {
                     varTypes.push("embeddedCommand");
                     break;
                 case "unexpectedEnd":
-                    $$.throwError("Unexpected end of line. Invalid Syntax");
+                    await $$.throwError("Unexpected end of line. Invalid Syntax");
                     break;
             }
         }

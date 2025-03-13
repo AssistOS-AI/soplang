@@ -13,11 +13,11 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
     this.safeTimestamp = _safeTimestamp;
 
     if(_parsedCommand.outputVars.length > 1){
-        $$.throwError("Command", _parsedCommand.command, "has more than one output variable. This is not supported!");
+        await $$.throwError("Command", _parsedCommand.command, "has more than one output variable. This is not supported!");
     }
 
     if(_parsedCommand.outputVars[0] !== _varName){
-        $$.throwError("Command", _parsedCommand.command, "has output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
+        await $$.throwError("Command", _parsedCommand.command, "has output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
     }
 
 
@@ -42,7 +42,7 @@ function VarContext(_varName, _docID, _chapterId, _paragraphId, _parsedCommand, 
         if(_parsedCommand.command === "table"){
             //console.debug("Adding the header to the actual value", _value, "for table", _parsedCommand.inputVars, "in document", _docID, "chapter", _chapterId, "paragraph", _paragraphId);
             if(_value.tableHeader !== undefined){
-                $$.throwError("Table variable has already has a header. Why?");
+                await $$.throwError("Table variable has already has a header. Why?");
             }
             return { tableHeader: _parsedCommand.inputVars, tableData: _value};
         }
@@ -107,7 +107,7 @@ function VarsGraph(commandsRegistry, varPersistence) {
     }
 
       if(!commandsRegistry){
-          $$.throwError("Commands Registry is mandatory");
+          await $$.throwError("Commands Registry is mandatory");
       }
 
       function makeNameForSpecialVars(chapterId, paragraphId, varName){
@@ -164,10 +164,10 @@ function VarsGraph(commandsRegistry, varPersistence) {
         let varContext = variables[docID][varName];
         if(!varContext){
             console.debug("All Variables", variables, "in document", docID, "are", Object.keys(variables[docID]));
-            $$.throwError("Variable '" + varName + "' not found in document " + docID);
+            await $$.throwError("Variable '" + varName + "' not found in document " + docID);
         }
         if(varContext.parsedCommand.command === "alias"){
-            $$.throwError("Cannot set value of alias", varName);
+            await $$.throwError("Cannot set value of alias", varName);
         }
 
         varContext.setNewValue(value);
@@ -183,17 +183,17 @@ function VarsGraph(commandsRegistry, varPersistence) {
             chapterId = "";
         }
         if(!docID){
-            $$.throwError("Document ID is mandatory");
+            await $$.throwError("Document ID is mandatory");
         }
 
         if(!varName){
-            $$.throwError("Variable name is mandatory");
+            await $$.throwError("Variable name is mandatory");
         }
         if(!variables[docID]){
              variables[docID] = {};
          }
         if(variables[docID][varName]){
-            $$.throwError("Variable already exists", name, "in document", docID);
+            await $$.throwError("Variable already exists", name, "in document", docID);
         }
 
         if(parsedCommand.command === "alias"){
@@ -223,7 +223,7 @@ function VarsGraph(commandsRegistry, varPersistence) {
                 deps:myVar.getDependencies()
                 };
         } else {
-            $$.throwError("Variable already exists", myVar.name + " in document " + myVar.docID, " in SOP Lang, a variable name must be defined only once in each document");
+            await $$.throwError("Variable already exists", myVar.name + " in document " + myVar.docID, " in SOP Lang, a variable name must be defined only once in each document");
         }
     }
 
@@ -242,7 +242,7 @@ function VarsGraph(commandsRegistry, varPersistence) {
                 let depName = node.deps[i];
                 let dep = graph[depName];
                 if(depName === varName){
-                    $$.throwError("Circular dependency detected for variable", depName);
+                    await $$.throwError("Circular dependency detected for variable", depName);
                 }
                 if(dep.layer === -1){
                     determineLayer(depName, dep);
@@ -366,7 +366,7 @@ function VarsGraph(commandsRegistry, varPersistence) {
                         break;
                     }
                 } else {
-                    $$.throwError("Dependency not found", depName);
+                    await $$.throwError("Dependency not found", depName);
                 }
             }
         }
