@@ -63,12 +63,10 @@ async function setNewValue(varId, newValue){
         }
     }*/
     let varDef = await getVariable(varId);
-        if(!varDef){
+    if(!varDef){
          await $$.throwError("Variable not found", varId);
-        }
-    varDef.value = newValue;
-    varDef.clock = defaultPersistence.getLogicalTimestamp();
-    await defaultPersistence.updateVariable(varId, varDef);
+    }
+    await defaultPersistence.updateVariable(varId, {value: newValue, clock: defaultPersistence.getLogicalTimestamp()});
 }
 
 async function getDependencies(varId){

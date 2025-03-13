@@ -244,7 +244,6 @@ function VarsGraph(commandsRegistry) {
             let value = await runCommand(variable);
             await varUtil.setNewValue(varId, value);
         }
-        return value;
     }
 
     self.buildAll = async function(){
@@ -256,16 +255,14 @@ function VarsGraph(commandsRegistry) {
             for(let j = 0; j < layer.length; j++){
                 let varId = layer[j];
                 //console.debug("Computing value for", varId);
-                let value = await computeValue(varId);
-                await varUtil.setNewValue(varId, value);
+                 await computeValue(varId);
             }
         }
     }
 
     self.varsDump = async function(){
-        let result = {};
+        let result = {variables:"\n"};
         let variables = await defaultPersistence.getEveryVariable();
-        console.debug("All variables", variables);
         for(let i =0 ; i < variables.length; i++){
             let varId = variables[i];
             let varInfo = await varUtil.getVariable(varId);
@@ -276,7 +273,8 @@ function VarsGraph(commandsRegistry) {
             if(!result[varInfo.docId]){
                 result[varInfo.docId] = {};
             }
-            console.debug(varInfo.value);
+
+            result.variables +="\t'" +varId+ "' is '" + varInfo.value + "'\n";
             result[varInfo.docId][varId] = {
                 id: varInfo.id,
                 varId: varInfo.varId,
@@ -293,10 +291,13 @@ function VarsGraph(commandsRegistry) {
         let layers = self.getLayers();
         console.log("--------------------- --- GRAPH PRINT ---------------------");
         for(let i = 0; i < layers.length; i++){
-            console.log("Level '"+ i+ "':", layers[i].join(", "));
+            console.log("\tLevel '"+ i+ "':", layers[i].join(", "));
         }
         console.log("\t---------------- VARIABLES ---------------------");
-        console.log(JSON.stringify(await self.varsDump()));
+        let dump = await self.varsDump();
+        console.log(dump.variables);
+        delete dump.variables;
+        console.log("\t Details:",JSON.stringify(dump));
         console.log("--------------------- END GRAPH PRINT ---------------------");
     }
 
