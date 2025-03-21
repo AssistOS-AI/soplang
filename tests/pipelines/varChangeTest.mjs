@@ -8,7 +8,7 @@ let graph = workspace.getGraph();
 
 let allOk = true;
 
-await graph.defineVariable("v1", "doc1","ch1", "p1","@v1 :=Hello");
+await graph.defineVariable("v1", "doc1","ch1", "p1","@v1 := Hello");
 await graph.defineVariable("v2", "doc1","ch2", "p2","@v2 := $v1 World!");
 
 graph.printGraph();

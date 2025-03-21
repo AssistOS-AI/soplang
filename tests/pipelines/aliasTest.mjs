@@ -1,25 +1,35 @@
-import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
-import {createVarsGraph} from "../../src/graph/VarsGraph.js";
-import {createRegistry} from "../../src/graph/CommandsRegistry.js";
+
+import {} from "../deps/clean.mjs";
+await $$.clean();
+let workspace = await $$.loadPlugin("Workspace");
+
+let graph = workspace.getGraph();
 
 let allOk = true;
 
-let graph = createVarsGraph(createRegistry());
+await graph.defineVariable("v1", "doc0","ch1", "p1","@v1 := Hello");
+await graph.defineVariable("v2", "doc1","ch2", "p2","@v2 := World");
 
-graph.defineVariable("v1", "doc0","ch1", "p1",parseCommandLine("value @v1 Hello"));
-graph.defineVariable("v1", "doc1","ch1", "p1",parseCommandLine("@v1 alias doc0 v1"));
-graph.defineVariable("v2", "doc0","ch2", "p2",parseCommandLine("set @v2 World"));
-graph.defineVariable("v2", "doc1","ch1", "p1",parseCommandLine("@v2 alias doc0 v2"));
-graph.defineVariable("v3", "doc1","ch2", "p2",parseCommandLine("@v3 = cat $v1 $v2 !"));
+await graph.defineVariable("v1", "doc2","ch1", "p1","@v1 alias doc0 v1");
+await graph.defineVariable("v2", "doc2","ch1", "p1","@v2 alias doc1 v2");
+await graph.defineVariable("v3", "doc2","ch2", "p2","@v3 := $v1 $v2 !");
 
 graph.topologicalSort();
-graph.printGraph();
+await graph.printGraph();
 
 await graph.buildAll();
 
-console.log("Graph dump:", graph.dump());
+await graph.printGraph();
 
+allOk &&= await graph.getVarValue("doc2","v3") === "Hello World !";
 
-allOk &&= graph.getVariable("doc1","v3") === "Hello World !";
+graph.setNewValue("doc0","v1","New Hello");
+await graph.buildAll();
+
+allOk &&= await graph.getVarValue("doc2","v3") === "New Hello World !";
+
+await graph.printGraph();
 
 console.log("All tests passed:", allOk? "true" : "false");
+
+workspace.shutDown();

@@ -20,51 +20,22 @@ async function getVarValue(varId){
         await $$.throwError("Variable not found:", varId);
         return undefined;
     }
-    /*
-      if(!variables[docId]){
-                console.warn("Document", docId , " not found when trying to get a value for variable", varName);
-                return undefined;
-          }
-        let varContext = variables[docId][varName];
-    if(varContext._parsedCommand.command === "special"){
-        let newValue = _parsedCommand.get(_varName, _docId, _chapterId, _paragraphId);
-        if(newValue !== _value){
-            this.safeTimestamp = new LocalSafeTimestamp();
-            _value = newValue;
-            console.debug("Special command", _parsedCommand.command, "changed value to", _value);
-        }
-    }
-    if(varContext.parsedCommand.command === "table"){
-        //console.debug("Adding the header to the actual value", _value, "for table", _parsedCommand.inputVars, "in document", _docId, "chapter", _chapterId, "paragraph", _paragraphId);
-        if(_value.tableHeader !== undefined){
-            await $$.throwError("Table variable has already has a header. Why?");
-        }
-        return { tableHeader: _parsedCommand.inputVars, tableData: _value};
-    } */
     return varDef.value;
 }
 
-async function setNewValue(varId, newValue){
-    /*
-    let varContext = variables[docId][varName];
-    if(!varContext){
-        console.debug("All Variables", variables, "in document", docId, "are", Object.keys(variables[docId]));
-        await $$.throwError("Variable '" + varName + "' not found in document " + docId);
-    }
-    if(varContext.parsedCommand.command === "alias"){
-        await $$.throwError("Cannot set value of alias", varName);
-    }
-    if(_parsedCommand.command === "special"){
-        return _parsedCommand.set(newValue, _varName, _docId, _chapterId, _paragraphId);
-    }
-    if(_parsedCommand.command === "table"){
-        if(newValue.tableHeader !== undefined){
-            newValue = newValue.tableData;
-        }
-    }*/
+async function setNewValue(varId, newValue, force = false){
     let varDef = await getVariable(varId);
     if(!varDef){
-         await $$.throwError("Variable not found", varId);
+        await $$.throwError("Variable not found", varId);
+    }
+
+
+    if(varDef.parsedCommand.command === "alias" && !force){
+        await $$.throwError("Cannot set value of alias", varId);
+    }
+
+    if(varDef.parsedCommand.command === "table"){
+        newValue = {tableHeader: varDef.parsedCommand.inputVars, tableData:newValue};
     }
     await defaultPersistence.updateVariable(varId, {value: newValue, clock: defaultPersistence.getLogicalTimestamp()});
 }
@@ -75,7 +46,13 @@ async function getDependencies(varId){
     if(!varDef){
         await $$.throwError("Variable not found", varId);
     }
-    if(varDef.parsedCommand && varDef.parsedCommand.inputVars.length > 0){
+    if(!varDef.parsedCommand){
+        return deps;
+    }
+
+    if(varDef.parsedCommand.command === "alias"){
+        deps.push( getVarID(varDef.parsedCommand.inputVars[0], varDef.parsedCommand.inputVars[1]));
+    } else if(varDef.parsedCommand.inputVars.length > 0){
         for(let i = 0; i < varDef.parsedCommand.inputVars.length; i++){
             let inputVar = varDef.parsedCommand.inputVars[i];
             if(varDef.parsedCommand.varTypes[i] === "alias"){
@@ -86,11 +63,6 @@ async function getDependencies(varId){
             }
         }
     }
-    /*if(this.parsedCommand === "alias"){
-        console.debug(">>>>>>>>>>")
-        deps.push(this.parsedCommand.value);
-    } */
-    //console.debug("Dependencies of ", varId, "are:", deps);
     return deps;
 }
 

@@ -78,27 +78,6 @@ function VarsGraph(commandsRegistry) {
             await $$.throwError("Variable name is mandatory");
         }
 
-        if(parsedCommand.command === "alias"){
-            await $$.thowError("Alias command is not supported yet");
-            let docId = parsedCommand.inputVars[0];
-            let varId = parsedCommand.inputVars[1];
-            /*
-            let initialVariable = variables[docId][varId];
-            if(!initialVariable){
-                initialVariable = new VarContext(varId,
-                            docId,
-                            undefined,
-                 undefined,
-                    undefined,
-                    undefined,
-                    undefined);
-                variables[docId][varId] = initialVariable;
-                variablesIndex[initialVariable.id] = initialVariable;
-            } */
-            parsedCommand.inputVars = [initialVariable.id];
-            parsedCommand.varTypes = ["alias"];
-         }
-
         if(await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand)) {
             let varId = varUtil.getVarID(docId, varName);
             graph[varId] = {
@@ -176,8 +155,7 @@ function VarsGraph(commandsRegistry) {
       async function resolveValue(varId){
           let varContext = await varUtil.getVariable(varId);
           if(varContext.parsedCommand.command === "alias"){
-              $$.throwErrorSync("Alias command is not supported yet");
-              return resolveValue(varContext.getVarValue());
+              return await self.getVarValue(varContext.parsedCommand.inputVars[0], varContext.parsedCommand.inputVars[1]);
           }
           return await varUtil.getVarValue(varId);
       }
@@ -196,7 +174,7 @@ function VarsGraph(commandsRegistry) {
               }
           }
           if(parsedCommand.command === "alias"){
-              return inputValues[0];
+              return await resolveValue(targetVar.varId);
           }
          return await commandsRegistry.runCommand(
                 parsedCommand.command,
@@ -233,16 +211,9 @@ function VarsGraph(commandsRegistry) {
         let value = await varUtil.getVarValue(varId);
 
         if(mustRecompute){
-        /*
-           if(varContext.parsedCommand.command === "special"){
-                value = varContext.getVarValue();
-            } else {
-                value = await runCommand(varContext);
-            }
-         */
             let variable = await varUtil.getVariable(varId);
             let value = await runCommand(variable);
-            await varUtil.setNewValue(varId, value);
+            await varUtil.setNewValue(varId, value, true);
         }
     }
 
@@ -260,8 +231,22 @@ function VarsGraph(commandsRegistry) {
         }
     }
 
+    function generateCSV(header, values ) {
+        let csv = header.join(',');
+        values.forEach(row => {
+            csv += '|';
+            header.forEach((key, index) => {
+                csv += row[key];
+                if(index < header.length -1) {
+                    csv += ',';
+                }
+            });
+        });
+        return csv;
+    }
+
     self.varsDump = async function(){
-        let result = {variables:"\n"};
+        let result = {variables:[]};
         let variables = await defaultPersistence.getEveryVariable();
         for(let i =0 ; i < variables.length; i++){
             let varId = variables[i];
@@ -270,21 +255,31 @@ function VarsGraph(commandsRegistry) {
                 console.warn("Failed to retrieve variable '" + varId + "'during dump");
                 continue;
             }
-            if(!result[varInfo.docId]){
-                result[varInfo.docId] = {};
+            if(varInfo.parsedCommand.command === "def"){
+                continue;
             }
 
-            result.variables +="\t'" +varId+ "' is '" + varInfo.value + "'\n";
-            result[varInfo.docId][varId] = {
-                id: varInfo.id,
+            let deps = await varUtil.getDependencies(varId);
+            deps = !deps ? "": deps.join(" ");
+
+            let valueAsString = varInfo.value && varInfo.value.tableHeader ? generateCSV(varInfo.value.tableHeader, varInfo.value.tableData) : varInfo.value;
+
+            result.variables.push({varId:varInfo.varId, value:valueAsString , clock: varInfo.clock , deps , command: varInfo.parsedCommand.command, inputVars: varInfo.parsedCommand.inputVars.join(" ")});
+            /*
+            if(!result[varInfo.docId]){
+                result[varInfo.docId] = [];
+            }
+            result[varInfo.docId].push({
                 varId: varInfo.varId,
-                command: varInfo.parsedCommand.command,
-                inputVars: varInfo.parsedCommand.inputVars.join(" "),
+                //command: varInfo.parsedCommand.command,
+                //inputVars: varInfo.parsedCommand.inputVars.join(" "),
                 value: JSON.stringify(varInfo.value),
                 clock: varInfo.clock? varInfo.clock: "Not Initialized"
-            };
+            })
+            */
         }
-        return result;
+        let dump = JSON.stringify(result.variables, null, 0);
+        return dump.replace(/},/g, '},\n\t');
     }
 
     self.printGraph = async function(){
@@ -294,10 +289,7 @@ function VarsGraph(commandsRegistry) {
             console.log("\tLevel '"+ i+ "':", layers[i].join(", "));
         }
         console.log("\t---------------- VARIABLES ---------------------");
-        let dump = await self.varsDump();
-        console.log(dump.variables);
-        delete dump.variables;
-        console.log("\t Details:",JSON.stringify(dump));
+        console.log("\t", await self.varsDump());
         console.log("--------------------- END GRAPH PRINT ---------------------");
     }
 

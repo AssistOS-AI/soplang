@@ -1,31 +1,32 @@
-import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
-import {createVarsGraph} from "../../src/graph/VarsGraph.js";
-import {createRegistry} from "../../src/graph/CommandsRegistry.js";
 
-let allOk = true;
+import {} from "../deps/clean.mjs";
+await $$.clean();
+let workspace = await $$.loadPlugin("Workspace");
 
-let graph = createVarsGraph(createRegistry());
+let graph = workspace.getGraph();
 
 let functionDefinition = 'return args.join("|")';
+let allOk = true;
 
-graph.defineVariable("pipeConcat", "doc1","ch1", "p1",
-    parseCommandLine("def @pipeConcat '"+ functionDefinition+"'"));
+await graph.defineVariable("pipeConcat", "doc1","ch1", "p1",
+    "def @pipeConcat '"+ functionDefinition+"'");
 
-graph.defineVariable("v1", "doc1","ch2", "p2",
-    parseCommandLine("set @v1 Hello "));
+await graph.defineVariable("v1", "doc1","ch2", "p2", "@v1 := Hello ");
 
-graph.defineVariable("v2", "doc1","ch2", "p2",
-    parseCommandLine("@v2: pipeConcat $v1 World !"));
+await graph.defineVariable("v2", "doc1","ch2", "p2", "@v2 pipeConcat $v1 World !");
 
 graph.topologicalSort();
-graph.printGraph();
+await graph.printGraph();
 
 await graph.buildAll();
 
-console.log("Vars dump:", graph.varsDump());
+await graph.printGraph();
+console.log(await graph.varsDump());
 
 
-allOk &&= graph.getVariable("doc1","v1") === "Hello";
-allOk &&= graph.getVariable("doc1","v2") === "Hello|World|!";
+allOk &&= await graph.getVarValue("doc1","v1") === "Hello";
+allOk &&= await graph.getVarValue("doc1","v2") === "Hello|World|!";
 
 console.log("All tests passed:", allOk? "true" : "false");
+
+workspace.shutDown();
