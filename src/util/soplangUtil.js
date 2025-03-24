@@ -104,9 +104,9 @@ function getNextToken(str, position){
 
 function parseCommandLine(commandLine) {
         // replace the first occurrence of = or :  with ' set '
-        commandLine = commandLine.replace(':=', ' concat ');
+        commandLine = commandLine.replace(':=', ' assign ');
 
-        console.debug("Parsing command line:", commandLine);
+        //console.debug("Parsing command line:", commandLine);
         let outputVars = [];
         let inputVars  = [];
         let varTypes = [];
@@ -224,8 +224,15 @@ function parseTextVars (text){
     // in the text section we can have embedded variables with names prefixed with % and ends with %.
     // Example 'some ignored text  %commandName some value% more ignored text %anotherCommand some string as value %'
     // The function returns an array with the variables found in the text and their values.
+    if(text === "" || text === undefined){
+        return [];
+    }
+    //console.debug("<><><><>>>>>parseTextVars ", text);
     let result = [];
     let embeddedVars = text.match(/%[^%]+%/g);
+    if(embeddedVars === null){
+        return [];
+    }
     embeddedVars.forEach(fulltext => {
         //take the first position of a space and this is the variable name
         let firstSpacePos = fulltext.indexOf(" ");

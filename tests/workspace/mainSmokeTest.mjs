@@ -1,43 +1,45 @@
 
-
 import {} from "../deps/clean.mjs";
+import assert from "assert";
+await $$.clean();
+let workspace = await $$.loadPlugin("Workspace");
+let graph = workspace.getGraph();
+let allOk = true;
 
-import {getCore} from "../../plugins/WorkspacePlugin.js";
-let workSpaceCore = await getCore();
-
-let ownerId = await workSpaceCore.createUser("user1@email.com", "User 1 1", "owner").id;
-await workSpaceCore.createWorkspace("Test Workspace", ownerId);
+let ownerId = await workspace.createUser("user1@email.com", "User 1 1", "owner").id;
+await workspace.createWorkspace("Test Workspace", ownerId);
 
 
 let testDoc ={
     "doc1": {
             docId: "doc1",
             "title": "Document Title",
-            "text": "Document Example",
+            "infoText": "Document abstract Example",
             "commands": "",
             chapters:[
                 {
-                    "chapter1": {
-                        "title": "Chapter1",
-                        "commands": "overwrite title with 'New Title for Chapter1'",
-                        paragraphs:[
-                            {
-                                text: " comment %localText Hello % das",
-                                commands: "@hello as $localText"
-                            },
-                            {
-                                text: " comment %localText World % comment",
-                                commands: "@helloWorld set $hello $localText"
-                            }
-                        ]
-                    }
+                    "title": "Chapter1",
+                    "commands": "@title := 'New Title for Chapter1'",
+                    paragraphs:[
+                        {
+                            text: " comment1 %localText Hello % comment2",
+                            commands: "@hello := $localText"
+                        },
+                        {
+                            text: " comment1 %localText World % comment2 %anotherLocalText New World %  comment 3 ",
+                            commands: "@helloWorld := $hello $localText"
+                        }
+                    ]
+                },
+                {
+                    "title": "Chapter2"
                 }
             ]
         },
         "doc2": {
             title: "Chapter 2",
             docId: "doc2",
-            infoText: "abstract",
+            infoText: "Text of the abstract ",
             commands: "@aliasHelloWorld alias doc1 helloWorld" + "\n" +
                 "@changedText if [unequal $text 'abstract']  then $text "+ "\n" +
                 "overwrite aliasHelloWorld with $changedText"
@@ -46,14 +48,16 @@ let testDoc ={
 
 for(let docId in testDoc){
     let doc = testDoc[docId];
-    let docObj = await workSpaceCore.createDocument(docId, "category");
-    await workSpaceCore.applyTemplate(docObj.id, doc);
+    let docObj = await workspace.createDocument(docId, "category");
+    await workspace.applyTemplate(docObj.id, doc);
 }
 
-await workSpaceCore.forceSave();
+await workspace.forceSave();
 
-await workSpaceCore.buildAll();
+await workspace.buildAll();
 
-console.assert(await workSpaceCore.getValue("doc1", "helloWorld") === "Hello", "Failed to get $helloWorld");
+await graph.printGraph();
 
-await workSpaceCore.shutDown();
+assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello", "Failed to get $helloWorld");
+
+await workspace.shutDown();

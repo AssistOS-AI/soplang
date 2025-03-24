@@ -33,6 +33,7 @@ async function createStandardPersistencePlugin(){
             id: "random",
             title: "string",
             text: "string",
+            documentId: "string",
             commands: "string",
             comments: "string",
             paragraphs: "array paragraph",

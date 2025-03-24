@@ -1,4 +1,4 @@
-import {} from "../deps/clean.mjs"
+import {} from "../../deps/clean.mjs"
 await $$.registerPlugin("DefaultPersistence", "../../plugins/StandardPersistencePlugin.js");
 await $$.registerPlugin("WorkspacePlugin", "../../plugins/WorkspacePlugin.js");
 let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");

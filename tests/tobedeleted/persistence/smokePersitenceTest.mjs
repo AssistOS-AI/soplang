@@ -14,7 +14,7 @@ export async function deleteFolder(folderPath) {
 await deleteFolder("./work_space_data/");
 await fs.mkdir("./work_space_data/");
 
-import {getCore} from "../../plugins/WorkspacePlugin.js";
+import {getCore} from "../../../plugins/WorkspacePlugin.js";
 let workSpaceCore = await getCore();
 
 let ownerId = await workSpaceCore.createUser("user1@email.com", "Owner 1", "owner").id;

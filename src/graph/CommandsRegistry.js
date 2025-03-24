@@ -1,7 +1,7 @@
 
 function CommandsRegistry( workSpace) {
     let commands = {
-        cat: async function (inputValues ) {
+        assign: async function (inputValues ) {
             return inputValues.join(" ");
         },
         list : async function (inputValues) {
@@ -9,9 +9,6 @@ function CommandsRegistry( workSpace) {
         }
     };
 
-    commands.set = commands.cat;
-    commands.value = commands.cat;
-    commands.concat = commands.cat;
     commands.def = commands.define = async function (inputValues, outputValues) {
         let code = "(function(args){" + inputValues[0] + "})";
         console.debug("Define:", outputValues[0], inputValues[0], code);

@@ -13,6 +13,12 @@ function VarsGraph(commandsRegistry) {
       }
 
       function makeNameForSpecialVars(chapterId, paragraphId, varName){
+          if(!chapterId){
+              chapterId = "_";
+          }
+          if(!paragraphId){
+                paragraphId = "_";
+          }
           switch(varName){
                 case "docId":
                 case "text":
@@ -22,19 +28,37 @@ function VarsGraph(commandsRegistry) {
           return varName;
       }
 
-      this.updateCommandSection = function(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){
+      this.analiseChapterTile = async function(docId, chapterId, title){
+
+      }
+
+      this.analiseDocumentTile = async function(docId, title){
+
+      }
+
+      this.analiseCommandSection = async function(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){
+          //console.debug("<><><><>>>>>Analysing command section", commandTextSeparatedByNewLine);
+          if(commandTextSeparatedByNewLine === "" || commandTextSeparatedByNewLine === null || commandTextSeparatedByNewLine === undefined){
+              return;
+          }
           let lines = commandTextSeparatedByNewLine.split("\n");
             for(let i = 0; i < lines.length; i++){
                 let line = lines[i];
                 let parsedCommand = parseCommandLine(line);
-                 self.defineVariable(makeNameForSpecialVars(parsedCommand.command), docId, chapterId, paragraphId, parsedCommand);
+                //console.debug("!!!!!!!! Parsed command", parsedCommand);
+                if(parsedCommand.outputVars.length === 0) {
+                    parsedCommand.outputVars = [makeNameForSpecialVars(chapterId, paragraphId, "output" + i)];
+                }
+
+                 self.defineVariable(makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
+                //console.debug("<><><><>>>>>Defining variable", parsedCommand.outputVars[0], "with command", parsedCommand);
             }
       }
 
-      this.updateTextSection = function(docId, chapterId, paragraphId, text){
+      this.analiseTextSection = async function(docId, chapterId, paragraphId, text){
             let specialTextVarName = makeNameForSpecialVars(chapterId, paragraphId, "text");
             self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
-                    {command: "assign", inputVars: [text], outputVars: [specialTextVarName]}, text);
+                    {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes:["text"]}, text);
 
             let embeddedVars = parseTextVars(text);
             if(embeddedVars){
@@ -65,11 +89,12 @@ function VarsGraph(commandsRegistry) {
       }
 
         if(!paragraphId){
-            paragraphId = "";
+            paragraphId = "_";
         }
         if(!chapterId){
-            chapterId = "";
+            chapterId = "_";
         }
+
         if(!docId){
             await $$.throwError("Document ID is mandatory");
         }
@@ -77,6 +102,8 @@ function VarsGraph(commandsRegistry) {
         if(!varName){
             await $$.throwError("Variable name is mandatory");
         }
+
+        console.debug(">>>>>Defining variable", varName, "in", docId, "with output", parsedCommand.outputVars[0], "and input vars", parsedCommand.inputVars , "and var types", parsedCommand.varTypes);
 
         if(await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand)) {
             let varId = varUtil.getVarID(docId, varName);
@@ -104,6 +131,9 @@ function VarsGraph(commandsRegistry) {
                 let dep = graph[depName];
                 if(depName === varName){
                     $$.throwErrorSync("Circular dependency detected for variable", depName);
+                }
+                if(!dep){
+                    $$.throwErrorSync("Dependency", depName, "not found for variable", varName);
                 }
                 if(dep.layer === 0){
                      determineLayer(depName, dep);

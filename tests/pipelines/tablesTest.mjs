@@ -54,5 +54,6 @@ assert(await graph.getVarValue("doc1","sarea1_cn") === 11110000);
 assert(await graph.getVarValue("doc1","sarea1") === 11110000);
 
 
-workspace.shutDown();
+await workspace.shutDown();
 console.log("All tests executed!");
+assert(allOk === true, "Some tests failed");

@@ -20,8 +20,8 @@ async function WorkspacePlugin(){
         return await graph.buildAll();
     }
 
-    self.getValue = async function (documentId, variableName) {
-        return graph.getValue(documentId, variableName);
+    self.getVarValue = async function (documentId, variableName) {
+        return graph.getVarValue(documentId, variableName);
     }
 
     self.registerCommand = function (commandName, commandFunction) {
@@ -137,16 +137,24 @@ async function WorkspacePlugin(){
         if(doc.chapters.length > 0){
             throw new Error("Document already has content");
         }
+
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, template.commands);
+        await graph.analiseDocumentTile(doc.docId, template.title);
+        await graph.analiseTextSection(doc.docId, undefined, undefined, template.infoText);
+
         await persistence.updateDocument(documentId, {title: template.title, category: template.category, infoText: template.infoText, commands: template.commands, comments: template.comments});
         if(template.chapters){
             for(let chapter of template.chapters){
-                //console.debug(">>>> Creating chapter", chapter);
+                console.debug(">>>> Creating chapter", chapter, "with paragraphs ", chapter.paragraphs);
                 let newChapter = await self.createChapter(documentId,  chapter.title, chapter.commands, chapter.comments);
-                if(chapter.paragraphs){
+                if(Array.isArray(chapter.paragraphs) && chapter.paragraphs.length > 0){
+                    console.debug(">>>> Creating paragraphs", chapter.paragraphs);
                     for(let paragraph of chapter.paragraphs){
                         //console.debug(">>>> Creating paragraph", paragraph);
                         await self.createParagraph(newChapter.id, paragraph.text,paragraph.commands,paragraph.comments);
                     }
+                } else {
+                    console.debug(">>>> No paragraphs for chapter", chapter);
                 }
             }
         }
@@ -159,10 +167,15 @@ async function WorkspacePlugin(){
         let document = await persistence.getDocument(documentId);
         let chapter =  await persistence.createChapter({
             title: chapterTitle,
+            docId: document.docId,
             commands,
             comments,
             paragraphs: []
         });
+
+        await graph.analiseCommandSection(document.docId, chapter.id, undefined, commands);
+        await graph.analiseChapterTile(document.docId, chapter.id,  chapterTitle);
+
 
         let chapters = document.chapters.concat(chapter.id);
         await persistence.updateDocument(documentId, {chapters});
@@ -170,13 +183,17 @@ async function WorkspacePlugin(){
     }
 
     self.createParagraph = async function (chapterId, paragraphText, commands, comments) {
-        //console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId);
+        console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId, "commands", commands);
         let chapter = await persistence.getChapter(chapterId);
         let par = await persistence.createParagraph({
             text: paragraphText,
             commands,
             comments
         });
+
+        await graph.analiseCommandSection(chapter.docId, chapter.id, par.id, commands);
+        await graph.analiseTextSection(chapter.docId, chapter.id, par.id, paragraphText);
+
         let paragraphs = chapter.paragraphs.concat(par.id);
         //console.debug("!!!!! Created paragraph", chapter, "for chapter", chapter, "new chapters", paragraphs);
         await persistence.updateChapter(chapterId, {paragraphs});
@@ -208,9 +225,14 @@ async function WorkspacePlugin(){
     }
 
     self.updateDocumentInfo = async function (documentId, title, category, infoText, commands) {
+        let doc = await persistence.getDocument(documentId);
         if(!title || !category || !infoText || !commands){
             throw new Error("All fields are required to be defined");
         }
+
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands);
+        await graph.analiseTextSection(doc.docId, undefined, undefined, infoText);
+
         return await persistence.updateDocument(documentId,{
             title,
             category,
@@ -237,17 +259,24 @@ async function WorkspacePlugin(){
         return await persistence.getParagraph(paragraphId);
     }
 
-    self.updateChapter = async function (chapterId, title, comments, commands) {
+    self.updateChapter = async function (chapterId, chapterTitle, comments, commands) {
+        let chapter = await persistence.getChapter(chapterId);
+        await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands);
+        await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
+
         return await persistence.updateChapter(chapterId,{
-            title,
+            chapterTitle,
             comments,
             commands
         });
     }
 
-    self.updateParagraph = async function (chapterId, paragraphId, text, commands, comments) {
+    self.updateParagraph = async function (chapterId, paragraphId, paragraphText, commands, comments) {
+        let chapter = await persistence.getChapter(chapterId);
+        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands);
+        await graph.analiseTextSection(chapter.docId, chapterId, paragraphId, paragraphText);
         return await persistence.updateParagraph(paragraphId,{
-            text,
+            paragraphText,
             commands,
             comments
         });

@@ -1,5 +1,6 @@
 
 import {} from "../deps/clean.mjs";
+import assert from "assert";
 await $$.clean();
 let workspace = await $$.loadPlugin("Workspace");
 
@@ -29,4 +30,5 @@ allOk &&= await graph.getVarValue("doc1","v2") === "Hallo World!";
 
 console.log("All tests passed:", allOk? "true" : "false");
 
-workspace.shutDown();
+await workspace.shutDown();
+assert(allOk === true, "Some tests failed");

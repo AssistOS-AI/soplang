@@ -1,5 +1,5 @@
-/tests/persistence/logs/
-/tests/persistence/work_space_data/
+/tests/tobedeleted/persistence/logs/
+/tests/tobedeleted/persistence/work_space_data/
 /tests/workspace/logs/
 /tests/workspace/work_space_data/
 /ExtensiblePersistence/
@@ -8,3 +8,5 @@
 /Persisto/tests/work_space_data/
 /tests/pipelines/work_space_data/
 /tests/pipelines/logs/
+/tests/work_space_data/
+/tests/logs/

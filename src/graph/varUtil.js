@@ -93,6 +93,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.parsedCommand = _parsedCommand;
 
     if(diffObjects(existingVarContext, varContext)){
+        console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
         this.clock = undefined;
     } else {
         return false; //nothing changed
@@ -104,7 +105,8 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     }
 
     if(_parsedCommand.outputVars[0] !== _varName){
-        $$.throwErrorSync("Command", _parsedCommand.command, "has output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
+        console.debug("Dump varContext", varContext);
+        $$.throwErrorSync("Output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
     }
 
 
@@ -115,6 +117,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
                 "Input Types", _parsedCommand.varTypes[0],
             "Initial value ", _value);
     } */
+
 
     if(varContext.parsedCommand){
         varContext.parsedCommand.inputVars = varContext.parsedCommand.inputVars ? Array.from(varContext.parsedCommand.inputVars) : [];
