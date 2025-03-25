@@ -247,9 +247,87 @@ function parseTextVars (text){
     return result;
 }
 
+
+function renameSpecialVars(chapterId, paragraphId, line){
+    return line.replace(/[$@]text/g, (match) => match[0] + makeNameForSpecialVars(chapterId, paragraphId, "text"))
+        .replace(/[$@]title/g, (match) => match[0] + makeNameForSpecialVars(chapterId, paragraphId, "title"));
+}
+
+function makeNameForSpecialVars(chapterId, paragraphId, varName, forcePrefix = false){
+    if(!chapterId){
+        chapterId = "_";
+    }
+    if(!paragraphId){
+        paragraphId = "_";
+    }
+    switch(varName){
+        case "text":
+        case "title":
+            forcePrefix = true;
+    }
+    if(forcePrefix){
+        return chapterId + "_" + paragraphId + "_" + varName;
+    }
+    return varName;
+}
+
+function parseComplexLine(input, makeVarName) {
+    const result = {};
+    let transformedText = input;
+
+    const regex = /\[(.*?)\]/g;
+    let match;
+    let matches = [];
+
+    while ((match = regex.exec(input)) !== null) {
+        matches.push({
+            fullMatch: match[0],
+            innerContent: match[1].trim(),
+            index: match.index
+        });
+    }
+
+    for (let i = matches.length - 1; i >= 0; i--) {
+        const { fullMatch, innerContent } = matches[i];
+        const varName = makeVarName();
+        result[varName] = innerContent;
+        transformedText = transformedText.replace(fullMatch, `$${varName}`);
+    }
+    //console.debug("Parsed line:",  transformedText, "Variables:", result);
+    return {
+        variables: result,
+        transformedText
+    };
+}
+
+
+function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLine){
+    let varCounter = 0;
+    function makeVarNames(){
+        varCounter++;
+        return makeNameForSpecialVars(chapterId, paragraphId, "TMP" + varCounter, true);
+    }
+
+    let result = commandTextSeparatedByNewLine.split("\n");
+    let newLines = [];
+    for(let i = 0; i < result.length; i++){
+        let res = parseComplexLine(result[i], makeVarNames);
+        result[i] = res.transformedText;
+        for(let key in res.variables){
+            newLines.push("@" + key + " " + res.variables[key]);
+        }
+    }
+
+    return newLines.concat(result);
+}
+
+
 module.exports = {
     parseCommandLine,
     compareObjects,
-    LocalSafeTimestamp,
-    parseTextVars
+    parseTextVars,
+    parseCommandBlock,
+    renameSpecialVars,
+    makeNameForSpecialVars,
+    parseComplexLine
 }

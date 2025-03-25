@@ -6,7 +6,13 @@ function CommandsRegistry( workSpace) {
         },
         list : async function (inputValues) {
             return inputValues;
-        }
+        },
+        equal : async function (inputValues) {
+            return inputValues[0] === inputValues[1];
+        },
+        unequal : async function (inputValues) {
+            return inputValues[0] !== inputValues[1];
+        },
     };
 
     commands.def = commands.define = async function (inputValues, outputValues) {
@@ -23,6 +29,12 @@ function CommandsRegistry( workSpace) {
         await $$.throwError("'special' variables should not be initialised as normal variables by running commands");
     }
 
+    commands.overwrite = async function (inputValues, outputValues, varContext, varGraph) {
+        console.debug("Overwriting", outputValues[0], "with", inputValues[0] + "!!!! Not implemented yet");
+    }
+    commands.if = async function (inputValues, outputValues, varContext, varGraph) {
+
+    }
 
 
     this.runCommand =  async function (commandName, inputValues, outputValues, varGraph, varContext  ) {

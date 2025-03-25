@@ -1,4 +1,10 @@
-const {LocalSafeTimestamp} = require("../util/soplangUtil");
+const {
+    parseCommandLine,
+    parseTextVars,
+    parseCommandBlock,
+    renameSpecialVars,
+    makeNameForSpecialVars,
+    parseComplexLine } = require("../util/soplangUtil");
 
 let defaultPersistence = $$.loadPlugin("DefaultPersistence");
 
@@ -8,11 +14,6 @@ function getVarID(docId, varName){
 
 async function getVariable(varId){
     return await defaultPersistence.getVariable(varId);
-}
-
-async function getVarTimestamp(varId){
-    let varContext = await getVariable(varId);
-    return varContext.clock;
 }
 async function getVarValue(varId){
     let varDef = await getVariable(varId);
@@ -28,7 +29,6 @@ async function setNewValue(varId, newValue, force = false){
     if(!varDef){
         await $$.throwError("Variable not found", varId);
     }
-
 
     if(varDef.parsedCommand.command === "alias" && !force){
         await $$.throwError("Cannot set value of alias", varId);
@@ -93,7 +93,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.parsedCommand = _parsedCommand;
 
     if(diffObjects(existingVarContext, varContext)){
-        console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
+        //console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
         this.clock = undefined;
     } else {
         return false; //nothing changed
@@ -108,16 +108,6 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
         console.debug("Dump varContext", varContext);
         $$.throwErrorSync("Output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
     }
-
-
-    /*
-    if(_parsedCommand.command === "alias" ){
-        console.debug(">>>Alias ",
-                _parsedCommand.outputVars[0], " as ",  _parsedCommand.inputVars[0],
-                "Input Types", _parsedCommand.varTypes[0],
-            "Initial value ", _value);
-    } */
-
 
     if(varContext.parsedCommand){
         varContext.parsedCommand.inputVars = varContext.parsedCommand.inputVars ? Array.from(varContext.parsedCommand.inputVars) : [];
@@ -149,5 +139,11 @@ module.exports = {
     getVarClock,
     setNewValue,
     getDependencies,
-    updateVarDefinition
+    updateVarDefinition,
+    parseCommandBlock,
+    renameSpecialVars,
+    makeNameForSpecialVars,
+    parseComplexLine,
+    parseCommandLine,
+    parseTextVars
 }

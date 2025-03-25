@@ -36,7 +36,7 @@ let testDoc ={
                 }
             ]
         },
-        "doc2": {
+    "doc2": {
             title: "Chapter 2",
             docId: "doc2",
             infoText: "Text of the abstract ",
@@ -46,6 +46,13 @@ let testDoc ={
           }
     };
 
+/*
+    @proposal attachFile id:1234
+    @mySummary  ask Assistant $proposal "do a summary"
+    @rephrased rephrase $mySummary "do it for a 5 years old child"
+
+ */
+
 for(let docId in testDoc){
     let doc = testDoc[docId];
     let docObj = await workspace.createDocument(docId, "category");
@@ -54,10 +61,12 @@ for(let docId in testDoc){
 
 await workspace.forceSave();
 
+await graph.printGraph();
+
 await workspace.buildAll();
 
 await graph.printGraph();
 
-assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello", "Failed to get $helloWorld");
+assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello", "Failed to validate the value $helloWorld, expected 'Hello' but got " + await workspace.getVarValue("doc1", "helloWorld"));
 
 await workspace.shutDown();

@@ -1,4 +1,3 @@
-let {parseCommandLine,compareObjects, LocalSafeTimestamp, parseTextVars} = require("../util/soplangUtil.js");
 
 let varUtil = require("./varUtil.js");
 let defaultPersistence = $$.loadPlugin("DefaultPersistence");
@@ -12,21 +11,6 @@ function VarsGraph(commandsRegistry) {
           $$.throwErrorSync("Commands Registry is mandatory");
       }
 
-      function makeNameForSpecialVars(chapterId, paragraphId, varName){
-          if(!chapterId){
-              chapterId = "_";
-          }
-          if(!paragraphId){
-                paragraphId = "_";
-          }
-          switch(varName){
-                case "docId":
-                case "text":
-                case "title":
-                    return [chapterId, paragraphId,varName].join("_");
-          }
-          return varName;
-      }
 
       this.analiseChapterTile = async function(docId, chapterId, title){
 
@@ -41,26 +25,27 @@ function VarsGraph(commandsRegistry) {
           if(commandTextSeparatedByNewLine === "" || commandTextSeparatedByNewLine === null || commandTextSeparatedByNewLine === undefined){
               return;
           }
-          let lines = commandTextSeparatedByNewLine.split("\n");
+          let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
             for(let i = 0; i < lines.length; i++){
                 let line = lines[i];
-                let parsedCommand = parseCommandLine(line);
+                line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
+                let parsedCommand = varUtil.parseCommandLine(line);
                 //console.debug("!!!!!!!! Parsed command", parsedCommand);
                 if(parsedCommand.outputVars.length === 0) {
-                    parsedCommand.outputVars = [makeNameForSpecialVars(chapterId, paragraphId, "output" + i)];
+                    parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
                 }
 
-                 self.defineVariable(makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
+                 self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
                 //console.debug("<><><><>>>>>Defining variable", parsedCommand.outputVars[0], "with command", parsedCommand);
             }
       }
 
       this.analiseTextSection = async function(docId, chapterId, paragraphId, text){
-            let specialTextVarName = makeNameForSpecialVars(chapterId, paragraphId, "text");
+            let specialTextVarName = varUtil.makeNameForSpecialVars(chapterId, paragraphId, "text");
             self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
                     {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes:["text"]}, text);
 
-            let embeddedVars = parseTextVars(text);
+            let embeddedVars = varUtil.parseTextVars(text);
             if(embeddedVars){
                 for(let i = 0; i < embeddedVars.length; i++){
                     let varName = embeddedVars[i].variable;
@@ -85,7 +70,7 @@ function VarsGraph(commandsRegistry) {
 
     this.defineVariable = async function(varName, docId, chapterId, paragraphId, parsedCommand){
           if(typeof parsedCommand === "string"){
-                parsedCommand = parseCommandLine(parsedCommand);
+                parsedCommand = varUtil.parseCommandLine(parsedCommand);
       }
 
         if(!paragraphId){
@@ -103,7 +88,7 @@ function VarsGraph(commandsRegistry) {
             await $$.throwError("Variable name is mandatory");
         }
 
-        console.debug(">>>>>Defining variable", varName, "in", docId, "with output", parsedCommand.outputVars[0], "and input vars", parsedCommand.inputVars , "and var types", parsedCommand.varTypes);
+        //console.debug(">>>>>Defining variable", varName, "in", docId, "with output", parsedCommand.outputVars[0], "and input vars", parsedCommand.inputVars , "and var types", parsedCommand.varTypes);
 
         if(await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand)) {
             let varId = varUtil.getVarID(docId, varName);
