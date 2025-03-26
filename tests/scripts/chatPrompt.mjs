@@ -8,15 +8,15 @@ let graph = createVarsGraph(createRegistry());
 
 let script = `        
     @question is $arg1
-    @personality lookupByName personality $arg2    
-    @systemPrompt extract $personality chat.prompt
-    @description extract $personality description
-    @name extract $personality name
+    @agent lookupByName agent $arg2    
+    @systemPrompt extract $agent chat.prompt
+    @description extract $agent description
+    @name extract $agent name
     @context alias $arg3 $arg4
     @prompt set "You are " $name $description $systemPrompt "Discussion Context is" $context "Focus on this aspect:" $question
-    @result ask $personality $prompt
+    @result ask $agent $prompt
     append $result to $arg3 $arg5
-    @yesno ask $personality "Answer with yes or not. Is result usefully to keep in history:" $result
+    @yesno ask $agent "Answer with yes or not. Is result usefully to keep in history:" $result
     @storeResult if [equal? $yesno 'yes'] then [append $result in $arg3 $arg6];    
 `;
 

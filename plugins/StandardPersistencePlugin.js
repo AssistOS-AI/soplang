@@ -11,7 +11,7 @@ async function createStandardPersistencePlugin(){
             clock : "integer",
             permissions: "any"
         },
-        personality: {
+        agent: {
             id: "random",
             name: "string",
             description: "string"
@@ -76,7 +76,7 @@ async function createStandardPersistencePlugin(){
 
     await persistence.createIndex("user", "email");
 
-    await persistence.createIndex("personality", "name");
+    await persistence.createIndex("agent", "name");
     await persistence.createIndex("variable", "varId");
     await persistence.createIndex("document", "docId");
 

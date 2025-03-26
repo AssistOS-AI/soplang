@@ -1,28 +1,30 @@
 import {} from "../../deps/clean.mjs"
-
+await $$.clean();
 let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
+let AgentPlugin =  $$.loadPlugin("AgentPlugin");
+let UserPlugin =  $$.loadPlugin("WorkspaceUserPlugin");
 
-let ownerId = await WorkspacePlugin.createUser("user1@email.com", "User 1 1", "owner").id;
+let ownerId = await UserPlugin.createUser("user1@email.com", "User 1 1", "owner").id;
 await WorkspacePlugin.createWorkspace("Test Workspace", ownerId);
 
-await WorkspacePlugin.createUser("user2@email.com", "User 2", "read");
+await UserPlugin.createUser("user2@email.com", "User 2", "read");
 
 
-await WorkspacePlugin.createPersonality("personality1", "Default Personality in workspace Test Workspace. Be short and polite");
-await WorkspacePlugin.createPersonality("personality2", "Default Personality in workspace Test Workspace. Be short and polite");
+await AgentPlugin.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
+await AgentPlugin.createAgent("agent2", "Default Agent in workspace Test Workspace. Be short and polite");
 await WorkspacePlugin.createDocument("doc1", "category1");
 await WorkspacePlugin.createDocument("doc2", "category1");
 await WorkspacePlugin.createDocument("doc3", "category2");
 
-let personalityByName = await WorkspacePlugin.getPersonalityByName("personality1");
-console.assert(personalityByName.name === "personality1", "Expected personality1");
+let agentByName = await AgentPlugin.getAgent("agent1");
+console.assert(agentByName.name === "agent1", "Expected agent1");
 
 let allDocumentInCategory1 = await WorkspacePlugin.getDocumentsByCategory("category1");
 
 console.assert(allDocumentInCategory1.length === 2, "Expected 2 documents in category1");
 
 try{
-    await WorkspacePlugin.createUser("user2@email.com", "User 3", "guest");
+    await UserPlugin.createUser("user2@email.com", "User 3", "guest");
     console.assert(false);
 } catch(error){
     //console.assert(true,"Expected exception:", error.message);

@@ -1,14 +1,14 @@
 import {} from "../../deps/clean.mjs"
-await $$.registerPlugin("DefaultPersistence", "../../plugins/StandardPersistencePlugin.js");
-await $$.registerPlugin("WorkspacePlugin", "../../plugins/WorkspacePlugin.js");
-let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
+await $$.clean();
 
+let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
+let UserPlugin = $$.loadPlugin("WorkspaceUserPlugin");
 console.debug("Start of the test");
 
-let ownerId = await WorkspacePlugin.createUser("user1@email.com", "User 1 1", "owner").id;
-await WorkspacePlugin.createWorkspace("Test Workspace", ownerId);
+let owner = await UserPlugin.createUser("user1@email.com", "User 1 1", "owner");
+await WorkspacePlugin.createWorkspace("Test Workspace", owner.id);
 
-await WorkspacePlugin.createUser("user2@email.com", "User 2", "read");
+await UserPlugin.createUser("user2@email.com", "User 2", "read");
 
 let doc = await WorkspacePlugin.createDocument("doc1", "category1");
 

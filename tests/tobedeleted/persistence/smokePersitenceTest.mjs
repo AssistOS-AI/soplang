@@ -1,25 +1,14 @@
-
-console.log("Start initialisation...");
-import { promises as fs } from "fs";
+import {} from "../../deps/clean.mjs"
+await $$.clean();
 import assert from "assert";
 
-export async function deleteFolder(folderPath) {
-    try {
-        await fs.rm(folderPath, { recursive: true, force: true });
-        console.log(`Folder deleted: ${folderPath}`);
-    } catch (error) {
-        console.error(`Error deleting folder: ${error.message}`);
-    }
-}
-await deleteFolder("./work_space_data/");
-await fs.mkdir("./work_space_data/");
+let workSpaceCore = $$.loadPlugin("WorkspacePlugin");
+let UserPlugin = $$.loadPlugin("WorkspaceUserPlugin");
+let AgentPlugin = $$.loadPlugin("AgentPlugin");
 
-import {getCore} from "../../../plugins/WorkspacePlugin.js";
-let workSpaceCore = await getCore();
-
-let ownerId = await workSpaceCore.createUser("user1@email.com", "Owner 1", "owner").id;
-await workSpaceCore.createWorkspace("Test Workspace", ownerId);
-await workSpaceCore.createPersonality("personality1", "Default Personality in workspace Test Workspace. Be short and polite");
+let owner = await UserPlugin.createUser("user1@email.com", "Owner 1", "owner");
+await workSpaceCore.createWorkspace("Test Workspace", owner.id);
+await AgentPlugin.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
 let doc1 = await workSpaceCore.createDocument("doc1", "category");
 
 await workSpaceCore.applyTemplate(doc1.id, {

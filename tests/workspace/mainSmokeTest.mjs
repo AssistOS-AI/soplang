@@ -2,12 +2,13 @@
 import {} from "../deps/clean.mjs";
 import assert from "assert";
 await $$.clean();
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = await $$.loadPlugin("WorkspacePlugin");
+let UserPlugin = await $$.loadPlugin("WorkspaceUserPlugin");
 let graph = workspace.getGraph();
 let allOk = true;
 
-let ownerId = await workspace.createUser("user1@email.com", "User 1 1", "owner").id;
-await workspace.createWorkspace("Test Workspace", ownerId);
+let owner = await UserPlugin.createUser("user1@email.com", "User 1 1", "owner");
+await workspace.createWorkspace("Test Workspace", owner.id);
 
 
 let testDoc ={

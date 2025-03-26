@@ -100,10 +100,10 @@ allOk |=compareObjects(parseCommandLine('define @output "string Value"'), {
     varTypes: ["text"]
 });
 
-allOk |=compareObjects(parseCommandLine("ask personalityName @output $input1 $input2 'some input' $inputN"), {
+allOk |=compareObjects(parseCommandLine("ask agentName @output $input1 $input2 'some input' $inputN"), {
     command: "ask",
     outputVars: ["output"],
-    inputVars: ["personalityName", "input1", "input2", 'some input', "inputN"],
+    inputVars: ["agentName", "input1", "input2", 'some input', "inputN"],
     varTypes: ["text", "var", "var", "text", "var"]
 });
 

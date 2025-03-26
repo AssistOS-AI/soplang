@@ -1,6 +1,3 @@
-
-
-
 let {createVarsGraph} = require("../src/graph/VarsGraph.js");
 let {createRegistry} = require("../src/graph/CommandsRegistry.js");
 
@@ -38,41 +35,6 @@ async function WorkspacePlugin(){
             ownerId: ownerId,
             clock: 0
         });
-    }
-
-    self.createPersonality = async function (name, description) {
-        return await persistence.createPersonality({
-            name: name,
-            description: description
-        });
-    }
-
-    self.createUser = async function (email, displayName, role) {
-        return await persistence.createUser({
-            email: email,
-            displayName: displayName,
-            role: role
-        });
-    }
-
-    self.updateUser = async function (userId, email, displayName, role) {
-        return await persistence.updateUser(userId,{
-            email: email,
-            displayName: displayName,
-            role: role
-        });
-    }
-
-    self.updatePersonality = async function (personalityId, name, description, values) {
-        return await persistence.updatePersonality(personalityId, {
-            name: name,
-            description: description,
-            ...values
-        });
-    }
-
-    self.getPersonalityInfo = async function (personalityId) {
-        return await persistence.getPersonality(personalityId);
     }
 
     self.createDocument = async function (docId, documentCategory) {
@@ -290,38 +252,21 @@ async function WorkspacePlugin(){
         return await persistence.restore(documentId, snapshotId);
     }
 
-    self.getPersonalityByName = async function (name) {
-        return await persistence.getPersonalityByName(name);
-    }
-
     self.getDocumentsByCategory = async function (category) {
         return await persistence.getDocumentsByCategory(category);
-    }
-
-    self.getUserByEmail = async function (email) {
-        return await persistence.getUserByEmail(email);
     }
 
     self.getDocumentSnapshots = async function (documentId) {
         return await persistence.getSnapshotByDocument(documentId);
     }
 
-    self.getAllUsers = async function () {
-        return await persistence.getEveryUser();
-    }
-
     self.getAllDocuments = async function () {
         return await persistence.getEveryDocument();
-    }
-
-    self.getAllPersonalities = async function () {
-        return await persistence.getEveryPersonality();
     }
 
     self.getAllVariables = async function () {
         return await persistence.getEveryVariable();
     }
-
 
     self.forceSave = async function () {
         return await persistence.forceSave();
@@ -346,5 +291,8 @@ module.exports = {
             return async function(globalUserId, email, command, ...args){
                 return true;
             }
+    },
+    getDependencies: async function(){
+        return ["StandardPersistencePlugin"];
     }
 }
