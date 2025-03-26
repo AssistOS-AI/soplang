@@ -7,7 +7,8 @@ const tests = [
     './pipelines/tablesTest.mjs',
     './util/commandLineParserTest.js',
     './pipelines/aliasTest.mjs',
-    './workspace/mainSmokeTest.mjs'
+    './workspace/mainSmokeTest.mjs',
+    './pipelines/conditionalsTest.mjs'
 ];
 
 async function runTestsSequentially(tests) {

@@ -115,6 +115,13 @@ function parseCommandLine(commandLine) {
         let pos = 0;
         let {token, position, tokenType} = getNextToken(commandLine, pos);
         pos = position;
+        while(tokenType === "whitespaces"){
+            let nextToken = getNextToken(commandLine, pos);
+            token = nextToken.token;
+            pos = position = nextToken.position;
+            tokenType = nextToken.tokenType;
+        }
+
         if(tokenType === "output"){
             outputVars.push(token);
             let nextToken = {};

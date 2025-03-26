@@ -33,7 +33,29 @@ function CommandsRegistry( workSpace) {
         console.debug("Overwriting", outputValues[0], "with", inputValues[0] + "!!!! Not implemented yet");
     }
     commands.if = async function (inputValues, outputValues, varContext, varGraph) {
+        // if var then x else y
+     let condition = inputValues[0];
+     let hashThen = inputValues[1] === "then";
+     if(!hashThen){
+         await $$.throwError("Invalid syntax. Expected 'then' after condition  in if statement");
+      }
+     let thenValue = undefined;
+     let elseValue = undefined;
+      if(inputValues.length >= 2){
+          thenValue = inputValues[2];
+      }
 
+     let hasElse = inputValues[3] === "else";
+      if(hasElse){
+          if(inputValues.length >= 4){
+                elseValue = inputValues[4];
+          }
+      }
+        if(condition){
+            return thenValue;
+        } else {
+            return elseValue;
+        }
     }
 
 

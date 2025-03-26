@@ -18,15 +18,19 @@ async function WorkspacePlugin(){
     }
 
     self.getVarValue = async function (documentId, variableName) {
-        return graph.getVarValue(documentId, variableName);
+        return await graph.getVarValue(documentId, variableName);
+    }
+
+    self.setVarValue = async function (documentId, variableName) {
+        return await graph.setVarValue(documentId, variableName);
     }
 
     self.registerCommand = function (commandName, commandFunction) {
         commandsRegistry.addCommand(commandName, commandFunction);
     }
 
-    self.runScript = async function (script) {
-        return await graph.runScript(script);
+    self.runScript = async function (script, documentId) {
+        return await graph.runScript(script, documentId);
     }
 
     self.createWorkspace = async function (workspaceName, ownerId) {

@@ -20,24 +20,47 @@ function VarsGraph(commandsRegistry) {
         //define special variable for document title
       }
 
-      this.analiseCommandSection = async function(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){
-          //console.debug("<><><><>>>>>Analysing command section", commandTextSeparatedByNewLine);
+
+      async function defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){
           if(commandTextSeparatedByNewLine === "" || commandTextSeparatedByNewLine === null || commandTextSeparatedByNewLine === undefined){
               return;
           }
           let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
-            for(let i = 0; i < lines.length; i++){
-                let line = lines[i];
-                line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
-                let parsedCommand = varUtil.parseCommandLine(line);
-                //console.debug("!!!!!!!! Parsed command", parsedCommand);
-                if(parsedCommand.outputVars.length === 0) {
-                    parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
-                }
+          console.debug(">>>>>Defining variables from code:", lines);
+          for(let i = 0; i < lines.length; i++){
+              let line = lines[i];
+              if(line === ""){
+                    continue;
+              }
+              line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
+              let parsedCommand = varUtil.parseCommandLine(line);
+              //console.debug("!!!!!!!! Parsed command", parsedCommand);
+              if(parsedCommand.outputVars.length === 0) {
+                  parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
+              }
 
-                 self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
-                //console.debug("<><><><>>>>>Defining variable", parsedCommand.outputVars[0], "with command", parsedCommand);
-            }
+              await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
+              //console.debug("<><><><>>>>>Defining variable", parsedCommand.outputVars[0], "with command", parsedCommand);
+          }
+      }
+
+      this.analiseCommandSection = async function(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){
+
+          defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
+
+
+      }
+
+      this.runScript = async function( script, inDocId){
+          if(script === "" || script === null || script === undefined){
+                return;
+          }
+          let document = await defaultPersistence.hasDocument(inDocId);
+          if(!document){
+              console.debug("Creating document", inDocId);
+             await defaultPersistence.createDocument({docId:inDocId, "title": "Document for script execution " + inDocId});
+          }
+          await defineVarsFromCode(inDocId, "_", "_", script);
       }
 
       this.analiseTextSection = async function(docId, chapterId, paragraphId, text){
@@ -67,6 +90,7 @@ function VarsGraph(commandsRegistry) {
         return await varUtil.setNewValue(varId, value);
     }
 
+      this.setVarValue = this.setNewValue;
 
     this.defineVariable = async function(varName, docId, chapterId, paragraphId, parsedCommand){
           if(typeof parsedCommand === "string"){
@@ -199,8 +223,6 @@ function VarsGraph(commandsRegistry) {
                 self
                 );
       }
-
-
 
     async function computeValue(varId){
         let deps = await varUtil.getDependencies(varId);
