@@ -215,8 +215,20 @@ function VarsGraph(commandsRegistry) {
           if(parsedCommand.command === "alias"){
               return await resolveValue(targetVar.varId);
           }
+
+          console.debug("Running command", parsedCommand.command, "with input values", inputValues, "and output", targetVar.varId);
+          let intendedCommand = parsedCommand.command;
+          if(intendedCommand[0] === "!"){
+              intendedCommand = intendedCommand.substring(1);
+              //all input values must be defined, cant pe null, empty string or undefined
+                for(let i = 0; i < inputValues.length; i++){
+                    if(inputValues[i] === null || inputValues[i] === "" || inputValues[i] === undefined){
+                        return undefined;
+                    }
+                }
+          }
          return await commandsRegistry.runCommand(
-                parsedCommand.command,
+                intendedCommand,
                 inputValues,
                 parsedCommand.outputVars,
                 targetVar,

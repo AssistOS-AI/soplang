@@ -104,7 +104,7 @@ function getNextToken(str, position){
 
 function parseCommandLine(commandLine) {
         // replace the first occurrence of = or :  with ' set '
-        commandLine = commandLine.replace(':=', ' assign ');
+        commandLine = commandLine.replace(':=', 'assign ');
 
         //console.debug("Parsing command line:", commandLine);
         let outputVars = [];
