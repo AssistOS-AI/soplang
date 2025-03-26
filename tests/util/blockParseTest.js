@@ -1,12 +1,12 @@
 let util =require("../../src/util/soplangUtil.js")
 
-let block = "@aliasHelloWorld alias doc1 helloWorld" + "\n" +
-    "@something := [ := a1 b1 ] [ := a2 b2 ]  [ := a3 b3 c4 ] " + "\n" +
-    "@changedText if [unequal $text 'abstract']  then  [ := @somethingAgain ]"+ "\n" +
-    "overwrite aliasHelloWorld with $changedText"
+let textSection = " first ignored comment 1 %var1 World % comment2 %var_2 New World %  some ignored comment 2" + "\n" +
+    "ignored comment 3 %_var_3 World % comment2 %var-4%%var-5 New World  value continues with new line and" + "\n" +
+     "  other texts are possible%  ignored comment 4" + "\n" +
+    "ignored comment 5 % var_6 World % comment2 %   var7 New Brave World %" + "\n";
 
-let lines = util.parseCommandBlock("ch1","p1",  block);
+let vars = util.parseTextVars(textSection);
 
-console.log(lines);
+console.log(vars);
 
 

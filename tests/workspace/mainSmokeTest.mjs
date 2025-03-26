@@ -2,8 +2,8 @@
 import {} from "../deps/clean.mjs";
 import assert from "assert";
 await $$.clean();
-let workspace = await $$.loadPlugin("WorkspacePlugin");
-let UserPlugin = await $$.loadPlugin("WorkspaceUserPlugin");
+let workspace = await $$.loadPlugin("Workspace");
+let UserPlugin = await $$.loadPlugin("WorkspaceUsers");
 let graph = workspace.getGraph();
 let allOk = true;
 
@@ -23,12 +23,12 @@ let testDoc ={
                     "commands": "@title := 'New Title for Chapter1'",
                     paragraphs:[
                         {
-                            text: " comment1 %localText Hello % comment2",
-                            commands: "@hello := $localText"
+                            text: " comment1 %localText1 Hello % comment2",
+                            commands: "@hello := $localText1"
                         },
                         {
-                            text: " comment1 %localText World % comment2 %anotherLocalText New World %  comment 3 ",
-                            commands: "@helloWorld := $hello $localText"
+                            text: " comment1 %localText2 World % comment2 %anotherLocalText New World %  comment 3 ",
+                            commands: "@helloWorld := $hello $localText2"
                         }
                     ]
                 },
@@ -41,9 +41,7 @@ let testDoc ={
             title: "Chapter 2",
             docId: "doc2",
             infoText: "Text of the abstract ",
-            commands: "@aliasHelloWorld alias doc1 helloWorld" + "\n" +
-                "@changedText if [unequal $text 'abstract']  then $text "+ "\n" +
-                "overwrite aliasHelloWorld with $changedText"
+            commands: "@aliasHelloWorld alias doc1 helloWorld"
           }
     };
 
@@ -68,6 +66,7 @@ await workspace.buildAll();
 
 await graph.printGraph();
 
-assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello", "Failed to validate the value $helloWorld, expected 'Hello' but got " + await workspace.getVarValue("doc1", "helloWorld"));
+assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello World", "Failed to validate the value $helloWorld, expected 'Hello' but got " + await workspace.getVarValue("doc1", "helloWorld"));
+assert(await workspace.getVarValue("doc2", "aliasHelloWorld") === "Hello World", "Failed to validate the value $aliasHelloWorld, expected 'Hello' but got " + await workspace.getVarValue("doc1", "helloWorld"));
 
 await workspace.shutDown();

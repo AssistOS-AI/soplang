@@ -13,11 +13,11 @@ function VarsGraph(commandsRegistry) {
 
 
       this.analiseChapterTile = async function(docId, chapterId, title){
-
+        //define special variable for chapter title
       }
 
       this.analiseDocumentTile = async function(docId, title){
-
+        //define special variable for document title
       }
 
       this.analiseCommandSection = async function(docId, chapterId, paragraphId, commandTextSeparatedByNewLine){

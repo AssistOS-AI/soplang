@@ -6,14 +6,14 @@ const tests = [
     './pipelines/depsGraphHWTest.mjs',
     './pipelines/tablesTest.mjs',
     './util/commandLineParserTest.js',
-    './workspace/mainSmokeTest.mjs',
-    './pipelines/aliasTest.mjs'
+    './pipelines/aliasTest.mjs',
+    './workspace/mainSmokeTest.mjs'
 ];
 
-async function runTestsSequentially(teste) {
+async function runTestsSequentially(tests) {
     let passed = 0, failed = 0;
 
-    for (const testPath of teste) {
+    for (const testPath of tests) {
         const absolutePath = path.resolve(testPath);
         console.log(`\n▶️ Running test: ${absolutePath}`);
 

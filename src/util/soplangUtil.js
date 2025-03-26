@@ -218,35 +218,27 @@ function LocalSafeTimestamp(){
         return JSON.stringify(this);
     }
 }
+function parseTextVars(text) {
+    if (!text) return [];
 
+    function extractVar(block) {
+        // Remove % from start and end, then trim
+        let content = block.slice(1, -1).trim();
+        let firstSpaceIndex = content.indexOf(' ');
 
-function parseTextVars (text){
-    // in the text section we can have embedded variables with names prefixed with % and ends with %.
-    // Example 'some ignored text  %commandName some value% more ignored text %anotherCommand some string as value %'
-    // The function returns an array with the variables found in the text and their values.
-    if(text === "" || text === undefined){
-        return [];
-    }
-    //console.debug("<><><><>>>>>parseTextVars ", text);
-    let result = [];
-    let embeddedVars = text.match(/%[^%]+%/g);
-    if(embeddedVars === null){
-        return [];
-    }
-    embeddedVars.forEach(fulltext => {
-        //take the first position of a space and this is the variable name
-        let firstSpacePos = fulltext.indexOf(" ");
-        if(firstSpacePos === -1){
-            console.warn("Invalid embedded variable:", fulltext);
-            return ;
+        if (firstSpaceIndex === -1) {
+            firstSpaceIndex = content.length;
         }
-        let variable = fulltext.substring(1, firstSpacePos);
-        let value = fulltext.substring(embeddedVars+1, fulltext.length-1);
-        result.push({variable, value});
-    });
-    return result;
-}
 
+        let variable = content.slice(0, firstSpaceIndex).trim();
+        let value = content.slice(firstSpaceIndex + 1).trim();
+
+        return { variable, value };
+    }
+
+    let blocks = text.match(/%[^%]+%/g) || [];
+    return blocks.map(extractVar).filter(Boolean);
+}
 
 function renameSpecialVars(chapterId, paragraphId, line){
     return line.replace(/[$@]text/g, (match) => match[0] + makeNameForSpecialVars(chapterId, paragraphId, "text"))

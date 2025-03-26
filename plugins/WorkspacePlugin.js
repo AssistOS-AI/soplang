@@ -293,6 +293,6 @@ module.exports = {
             }
     },
     getDependencies: async function(){
-        return ["StandardPersistencePlugin"];
+        return ["DefaultPersistence"];
     }
 }
