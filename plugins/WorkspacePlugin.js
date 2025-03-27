@@ -296,7 +296,7 @@ module.exports = {
                 return true;
             }
     },
-    getDependencies: async function(){
+    getDependencies: function(){
         return ["DefaultPersistence"];
     }
 }

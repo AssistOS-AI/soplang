@@ -113,5 +113,8 @@ module.exports = {
         return async function(globalUserId, email, command, ...args){
             return true;
         }
+    },
+    getDependencies: function(){
+        return [];
     }
 }
