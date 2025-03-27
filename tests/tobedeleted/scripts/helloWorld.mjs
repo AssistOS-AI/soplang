@@ -1,6 +1,6 @@
-import {parseCommandLine,compareObjects} from "../../src/util/soplangUtil.js";
-import {createVarsGraph} from "../../src/graph/VarsGraph.js";
-import {createRegistry} from "../../src/graph/CommandsRegistry.js";
+import {parseCommandLine,compareObjects} from "../../../src/util/soplangUtil.js";
+import {createVarsGraph} from "../../../src/graph/VarsGraph.js";
+import {createRegistry} from "../../../src/graph/CommandsRegistry.js";
 
 let allOk = true;
 

@@ -6,24 +6,18 @@ let graph = workspace.getGraph();
 let allOk = true;
 
 let script = `
-    @v1 := Hello
-    @v2 if $v1 then [ := $v1 World! ] else [ := Hello Universe! ]
+    @v1 := $arg1    
+    @v2 := $v1 World!
 `;
 
 
-let docId = await workspace.runScript(script);
+let docId =await workspace.runScript(script , "Hello");
 
 await workspace.buildAll();
 await graph.printGraph();
 
-allOk &&= await workspace.getVarValue(docId,"v2") === "Hello World!";
-
-await workspace.setVarValue(docId,"v1","");
-
-await workspace.buildAll();
-await graph.printGraph();
-
-allOk &&= await graph.getVarValue(docId,"v2") === "Hello Universe!";
+let value = await graph.getVarValue(docId,"v2");
+allOk &&= value === "Hello World!";
 
 await workspace.shutDown();
 

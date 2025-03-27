@@ -8,29 +8,29 @@ let allOk = true;
 let script = `
     @v1 := Hello
     @pipeConcat def 'return args.join("|")'
-    @v2 !pipeConcat $v1 World!
-    @v3 !:= $v1 World!
+    @v2 ?pipeConcat $v1 World!
+    @v3 ?:= $v1 World!
 `;
 
 
-await workspace.runScript(script, "doc1");
+let docId =await workspace.runScript(script);
 
 await workspace.buildAll();
 await graph.printGraph();
 
-let value_v2 = await graph.getVarValue("doc1","v2");
-let value_v3 = await graph.getVarValue("doc1","v3");
+let value_v2 = await graph.getVarValue(docId,"v2");
+let value_v3 = await graph.getVarValue(docId,"v3");
 allOk &&= value_v2 === "Hello|World!";
 allOk &&= value_v3 === "Hello World!";
 console.log("Obtained values first time:", value_v2, value_v3);
 
-await workspace.setVarValue("doc1","v1","");
+await workspace.setVarValue(docId,"v1","");
 
 await workspace.buildAll();
 await graph.printGraph();
 
-value_v2 = await graph.getVarValue("doc1","v2");
-value_v3 = await graph.getVarValue("doc1","v3");
+value_v2 = await graph.getVarValue(docId,"v2");
+value_v3 = await graph.getVarValue(docId,"v3");
 allOk &&= value_v2 === undefined;
 allOk &&= value_v3 === undefined;
 console.log("Obtained values second time:", value_v2, value_v3);

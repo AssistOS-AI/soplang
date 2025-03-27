@@ -51,16 +51,24 @@ function VarsGraph(commandsRegistry) {
 
       }
 
-      this.runScript = async function( script, inDocId){
+      this.runScript = async function( script, ...args){
           if(script === "" || script === null || script === undefined){
                 return;
           }
-          let document = await defaultPersistence.hasDocument(inDocId);
-          if(!document){
-              console.debug("Creating document", inDocId);
-             await defaultPersistence.createDocument({docId:inDocId, "title": "Document for script execution " + inDocId});
-          }
+          const SCRIPT_EXECUTION = "Script Execution";
+          let inDocId = SCRIPT_EXECUTION + " " + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
+          await defaultPersistence.createDocument({docId:inDocId, title:inDocId, category: SCRIPT_EXECUTION, commands: script});
+          let initialisation = "@arg0 := " + inDocId + "\n";
+            if(Array.isArray(args)){
+                for(let i = 0; i < args.length; i++){
+                    initialisation += ("@arg" + (i+1) + " := " + args[i] + "\n");
+                }
+            } else {
+                initialisation += ("@arg1 := " + args + "\n");
+            }
+            script = initialisation + script;
           await defineVarsFromCode(inDocId, "_", "_", script);
+          return inDocId;
       }
 
       this.analiseTextSection = async function(docId, chapterId, paragraphId, text){
@@ -218,7 +226,7 @@ function VarsGraph(commandsRegistry) {
 
           console.debug("Running command", parsedCommand.command, "with input values", inputValues, "and output", targetVar.varId);
           let intendedCommand = parsedCommand.command;
-          if(intendedCommand[0] === "!"){
+          if(intendedCommand[0] === "?"){
               intendedCommand = intendedCommand.substring(1);
               //all input values must be defined, cant pe null, empty string or undefined
                 for(let i = 0; i < inputValues.length; i++){
