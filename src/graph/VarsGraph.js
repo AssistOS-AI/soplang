@@ -55,8 +55,8 @@ function VarsGraph(commandsRegistry) {
           if(script === "" || script === null || script === undefined){
                 return;
           }
-          const SCRIPT_EXECUTION = "Script Execution";
-          let inDocId = SCRIPT_EXECUTION + " " + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
+          const SCRIPT_EXECUTION = "Script_Execution";
+          let inDocId = SCRIPT_EXECUTION + "_" + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
           await defaultPersistence.createDocument({docId:inDocId, title:inDocId, category: SCRIPT_EXECUTION, commands: script});
           let initialisation = "@arg0 := " + inDocId + "\n";
             if(Array.isArray(args)){
