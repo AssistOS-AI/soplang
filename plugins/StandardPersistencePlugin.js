@@ -7,6 +7,8 @@ async function createStandardPersistencePlugin(){
     await persistence.configureTypes({
         workspace: {
             id: "singleton workspace",
+            spaceGlobalId: "string",
+            name: "string",
             documents: "array document",
             clock : "integer",
             permissions: "any"
@@ -74,6 +76,7 @@ async function createStandardPersistencePlugin(){
         }
     });
 
+    await persistence.createIndex("workspace", "spaceGlobalId");
     await persistence.createIndex("user", "email");
 
     await persistence.createIndex("agent", "name");
