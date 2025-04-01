@@ -22,6 +22,9 @@ async function AgentPlugin(){
     self.getAllAgents = async function () {
         return await persistence.getEveryAgent();
     }
+    self.getAllAgentObjects = async function () {
+        return await persistence.getEveryAgentObject();
+    }
 
     self.forceSave = async function () {
         return await persistence.forceSave();

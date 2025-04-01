@@ -180,6 +180,12 @@ async function WorkspacePlugin(){
         await persistence.updateChapter(chapterId, {paragraphs});
         return await persistence.getParagraph(par.id);
     }
+    self.deleteParagraph = async function (chapterId, paragraphId) {
+        let chapter = await persistence.getChapter(chapterId);
+        let paragraphs = chapter.paragraphs.filter(p => p !== paragraphId);
+        await persistence.updateChapter(chapterId, {paragraphs});
+        return await persistence.deleteParagraph(paragraphId);
+    }
 
     self.changeParagraphOrder = async function (chapterId, paragraphId, newPosition) {
         let chapter = await persistence.getChapter(chapterId);
@@ -239,6 +245,9 @@ async function WorkspacePlugin(){
         let paragraphId = chapter.paragraphs[paragraphPosition];
         return await persistence.getParagraph(paragraphId);
     }
+    self.getParagraph = async function(paragraphId){
+        return await persistence.getParagraph(paragraphId);
+    }
 
     self.updateChapter = async function (chapterId, chapterTitle, comments, commands) {
         let chapter = await persistence.getChapter(chapterId);
@@ -250,6 +259,15 @@ async function WorkspacePlugin(){
             comments,
             commands
         });
+    }
+    self.getChapter = async function (chapterId) {
+        return await persistence.getChapter(chapterId);
+    }
+    self.deleteChapter = async function (documentId, chapterId) {
+        let document = await persistence.getDocument(documentId);
+        let chapters = document.chapters.filter(c => c !== chapterId);
+        await persistence.updateDocument(documentId, {chapters});
+        return await persistence.deleteChapter(chapterId);
     }
 
     self.updateParagraph = async function (chapterId, paragraphId, paragraphText, commands, comments) {
@@ -278,9 +296,15 @@ async function WorkspacePlugin(){
     self.getDocumentSnapshots = async function (documentId) {
         return await persistence.getSnapshotByDocument(documentId);
     }
+    self.deleteSnapshot = async function(documentId, snapshotId) {
+        return await persistence.deleteSnapshot(documentId, snapshotId);
+    }
 
     self.getAllDocuments = async function () {
         return await persistence.getEveryDocument();
+    }
+    self.getAllDocumentObjects = async function () {
+        return await persistence.getEveryDocumentObject();
     }
 
     self.getAllVariables = async function () {
