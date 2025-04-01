@@ -270,8 +270,46 @@ function makeNameForSpecialVars(chapterId, paragraphId, varName, forcePrefix = f
     return varName;
 }
 
+function replaceDotVariables(inputString) {
+    // Array to store all detected chain variables
+    const detectedVars = {};
+
+    // Function to transform variable names (replacing dots with underscores)
+    const transformVarName = (varName) => {
+        return varName.replace(/\./g, '_');
+    };
+
+    // Process variables with specific prefix (@ or $)
+    const processVars = (str, prefix) => {
+        // Match variables that start with the prefix followed by alphanumeric chars and dots
+        const regex = new RegExp(`\\${prefix}([a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)+)`, 'g');
+
+        return str.replace(regex, (match, varName) => {
+            // Add the original variable to the detected list (without the prefix)
+            detectedVars[varName] = `@` + transformVarName(varName) + ` chainAlias ` + varName.replaceAll(".", " ");
+
+            // Transform the variable name by replacing dots with underscores
+            const newVarName = transformVarName(varName);
+
+            // Return the transformed variable with its prefix
+            return `${prefix}${newVarName}`;
+        });
+    };
+
+    // Process @ variables first
+    let result = processVars(inputString, '@');
+
+    // Then process $ variables
+    result = processVars(result, '$');
+
+    // Return both the transformed string and the list of detected variables
+    return {
+        transformedString: result,
+        detectedVariables: detectedVars
+    };
+}    const result = {};
+
 function parseComplexLine(input, makeVarName) {
-    const result = {};
     let transformedText = input;
 
     const regex = /\[(.*?)\]/g;
@@ -310,10 +348,14 @@ function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLin
     let result = commandTextSeparatedByNewLine.split("\n");
     let newLines = [];
     for(let i = 0; i < result.length; i++){
-        let res = parseComplexLine(result[i], makeVarNames);
+        let lineRes = replaceDotVariables(result[i]);
+        let res = parseComplexLine(lineRes.transformedString, makeVarNames);
         result[i] = res.transformedText;
         for(let key in res.variables){
             newLines.push("@" + key + " " + res.variables[key]);
+        }
+        for (let key in lineRes.detectedVariables) {
+            newLines.push(lineRes.detectedVariables[key]);
         }
     }
 
@@ -328,5 +370,6 @@ module.exports = {
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine
+    parseComplexLine,
+    replaceDotVariables
 }
