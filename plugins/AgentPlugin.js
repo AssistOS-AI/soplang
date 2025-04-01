@@ -8,17 +8,15 @@ async function AgentPlugin(){
             description: description
         });
     }
-
-    self.updateAgent = async function (agentId, name, description, values) {
-        return await persistence.updateAgent(agentId, {
-            name: name,
-            description: description,
-            ...values
-        });
+    self.deleteAgent = async function(id){
+        return await persistence.deleteAgent(id);
+    }
+    self.updateAgent = async function (id, values) {
+        return await persistence.updateAgent(id, values);
     }
 
-    self.getAgent = async function (agentId) {
-        return await persistence.getAgent(agentId);
+    self.getAgent = async function (id) {
+        return await persistence.getAgent(id);
     }
 
     self.getAllAgents = async function () {

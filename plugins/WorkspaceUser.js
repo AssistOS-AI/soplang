@@ -17,6 +17,9 @@ async function WorkspaceUser(){
             role: role
         });
     }
+    self.deleteUser = async function (userId) {
+        return await persistence.deleteUser(userId);
+    }
 
     self.getUser = async function (email) {
         return await persistence.getUser(email);

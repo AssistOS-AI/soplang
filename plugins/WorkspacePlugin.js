@@ -33,14 +33,29 @@ async function WorkspacePlugin(){
         return await graph.runScript(script, ...args);
     }
 
-    self.createWorkspace = async function (workspaceName, ownerId) {
-        return await persistence.createWorkspace( {
+    self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+        return await persistence.createWorkspace({
             id: workspaceName,
             ownerId: ownerId,
+            spaceGlobalId: spaceGlobalId,
+            documents: [],
             clock: 0
         });
     }
 
+    self.getWorkspace = async function (globalId) {
+        return await persistence.getWorkspace(globalId);
+    }
+    self.updateDocument = async (documentId, title, category, infoText, commands, comments, chapters) => {
+        return await persistence.updateDocument(documentId, {
+            title: title,
+            category: category,
+            infoText: infoText,
+            commands: commands,
+            comments: comments,
+            chapters: chapters
+        });
+    }
     self.createDocument = async function (docId, documentCategory) {
         return await persistence.createDocument({
             title: docId,
