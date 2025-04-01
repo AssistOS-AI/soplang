@@ -1,12 +1,16 @@
+let block = `
+    @nob1       := new NamedObject "NOB1" "Constructor Name NOB1"
+    @nob1.name  := "Second Name of all NOBs"
+    #initial value will be null as no object exists with id NOB2
+    @nob2Alias  lookup "NOB2"   
+    @name       := $nob1Alias.name 
+    #new become a lookup on the re-execution of the script, added @nob2Alias dependency to force order of execution
+    @nob2       new NamedObject "NOB2" @nob2Alias
+    @nob2.name  := $nob1Alias.name
+    #force deletion of nob1.    
+    @deleteNob1 if [exists $nob1] then [ delete nob1 ] else "already deleted" 
+    `;
+
 let util =require("../../src/util/soplangUtil.js")
-
-let textSection = " first ignored comment 1 %var1 World % comment2 %var_2 New World %  some ignored comment 2" + "\n" +
-    "ignored comment 3 %_var_3 World % comment2 %var-4%%var-5 New World  value continues with new line and" + "\n" +
-     "  other texts are possible%  ignored comment 4" + "\n" +
-    "ignored comment 5 % var_6 World % comment2 %   var7 New Brave World %" + "\n";
-
-let vars = util.parseTextVars(textSection);
-
-console.log(vars);
-
-
+let parsedBlock = util.parseCommandBlock(undefined, undefined, block);
+console.log(parsedBlock)
