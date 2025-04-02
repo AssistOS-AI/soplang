@@ -286,7 +286,11 @@ function replaceDotVariables(inputString) {
 
         return str.replace(regex, (match, varName) => {
             // Add the original variable to the detected list (without the prefix)
-            detectedVars[varName] = `@` + transformVarName(varName) + ` chainAlias ` + varName.replaceAll(".", " ");
+            let tempVarName = transformVarName(varName);
+            let aliasTempVarName = '__alias_' + tempVarName;
+            const splitVarName = varName.split(".");
+            detectedVars[aliasTempVarName] = `@` + aliasTempVarName + ` new chainAlias $${splitVarName[0]}`;
+            detectedVars[varName] = `@` + tempVarName + ` ${aliasTempVarName}.chainAlias ` + varName.replaceAll(".", " ") + ` $${splitVarName[0]}`;
 
             // Transform the variable name by replacing dots with underscores
             const newVarName = transformVarName(varName);
@@ -296,13 +300,9 @@ function replaceDotVariables(inputString) {
         });
     };
 
-    // Process @ variables first
     let result = processVars(inputString, '@');
-
-    // Then process $ variables
     result = processVars(result, '$');
-
-    // Return both the transformed string and the list of detected variables
+    result = processVars(result, '~');
     return {
         transformedString: result,
         detectedVariables: detectedVars

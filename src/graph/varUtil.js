@@ -26,6 +26,13 @@ async function getVarValue(varId){
 
 async function setNewValue(varId, newValue, force = false){
     let varDef = await getVariable(varId);
+    let varValue = await getVarValue(varId);
+
+    if(varValue !== undefined && typeof varValue.setInnerValue === "function"){
+        await varValue.setInnerValue(varDef, newValue);
+        return;
+    }
+
     if(!varDef){
         await $$.throwError("Variable not found", varId);
     }
@@ -37,9 +44,9 @@ async function setNewValue(varId, newValue, force = false){
     if(varDef.parsedCommand.command === "table"){
         newValue = {tableHeader: varDef.parsedCommand.inputVars, tableData:newValue};
     }
+
     await defaultPersistence.updateVariable(varId, {value: newValue, clock: defaultPersistence.getLogicalTimestamp()});
 }
-
 async function getDependencies(varId){
     let deps = [];
     let varDef = await getVariable(varId);
@@ -55,11 +62,15 @@ async function getDependencies(varId){
     } else if(varDef.parsedCommand.inputVars.length > 0){
         for(let i = 0; i < varDef.parsedCommand.inputVars.length; i++){
             let inputVar = varDef.parsedCommand.inputVars[i];
-            if(varDef.parsedCommand.varTypes[i] === "alias"){
+            const varType = varDef.parsedCommand.varTypes[i];
+            if(varType === "alias"){
                 deps.push(inputVar);
             }
-            if(varDef.parsedCommand.varTypes[i] === "var"){
+            if(varType === "var"){
                 deps.push(inputVar);
+            }
+            if(inputVar[0] === "~"){
+                deps.push(getVarID(varDef.docId, inputVar.slice(1)));
             }
         }
     }
@@ -67,6 +78,9 @@ async function getDependencies(varId){
 }
 
 async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _parsedCommand) {
+    if (!_docId) {
+        throw new Error("Document ID is required");
+    }
     let existingVarContext = {};
     let varId = getVarID(_docId, _varName);
 
@@ -91,6 +105,9 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.chapterId = _chapterId;
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;
+    if (_parsedCommand === "new") {
+        varContext.customType = _parsedCommand.inputVars[0];
+    }
 
     if(diffObjects(existingVarContext, varContext)){
         //console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);

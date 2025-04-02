@@ -1,4 +1,4 @@
-
+Error.stackTraceLimit = Infinity;
 console.log("Start initialisation...");
 import {} from "../../Persisto/clean.mjs";
 

@@ -1,11 +1,12 @@
 let {createVarsGraph} = require("../src/graph/VarsGraph.js");
 let {createRegistry} = require("../src/graph/CommandsRegistry.js");
+const customTypeRegistry = require("../src/graph/customTypeRegistry.js");
 
 async function WorkspacePlugin(){
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
 
-    let commandsRegistry = createRegistry();
+    let commandsRegistry = createRegistry(self);
     let graph = createVarsGraph(commandsRegistry, persistence);
 
     self.getGraph = function(){
@@ -21,8 +22,8 @@ async function WorkspacePlugin(){
         return await graph.getVarValue(documentId, variableName);
     }
 
-    self.setVarValue = async function (documentId, variableName) {
-        return await graph.setVarValue(documentId, variableName);
+    self.setVarValue = async function (documentId, variableName, value) {
+        return await graph.setVarValue(documentId, variableName, value);
     }
 
     self.registerCommand = function (commandName, commandFunction) {
@@ -48,13 +49,19 @@ async function WorkspacePlugin(){
     self.getWorkspace = async function (globalId) {
         return await persistence.getWorkspace(globalId);
     }
-    self.updateDocument = async (documentId, title, category, infoText, commands, comments) => {
+
+    self.defineCustomType = async function (typeName, typeDefinition) {
+        customTypeRegistry.registerType(typeName, typeDefinition);
+    }
+
+    self.updateDocument = async (documentId, title, category, infoText, commands, comments, chapters) => {
         return await persistence.updateDocument(documentId, {
             title: title,
             category: category,
             infoText: infoText,
             commands: commands,
             comments: comments,
+            chapters: chapters
         });
     }
     self.createDocument = async function (docId, documentCategory) {
@@ -144,7 +151,7 @@ async function WorkspacePlugin(){
         return doc;
     }
 
-    self.createChapter = async function (documentId, chapterTitle, commands, comments, position) {
+    self.createChapter = async function (documentId, chapterTitle, commands, comments) {
         //console.debug(">>>> Creating chapter", chapterTitle, "for document", documentId);
         let document = await persistence.getDocument(documentId);
         let chapter =  await persistence.createChapter({
@@ -158,19 +165,13 @@ async function WorkspacePlugin(){
         await graph.analiseCommandSection(document.docId, chapter.id, undefined, commands);
         await graph.analiseChapterTile(document.docId, chapter.id,  chapterTitle);
 
-        let chapters = document.chapters;
-        if(position === undefined || position === null){
-            position = chapters.length;
-        }
-        if (position < 0 || position > chapters.length) {
-            throw new Error("Cannot create chapter: invalid position");
-        }
-        chapters.splice(position, 0, chapter.id);
+
+        let chapters = document.chapters.concat(chapter.id);
         await persistence.updateDocument(documentId, {chapters});
         return await persistence.getChapter(chapter.id);
     }
 
-    self.createParagraph = async function (chapterId, paragraphText, commands, comments, position) {
+    self.createParagraph = async function (chapterId, paragraphText, commands, comments) {
         console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId, "commands", commands);
         let chapter = await persistence.getChapter(chapterId);
         let par = await persistence.createParagraph({
@@ -182,16 +183,7 @@ async function WorkspacePlugin(){
         await graph.analiseCommandSection(chapter.docId, chapter.id, par.id, commands);
         await graph.analiseTextSection(chapter.docId, chapter.id, par.id, paragraphText);
 
-        let paragraphs = chapter.paragraphs;
-        if(position === undefined || position === null){
-            position = paragraphs.length;
-        }
-        if (position < 0 || position > paragraphs.length) {
-            throw new Error("Cannot create paragraph: invalid position");
-        }
-        paragraphs.splice(position, 0, par.id);
-
-
+        let paragraphs = chapter.paragraphs.concat(par.id);
         //console.debug("!!!!! Created paragraph", chapter, "for chapter", chapter, "new chapters", paragraphs);
         await persistence.updateChapter(chapterId, {paragraphs});
         return await persistence.getParagraph(par.id);
@@ -272,7 +264,7 @@ async function WorkspacePlugin(){
         await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
 
         return await persistence.updateChapter(chapterId,{
-            title: chapterTitle,
+            chapterTitle,
             comments,
             commands
         });
@@ -292,7 +284,7 @@ async function WorkspacePlugin(){
         await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands);
         await graph.analiseTextSection(chapter.docId, chapterId, paragraphId, paragraphText);
         return await persistence.updateParagraph(paragraphId,{
-            text: paragraphText,
+            paragraphText,
             commands,
             comments
         });
