@@ -46,14 +46,13 @@ async function WorkspacePlugin(){
     self.getWorkspace = async function (globalId) {
         return await persistence.getWorkspace(globalId);
     }
-    self.updateDocument = async (documentId, title, category, infoText, commands, comments, chapters) => {
+    self.updateDocument = async (documentId, title, category, infoText, commands, comments) => {
         return await persistence.updateDocument(documentId, {
             title: title,
             category: category,
             infoText: infoText,
             commands: commands,
             comments: comments,
-            chapters: chapters
         });
     }
     self.createDocument = async function (docId, documentCategory) {
