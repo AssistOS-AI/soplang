@@ -42,7 +42,9 @@ async function WorkspacePlugin(){
             clock: 0
         });
     }
-
+    self.deleteDocument = async function (documentId) {
+        return await persistence.deleteDocument(documentId);
+    }
     self.getWorkspace = async function (globalId) {
         return await persistence.getWorkspace(globalId);
     }
@@ -195,6 +197,7 @@ async function WorkspacePlugin(){
         await persistence.updateChapter(chapterId, {paragraphs});
         return await persistence.getParagraph(par.id);
     }
+
     self.deleteParagraph = async function (chapterId, paragraphId) {
         let chapter = await persistence.getChapter(chapterId);
         let paragraphs = chapter.paragraphs.filter(p => p !== paragraphId);
