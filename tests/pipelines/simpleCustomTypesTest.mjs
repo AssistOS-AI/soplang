@@ -4,18 +4,18 @@ let workspace = await $$.loadPlugin("Workspace");
 let graph = workspace.getGraph();
 
 let allOk = true;
-function NameObjectConstructor(id, name) {
-    this.id = id;
+function NameObject(name) {
+    this.id = 1;
     this.name = name;
 
-    this.serialize = function() {
+    this.serialize = async function() {
         return JSON.stringify({
             id: this.id,
             name: this.name
         });
     };
 
-    this.deserialize = function(valueFromVariable) {
+    this.deserialize = async function(valueFromVariable) {
         let data;
         if (typeof valueFromVariable === 'string') {
             try {
@@ -27,28 +27,27 @@ function NameObjectConstructor(id, name) {
             data = valueFromVariable;
         }
 
-        return new NameObjectConstructor(
-            data.id || "",
-            data.name || ""
-        );
-    };
-
-    this.getInnerValue = function(obj, workspace) {
         return this;
     };
 
-    this.setInnerValue = function(obj, newValue, workspace) {
+    this.getInnerValue = function(obj, workspace) {
+        return obj;
+    };
 
+    this.setInnerValue = function(obj, newValue, workspace) {
+        for (let key in newValue) {
+            obj[key] = newValue[key];
+        }
     };
 
     this.delete = function() {
         // Nothing to do for cleanup
     };
 }
-let testScript = `@nob1 new NamedObject "NOB1" "Constructor Name NOB1"
-    overwrite ~nob1.name "Second Name of all NOBs"
+let testScript = `@nob1 new NamedObject "Initial name NOB1" 
+    overwrite ~nob1.name "New name NOB1"
     @var1 := $nob1.name`
-await workspace.defineCustomType("NamedObject", NameObjectConstructor);
+await workspace.defineCustomType("NamedObject", NameObject);
 
 let docId = await workspace.runScript(testScript);
 

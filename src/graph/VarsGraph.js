@@ -274,12 +274,11 @@ function VarsGraph(commandsRegistry) {
             }
         }
 
-
         // let value = await varUtil.getVarValue(varId);
-
         if (mustRecompute) {
             let variable = await varUtil.getVariable(varId);
             let value = await runCommand(variable);
+            console.debug("Computed value for", varId, ":", value);
             await varUtil.setNewValue(varId, value, true);
         }
     }
@@ -313,7 +312,7 @@ function VarsGraph(commandsRegistry) {
     }
 
     self.varsDump = async function () {
-        let result = {variables: []};
+        let allVars = [];
         let variables = await defaultPersistence.getEveryVariable();
         for (let i = 0; i < variables.length; i++) {
             let varId = variables[i];
@@ -332,28 +331,31 @@ function VarsGraph(commandsRegistry) {
             let valueAsString = varInfo.value && varInfo.value.tableHeader ? generateCSV(varInfo.value.tableHeader, varInfo.value.tableData) : varInfo.value;
 
             const obj = {};
-            obj[varInfo.varId] = {
-                value: valueAsString,
-                clock: varInfo.clock,
-                deps,
-                command: varInfo.parsedCommand.command,
-                inputVars: varInfo.parsedCommand.inputVars.join(",")
-            };
-            result.variables.push(obj);
-            /*
-            if(!result[varInfo.docId]){
-                result[varInfo.docId] = [];
+
+            let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Deps: [${deps}]`;
+
+            async function dumpObjOrValue(value) {
+                if (typeof value === "object") {
+                    let typeName = value.constructor.name;
+                    let valueString = value.serialize ? await value.serialize() : value.toString();
+                    return `Object Type: '${typeName}', Serialisation: '${valueString}'`;
+                }
+                if(value === undefined || value === null){
+                    return "NULL";
+                }
+                return value.toString();
             }
-            result[varInfo.docId].push({
-                varId: varInfo.varId,
-                //command: varInfo.parsedCommand.command,
-                //inputVars: varInfo.parsedCommand.inputVars.join(" "),
-                value: JSON.stringify(varInfo.value),
-                clock: varInfo.clock? varInfo.clock: "Not Initialized"
-            })
-            */
+            allVars.push({
+                varId : varInfo.varId,
+                value: await dumpObjOrValue(valueAsString),
+                info: info
+            });
         }
-        let dump = JSON.stringify(result.variables, null, 2);
+
+        let dump = "\n";
+        for(let v in allVars){
+            dump += `\tVariable '${allVars[v].varId}':\n \t\t${allVars[v].value}\n \t\tInfo: ${allVars[v].info}\n`;
+        }
         return dump;
         // return dump.replace(/},/g, '},\n\t');
     }

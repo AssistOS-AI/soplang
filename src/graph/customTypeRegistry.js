@@ -46,20 +46,16 @@ function AliasObject(docId, varId) {
     this.docId = docId;
     this.varId = varId;
 
-    this.commands = {}
-    this.serialize = function (obj) {
-        return JSON.stringify(obj);
-    }
-    this.deserialize = function (valueFromVariable) {
-        let parsed = JSON.parse(valueFromVariable);
-        return new AliasObject(parsed.docId, parsed.varId);
-    }
+     this.getCommands = function () {
+        return {
+        }
+     }
 
-    this.getInnerValue = function (obj, workspace) {
-        return workspace.getVarValue(obj.docId, obj.varId);
+    this.getRuntimeValue = async function (workspace) {
+        return workspace.getVarValue(this.docId, this.varId);
     }
-    this.setInnerValue = function (obj, newValue, workspace) {
-        // nothing to do here
+    this.setRuntimeValue = async function (obj, newValue, workspace) {
+         await $$.throwError("Cannot set value of alias. Change the original variable instead");
     }
     this.getDependencies = function (obj, workspace) {
         const varUtil = require("./varUtil");
@@ -70,58 +66,45 @@ function AliasObject(docId, varId) {
 }
 
 const chainAlias = async function (inputValues, outputValues, currentDocId, workspace) {
-    return new ChainAliasObject(inputValues[0] + "." + inputValues[1], currentDocId);
+    return new ChainAliasObject(currentDocId, inputValues[0] + "." + inputValues[1] );
 }
 
-function ChainAliasObject(chain, docId) {
-    let objId;
-    let objPath;
+function ChainAliasObject(docId, chain) {
+    let self = this;
+    let targetObjectId = undefined;
     if (typeof chain === "string") {
         this.chain = chain;
         const splitChain = chain.split(".");
-        objId = splitChain[0];
-        objPath = splitChain[1];
-    }
-
-    const commands = {
-        chainAlias: chainAlias
+        this.objId = splitChain[0];
+        this.objPath = splitChain[1];
     }
 
     this.getCommands = function () {
-        return commands;
+        return {
+            chainAlias
+        };
     }
 
-    this.serialize = async function (obj) {
-        return JSON.stringify(obj);
-    }
-
-    this.deserialize = async function (valueFromVariable) {
-        let parsed = JSON.parse(valueFromVariable);
-        return new ChainAliasObject(parsed.chain);
-    }
-
-    this.getInnerValue = async function () {
-        let obj = await varUtil.getVarValue(varUtil.getVarID(docId, objId));
+    this.getRuntimeValue = async function () {
+        let targetVarId = varUtil.getVarID(docId, this.objId);
+        let obj = await varUtil.getVarValue(targetVarId);
         if (!obj) {
             return undefined;
         }
-        return obj[objPath];
+        return obj[this.objPath];
     }
 
-    this.setInnerValue = async function (obj, newValue) {
-        obj[objPath] = newValue;
-        await varUtil.setNewValue(varUtil.getVarID(docId, objId), obj);
+    this.setRuntimeValue = async function (newValue) {
+        let targetVarId = varUtil.getVarID(docId, this.objId);
+        let obj = await varUtil.getVarValue(targetVarId);
+        obj[this.objPath] = newValue;
+        await varUtil.setNewValue(targetVarId, obj);
     }
 
     this.getDependencies = function (obj, workspace) {
         const varUtil = require("./varUtil");
-        let deps = [];
-        if (obj.chain && Array.isArray(obj.chain)) {
-            for (let link of obj.chain) {
-                deps.push(varUtil.getVarID(link.docId, link.varId));
-            }
-        }
-        return deps;
+        let targetVarId = varUtil.getVarID(docId, this.objId);
+        return [targetVarId];
     }
 
     this.delete = async function () {
