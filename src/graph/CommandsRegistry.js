@@ -16,6 +16,8 @@ function CommandsRegistry( workspace) {
         }
     };
 
+    commands.as = commands.assign;
+
     commands.def = commands.define = async function (inputValues, outputValues) {
         let code = "(function(args){" + inputValues[0] + "})";
         console.debug("Define:", outputValues[0], inputValues[0], code);
@@ -31,10 +33,25 @@ function CommandsRegistry( workspace) {
     }
 
     commands.new = async function (inputValues, outputValues, currentDocId) {
-        const customTypeRegistry = require("./customTypeRegistry");
         const typeName = inputValues[0];
         const args = inputValues.slice(1);
         return customTypeRegistry.newInstance(typeName, ...args);
+    }
+
+    commands.lookup = async function (inputValues, outputValues, currentDocId, workspace) {
+        const typeName = inputValues[0];
+        const primaryKey = inputValues[1];
+        const persistence = $$.loadPlugin("DefaultPersistence");
+        let typeNameForMethods = typeName.charAt(0).toUpperCase() + typeName.slice(1);
+        let getMethod = "get" + typeNameForMethods;
+        //let createMethod = "create" + typeNameForMethods;
+        let existingPersistentObject= undefined;
+        try{
+            existingPersistentObject = await persistence[getMethod](primaryKey);
+        } catch (err){
+            // ignore !?
+        }
+        return customTypeRegistry.newInstance(typeName, primaryKey, existingPersistentObject);
     }
 
     commands.if = async function (inputValues) {
@@ -75,10 +92,11 @@ function CommandsRegistry( workspace) {
                 await $$.throwError("Variable not found:", splitCommand[0]);
                 return;
             }
-            //console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + value);
+
             const command = value[splitCommand[1]];
             if(!command){
-                await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${value}"`);
+                console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + value);
+                await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${$$.dumpObject(value)}"`);
                 return;
             }
             let result = await command(inputValues, outputValues, currentDocId, workspace);

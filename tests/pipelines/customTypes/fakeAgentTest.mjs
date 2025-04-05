@@ -4,57 +4,60 @@ let workspace = await $$.loadPlugin("Workspace");
 let persistence = await $$.loadPlugin("DefaultPersistence");
 let graph = workspace.getGraph();
 
-persistence.declareType("FakeAgent", {
-    agentName: {
-        type: "string",
-        defaultValue: "FakeAgent"
-    },
-    agentType: {
-        type: "string",
-        defaultValue: "FakeAgent"
-    },
-    agentId: {
-        type: "string",
-        defaultValue: "FakeAgent"
+await persistence.configureTypes({
+    fakeAgent: {
+        name: "string"
     }
 });
 
-let allOk = true;
+await persistence.createIndex("fakeAgent", "name");
 
+await persistence.createFakeAgent({name:"Einstein"});
+
+//this is for testing lookup and an example when the persistent objects handled by Persisto are adapted to be used in SOP Lang
 function FakeAgent() {
     let self = this;
+    let agent = undefined; // should never be added to "this" as it will create unnecessary copies of the object
 
-    this.init = async function(x) {
+    this.init = async function(name, persistentInstance) {
         self.agentName = name;
-        persistence.createFakeAgent(self.agentName);
+        if(persistentInstance){
+            agent = persistentInstance;
+        } else {
+            agent = await persistence.createFakeAgent({name:self.agentName});
+        }
     }
 
     this.restore = async function(JSONSerialisation) {
         if(JSONSerialisation){
             self.agentName = JSONSerialisation.agentName;
+            agent = await persistence.getFakeAgent(self.agentName);
         }
     }
 
     this.ask = async function(inputValues, outputValues, currentDocId, workspace) {
-        let agentName = inputValues[0];
-        let prompt = "You are an useful agent named" + inputValues.join(" ") + " Please respond!";
-        if(agentName === "007Agent"){
+        let prompt = `You are an useful agent named ${self.agentName} ${inputValues.join(" ")}  Please respond!`;
+        if(self.agentName === "007Agent"){
             return "I am a fake James Bond!";
         } else {
-            return `Answer for: '${prompt}'`;
+            return `I am:[${self.agentName}] Prompt was: '${prompt}'`;
         }
     }
 }
 
 let testScript = `
-    @agent1 := new Agent 007Agent
-    @agent2 := lookup Agent Einstein     
-    @resp1  := $agent1.ask "What is your name?" #debug
-    @resp2  := $agent2.ask "What is your name?" #debug    
+    @agent1 new FakeAgent 007Agent
+    @agent2 lookup FakeAgent Einstein  # it was created before and now loaded from persistence
+    @agent3 lookup FakeAgent BigAnonymous  #  was not created before and now loaded from persistence   
+    @agent4 alias Script_Execution_1 agent1     
+    @resp1  agent1.ask "What is your name?" #debug
+    @resp2  agent2.ask "What is your name?" #debug
+    @resp3  agent3.ask "What is your name?" #debug        
+    @resp4  agent4.ask "What is your name?" #debug    
+    #ignored line
     `
 
-
-await workspace.defineCustomType("NamedObject", NamedObject);
+await workspace.defineCustomType("FakeAgent", FakeAgent);
 
 let docId = await workspace.runScript(testScript);
 
@@ -62,19 +65,10 @@ await workspace.buildAll();
 let value = undefined;
 
 console.debug("Checking var, var0 and var1 after the first build");
-await check("var", "NOB1");
-await check("var0", "Second Name of NOB1");
-await check("var1", "Final name of NOB1");
-
-await workspace.buildAll();
-
-// allOk &&= value === "Second Name of all NOBs";
-
-await graph.printGraph();
-await check("var", "Final name of NOB1");
-await check("var0", "Second Name of NOB1");
-await check("var1", "Final name of NOB1");
+$$.check(docId, "resp1", "I am a fake James Bond!");
+$$.check(docId, "resp2", "I am:[Einstein] Prompt was: 'You are an useful agent named Einstein What is your name?  Please respond!'");
+$$.check(docId, "resp3", "I am:[BigAnonymous] Prompt was: 'You are an useful agent named BigAnonymous What is your name?  Please respond!'");
+$$.check(docId, "resp4", "I am a fake James Bond!");
 
 await workspace.shutDown();
-
-console.log("All tests passed:", allOk? "true" : "false");
+console.log("All tests passed:", $$.allOk ? "true" : "false");

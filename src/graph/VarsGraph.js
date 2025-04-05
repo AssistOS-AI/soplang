@@ -28,9 +28,6 @@ function VarsGraph(commandsRegistry) {
         console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
-            if (line === "") {
-                continue;
-            }
             line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
             let parsedCommand = null;
             try {

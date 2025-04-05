@@ -18,6 +18,19 @@ $$.recordBuildInfo = function (text) {
     infoFromLastBuild.push(text);
 }
 
+$$.dumpObject = function (obj) {
+    let res = "{";
+    for(let key in obj){
+        if(typeof obj[key] === "function"){
+            continue;
+        }
+        res += key + ": " + obj[key] + ", ";
+    }
+    res += `type: ${obj?.constructor?.name || typeof obj}`;
+    res += "}";
+    return res;
+}
+
 async function WorkspacePlugin(){
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");

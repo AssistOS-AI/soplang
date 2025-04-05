@@ -16,6 +16,7 @@ const restoreInstance = async (name, JSONSerialisation) => {
     }
     let instance = new customTypes[name];
     await instance.restore(JSONSerialisation);
+    instance.customType = name;
     return instance;
 }
 
@@ -25,6 +26,7 @@ const newInstance = async (name, ...args) => {
     }
     let instance = new customTypes[name];
     await instance.init(...args);
+    instance.customType = name;
     return instance;
 }
 

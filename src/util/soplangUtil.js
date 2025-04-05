@@ -342,11 +342,19 @@ function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLin
     }
 
     let result = commandTextSeparatedByNewLine.split("\n");
+    let validLines = [];
     let newLines = [];
     for(let i = 0; i < result.length; i++){
-        let lineRes = replaceDotVariables(result[i]);
+        let line = result[i].trim();
+        if(line.length === 0){
+            continue;
+        }
+        if(line.startsWith("#") || line.startsWith("//")){
+            continue;
+        }
+        let lineRes = replaceDotVariables(line);
         let res = parseComplexLine(lineRes.transformedString, makeVarNames);
-        result[i] = res.transformedText;
+        validLines.push(res.transformedText);
         for(let key in res.variables){
             newLines.push("@" + key + " " + res.variables[key]);
         }
@@ -355,7 +363,7 @@ function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLin
         }
     }
 
-    return newLines.concat(result);
+    return newLines.concat(validLines);
 }
 
 

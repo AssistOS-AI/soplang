@@ -27,6 +27,9 @@ async function getVarValue(varId){
     if(varDef.customType){
         return customTypeRegistry.restoreInstance(varDef.customType, varDef.value);
     }
+    if(typeof varDef.value === "object" && typeof varDef.value.customType === "string"){
+        return customTypeRegistry.restoreInstance(varDef.value.customType, varDef.value);
+    }
     return varDef.value;
 }
 
@@ -159,7 +162,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.chapterId = _chapterId;
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;
-    if (_parsedCommand.command === "new") {
+    if (_parsedCommand.command === "new" || _parsedCommand.command === "lookup") {
         varContext.customType = _parsedCommand.inputVars[0];
     }
 
