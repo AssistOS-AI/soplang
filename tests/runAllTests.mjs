@@ -1,16 +1,20 @@
 import { fork } from 'child_process';
 import path from 'path';
+let failedTests = [];
+
 const tests = [
-    './pipelines/defTest.mjs',
-    './pipelines/varChangeTest.mjs',
-    './pipelines/depsGraphHWTest.mjs',
-    './pipelines/tablesTest.mjs',
+    './pipelines/basic/defTest.mjs',
+    './pipelines/basic/varChangeTest.mjs',
+    './pipelines/basic/depsGraphHWTest.mjs',
+    './pipelines/tables/tablesTest.mjs',
     './util/commandLineParserTest.js',
-    './pipelines/aliasTest.mjs',
-    './workspace/mainSmokeTest.mjs',
-    './pipelines/conditionalsTest.mjs',
-    './pipelines/implicitConditionalsTest.mjs',
-    './pipelines/runScriptTest.mjs',
+    './pipelines/basic/aliasTest.mjs',
+    './pipelines/documents/mainSmokeTest.mjs',
+    './pipelines/basic/conditionalsTest.mjs',
+    './pipelines/basic/implicitConditionalsTest.mjs',
+    './pipelines/scripts/runScriptTest.mjs',
+    './pipelines/customTypes/simpleCustomTypesTest.mjs',
+    './pipelines/customTypes/fakeAgentTest.mjs',
 ];
 
 async function runTestsSequentially(tests) {
@@ -33,11 +37,16 @@ async function runTestsSequentially(tests) {
             passed++;
         } else {
             console.log(`❌ FAILED: ${testPath} (exit code: ${exitCode})`);
+            failedTests.push(testPath);
             failed++;
         }
     }
 
     console.log(`\n🏁 Finished: ${passed} passed, ${failed} failed.`);
+    if(failed > 0) {
+        console.log(`\nFailed tests:`);
+        failedTests.forEach(test => console.log(`- ${test}`));
+    }
     process.exit(failed > 0 ? 1 : 0);
 }
 
