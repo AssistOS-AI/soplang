@@ -32,7 +32,14 @@ function VarsGraph(commandsRegistry) {
                 continue;
             }
             line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
-            let parsedCommand = varUtil.parseCommandLine(line);
+            let parsedCommand = null;
+            try {
+                parsedCommand = varUtil.parseCommandLine(line);
+            } catch (e) {
+                console.error("Error parsing command!" + `Line ${line}  will be ignored`);
+                continue;
+            }
+
             //console.debug("!!!!!!!! Parsed command", parsedCommand);
             if (parsedCommand.outputVars.length === 0) {
                 parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
@@ -93,16 +100,20 @@ function VarsGraph(commandsRegistry) {
 
 
     this.getVarValue = async function (docId, varName) {
-        let varId = varUtil.getVarID(docId, varName);
+        let varId;
+        if (varName === undefined || varName === null || varName === "") {
+            varId = docId;
+        } else {
+            varId = varUtil.getVarID(docId, varName);
+        }
         return await varUtil.getVarValue(varId);
     }
 
-    this.setNewValue = async function (docId, varName, value) {
-        let varId = varUtil.getVarID(docId, varName);
-        return await varUtil.setNewValue(varId, value);
-    }
 
-    this.setVarValue = this.setNewValue;
+    this.setVarValue = async function (docId, varName, value) {
+        let varId = varUtil.getVarID(docId, varName);
+        return await varUtil.setVarValue(varId, value);
+    }
 
     this.defineVariable = async function (varName, docId, chapterId, paragraphId, parsedCommand) {
         if (typeof parsedCommand === "string") {
@@ -152,12 +163,14 @@ function VarsGraph(commandsRegistry) {
                 let depName = node.deps[i];
                 let dep = graph[depName];
                 if (depName === varName) {
-                    $$.throwErrorSync("Circular dependency detected for variable", depName);
+                    $$.recordBuildError(`Circular dependency detected for variable ${depName}. Build stopped!`);
+                    $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
                 }
                 if (!dep) {
-                    $$.throwErrorSync("Dependency", depName, "not found for variable", varName);
+                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Build stopped!`);
+                    $$.throwErrorSync( `Dependency ${depName} not found for variable ${varName}. Build stopped!`);
                 }
-                if (dep.layer === 0) {
+                else if (dep.layer === 0) {
                     determineLayer(depName, dep);
                 }
             }
@@ -207,12 +220,19 @@ function VarsGraph(commandsRegistry) {
 
     async function resolveValue(varId) {
         let varContext = await varUtil.getVariable(varId);
-        if (varContext.parsedCommand.command === "alias") {
+        if (varContext.parsedCommand.command === 'alias') {
             return await self.getVarValue(varContext.parsedCommand.inputVars[0], varContext.parsedCommand.inputVars[1]);
         }
+
+        if(varContext.parsedCommand.command === "chainAlias"){
+            //console.debug("Chain alias", varContext.parsedCommand.inputVars);
+            let obj = await self.getVarValue(varContext.parsedCommand.inputVars[2]);
+            return obj[varContext.parsedCommand.inputVars[1]];
+        }
+
         const value = await varUtil.getVarValue(varId);
-        if(value && typeof value.getInnerValue === "function"){
-            return await value.getInnerValue();
+        if(value && typeof value.getRuntimeValue === "function"){
+            return await value.getRuntimeValue();
         }
 
         return value;
@@ -221,8 +241,27 @@ function VarsGraph(commandsRegistry) {
     async function runCommand(targetVar) {
         let parsedCommand = targetVar.parsedCommand;
         let inputValues = []
+        let debugActivatedForCommand = false;
+
         for (let i = 0; i < parsedCommand.inputVars.length; i++) {
             let value = parsedCommand.inputVars[i];
+            if(value === "await"){
+                while(i < parsedCommand.inputVars.length){
+                    if(parsedCommand.inputVars[i] === "#debug"){
+                        debugActivatedForCommand = true;
+                    }
+                    i++;
+                }
+                break; // anything after wait will not be executed but still could participate in determination of dependencies
+            }
+            if(value === "#debug"){
+                debugActivatedForCommand = true;
+                continue;
+            }
+            if(value === "#"){
+                continue;
+            }
+
             switch (parsedCommand.varTypes[i]) {
                 case "var":
                     inputValues.push(await resolveValue(value));
@@ -231,11 +270,10 @@ function VarsGraph(commandsRegistry) {
                     inputValues.push(value);
             }
         }
-        if (parsedCommand.command === "alias") {
+        if (parsedCommand.command === "alias" || parsedCommand.command === "chainAlias") {
             return await resolveValue(targetVar.varId);
         }
 
-        console.debug("Running command", parsedCommand.command, "with input values", inputValues, "and output", targetVar.varId);
         let intendedCommand = parsedCommand.command;
         if (intendedCommand[0] === "?") {
             intendedCommand = intendedCommand.substring(1);
@@ -246,12 +284,18 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
-        return await commandsRegistry.runCommand(
+        let result = await commandsRegistry.runCommand(
             intendedCommand,
             inputValues,
             parsedCommand.outputVars,
             targetVar.docId
         );
+
+        if(debugActivatedForCommand){
+            $$.recordBuildInfo(`#DEBUG '${targetVar.varId}' is '${result}' #### Command ${parsedCommand.command}[${inputValues}]`);
+
+        }
+        return result;
     }
 
     async function computeValue(varId) {
@@ -278,8 +322,7 @@ function VarsGraph(commandsRegistry) {
         if (mustRecompute) {
             let variable = await varUtil.getVariable(varId);
             let value = await runCommand(variable);
-            console.debug("Computed value for", varId, ":", value);
-            await varUtil.setNewValue(varId, value, true);
+            await varUtil.setVarValue(varId, value, true);
         }
     }
 
@@ -332,12 +375,24 @@ function VarsGraph(commandsRegistry) {
 
             const obj = {};
 
-            let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Deps: [${deps}]`;
+            let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Dependencies: [${deps}]`;
 
             async function dumpObjOrValue(value) {
+                function dumpObjectSingleLine(obj) {
+                    let res = "{";
+                    for (let key in obj) {
+                        if (typeof obj[key] === "function") {
+                        continue;
+                        }
+                        res += `'${key}' : '${obj[key]}', `;
+                    }
+                    return res + "}";
+                }
+
+
                 if (typeof value === "object") {
                     let typeName = value.constructor.name;
-                    let valueString = value.serialize ? await value.serialize() : value.toString();
+                    let valueString = typeof value === "object" ? dumpObjectSingleLine(value) : value.toString();
                     return `Object Type: '${typeName}', Serialisation: '${valueString}'`;
                 }
                 if(value === undefined || value === null){

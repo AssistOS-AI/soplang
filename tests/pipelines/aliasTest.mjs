@@ -24,7 +24,7 @@ await graph.printGraph();
 
 allOk &&= await graph.getVarValue("doc2","v3") === "Hello World !";
 
-graph.setNewValue("doc0","v1","New Hello");
+graph.setVarValue("doc0","v1","New Hello");
 await graph.buildAll();
 
 allOk &&= await graph.getVarValue("doc2","v3") === "New Hello World !";

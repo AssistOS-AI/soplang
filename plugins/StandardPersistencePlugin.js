@@ -86,7 +86,7 @@ async function createStandardPersistencePlugin(){
     await persistence.createGrouping("documents", "document", "category");
     await persistence.createGrouping("snapshots", "snapshot", "document");
 
-    await persistence.createIndex("graph", "alias");
+    await persistence.createIndex("graph", "alias"); //TODO: Check why this exists? (Sînică)
 
     try{
         console.debug("Checking if GRAPH exists!");

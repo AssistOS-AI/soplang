@@ -19,7 +19,7 @@ await graph.printGraph();
 await graph.buildAll();
 await graph.printGraph();
 
-graph.setNewValue( "doc1","v1", "Hallo");
+graph.setVarValue( "doc1","v1", "Hallo");
 await graph.printGraph();
 
 await graph.buildAll();

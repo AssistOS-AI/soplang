@@ -2,6 +2,22 @@ let {createVarsGraph} = require("../src/graph/VarsGraph.js");
 let {createRegistry} = require("../src/graph/CommandsRegistry.js");
 const customTypeRegistry = require("../src/graph/customTypeRegistry.js");
 
+
+let errorFromLastBuild = [];
+let infoFromLastBuild = [];
+$$.recordBuildError = function (text, err) {
+    console.debug("Recording build error", text, err);
+    errorFromLastBuild.push({
+        text: text,
+        err: err
+    });
+}
+
+$$.recordBuildInfo = function (text) {
+    console.debug("Recording build info:", text);
+    infoFromLastBuild.push(text);
+}
+
 async function WorkspacePlugin(){
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
@@ -14,6 +30,7 @@ async function WorkspacePlugin(){
     }
 
     self.buildAll = async function () {
+        errorFromLastBuild = [];
         graph.topologicalSort();
         return await graph.buildAll();
     }

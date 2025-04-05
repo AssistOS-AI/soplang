@@ -34,7 +34,7 @@ function CommandsRegistry( workspace) {
         const customTypeRegistry = require("./customTypeRegistry");
         const typeName = inputValues[0];
         const args = inputValues.slice(1);
-        return customTypeRegistry.createInstance(typeName, ...args);
+        return customTypeRegistry.newInstance(typeName, ...args);
     }
 
     commands.if = async function (inputValues) {
@@ -75,8 +75,17 @@ function CommandsRegistry( workspace) {
                 await $$.throwError("Variable not found:", splitCommand[0]);
                 return;
             }
-            const command = value.getCommands()[splitCommand[1]]
-            return await command(inputValues, outputValues, currentDocId, workspace);
+            //console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + value);
+            const command = value[splitCommand[1]];
+            if(!command){
+                await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${value}"`);
+                return;
+            }
+            let result = await command(inputValues, outputValues, currentDocId, workspace);
+            //save the status of the variable just in case that the function had a side effect on its state
+            console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
+            await workspace.setVarValue(currentDocId, splitCommand[0], value);
+            return result; // the result of the command will be immediately  assigned to the output variable
         }
         let commandFunction = commands[commandName];
         if(!commandFunction){
