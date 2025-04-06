@@ -16,6 +16,7 @@ await $$.registerPlugin("DefaultPersistence", "../plugins/StandardPersistencePlu
 await $$.registerPlugin("Workspace", "../plugins/WorkspacePlugin.js");
 await $$.registerPlugin("Agents", "../plugins/AgentPlugin.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
+await $$.registerPlugin("Documents", "../plugins/DocumentsPlugin.js");
 
 
 $$.allOk = true;

@@ -30,6 +30,8 @@ const newInstance = async (name, ...args) => {
     return instance;
 }
 
+$$.registerCustomType = registerType;
+
 module.exports = {
     registerType,
     restoreInstance,

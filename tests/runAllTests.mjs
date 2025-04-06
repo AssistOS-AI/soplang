@@ -15,6 +15,7 @@ const tests = [
     './pipelines/scripts/runScriptTest.mjs',
     './pipelines/customTypes/simpleCustomTypesTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
+    './pipelines/scripts/workWithDocsTest.mjs',
 ];
 
 async function runTestsSequentially(tests) {

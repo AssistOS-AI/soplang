@@ -3,6 +3,7 @@ import {} from "../../deps/clean.mjs";
 import assert from "assert";
 await $$.clean();
 let workspace = await $$.loadPlugin("Workspace");
+let documents = await $$.loadPlugin("Documents");
 let UserPlugin = await $$.loadPlugin("WorkspaceUsers");
 let graph = workspace.getGraph();
 let allOk = true;
@@ -54,8 +55,8 @@ let testDoc ={
 
 for(let docId in testDoc){
     let doc = testDoc[docId];
-    let docObj = await workspace.createDocument(docId, "category");
-    await workspace.applyTemplate(docObj.id, doc);
+    let docObj = await documents.createDocument(docId, "category");
+    await documents.applyTemplate(docObj.id, doc);
 }
 
 await workspace.forceSave();

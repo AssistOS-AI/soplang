@@ -1,4 +1,5 @@
 const customTypeRegistry = require("./customTypeRegistry");
+const {tableCommands} = require("../predefined/tableUtil");
 
 function CommandsRegistry( workspace) {
     let commands = {
@@ -95,7 +96,7 @@ function CommandsRegistry( workspace) {
 
             const command = value[splitCommand[1]];
             if(!command){
-                console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + value);
+                console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + $$.dumpObject(value));
                 await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${$$.dumpObject(value)}"`);
                 return;
             }
@@ -119,14 +120,18 @@ function CommandsRegistry( workspace) {
 
 }
 
-let tableCommands = require("./tableUtil.js").tableCommands;
 
 module.exports = {
-    createRegistry: function (workspace) {
-        let registry = new CommandsRegistry(workspace);
+    createRegistry: async function (workspace) {
+        let registry = null;
+        registry = new CommandsRegistry(workspace);
+
+        const {tableCommands} = await import("../predefined/tableUtil.js");
         for(let commandName in tableCommands){
             registry.registerCommand(commandName, tableCommands[commandName]);
         }
+        const {init} = await import("../predefined/DocumentCommands.js");
+        await init();
         return registry;
     }
 }
