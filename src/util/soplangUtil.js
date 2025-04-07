@@ -270,10 +270,7 @@ function makeNameForSpecialVars(chapterId, paragraphId, varName, forcePrefix = f
     return varName;
 }
 
-function replaceDotVariables(inputString) {
-    // Array to store all detected chain variables
-    const detectedVars = {};
-
+function replaceDotVariables(inputString, detectedVars = {}) {
     // Function to transform variable names (replacing dots with underscores)
     const transformVarName = (varName) => {
         return varName.replace(/\./g, '_');
@@ -285,10 +282,12 @@ function replaceDotVariables(inputString) {
         const regex = new RegExp(`\\${prefix}([a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)+)`, 'g');
 
         return str.replace(regex, (match, varName) => {
-            // Add the original variable to the detected list (without the prefix)
-            let tempVarName = transformVarName(varName);
-            const splitVarName = varName.split(".");
-            detectedVars[varName] = `@` + tempVarName + ` chainAlias ` + varName.replaceAll(".", " ") + ` $${splitVarName[0]}`;
+            // Only add the chain alias if we haven't seen this variable before
+            if (!detectedVars[varName]) {
+                let tempVarName = transformVarName(varName);
+                const splitVarName = varName.split(".");
+                detectedVars[varName] = `@` + tempVarName + ` chainAlias ` + varName.replaceAll(".", " ") + ` $${splitVarName[0]}`;
+            }
             // Transform the variable name by replacing dots with underscores
             const newVarName = transformVarName(varName);
             // Return the transformed variable with its prefix
@@ -303,11 +302,11 @@ function replaceDotVariables(inputString) {
         transformedString: result,
         detectedVariables: detectedVars
     };
-}    const result = {};
+}
 
 function parseComplexLine(input, makeVarName) {
     let transformedText = input;
-
+    const result = {};
     const regex = /\[(.*?)\]/g;
     let match;
     let matches = [];
@@ -334,9 +333,9 @@ function parseComplexLine(input, makeVarName) {
 }
 
 
-function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLine){
+function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine) {
     let varCounter = 0;
-    function makeVarNames(){
+    function makeVarNames() {
         varCounter++;
         return makeNameForSpecialVars(chapterId, paragraphId, "TMP" + varCounter, true);
     }
@@ -344,23 +343,26 @@ function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLin
     let result = commandTextSeparatedByNewLine.split("\n");
     let validLines = [];
     let newLines = [];
-    for(let i = 0; i < result.length; i++){
+    let detectedVars = {};
+
+    for (let i = 0; i < result.length; i++) {
         let line = result[i].trim();
         if(line.length === 0){
             continue;
         }
-        if(line.startsWith("#") || line.startsWith("//")){
+        if (line.startsWith("#") || line.startsWith("//")) {
             continue;
         }
-        let lineRes = replaceDotVariables(line);
+        let lineRes = replaceDotVariables(line, detectedVars);
         let res = parseComplexLine(lineRes.transformedString, makeVarNames);
         validLines.push(res.transformedText);
-        for(let key in res.variables){
+        for (let key in res.variables) {
             newLines.push("@" + key + " " + res.variables[key]);
         }
-        for (let key in lineRes.detectedVariables) {
-            newLines.push(lineRes.detectedVariables[key]);
-        }
+    }
+
+    for (let key in detectedVars) {
+        newLines.push(detectedVars[key]);
     }
 
     return newLines.concat(validLines);
