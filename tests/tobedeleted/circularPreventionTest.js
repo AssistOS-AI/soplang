@@ -1,4 +1,4 @@
-let loader = require('../../src/graph/executionEngine');
+let loader = import('../../src/graph/executionEngine.js');
 
 let initialState ={
 

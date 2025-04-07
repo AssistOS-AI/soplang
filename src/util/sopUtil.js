@@ -1,5 +1,5 @@
 let typesRegistry = {};
-
+import {convertToBase36Id} from "../../Persisto/src//persistence/utils.js"
 let parseType = function (typeDescription) {
     let words = typeDescription.split(" ");
     let type = words[0];
@@ -63,76 +63,77 @@ function parseObjectAndConvert(typeName, JSONSerialisationAsString){
     }
     return res;
 }
-
-module.exports = {
-    registerSchema : function (schema) {
-        /*
-        A schema ia an object with each member represent the name of the type and the value is an object enumerating
-        the properties of the type. The properties are strings with name of the fieldName and the type description of the fieldName
-        The type description of a fieldName is a string  with words separated by space.
-         The first word is string, integer, array, object, or any
-            for array the second word is the name of type and means that the array contains IDs of objects of that type
-         */
-        return expandSchemaWithTypeDetails(schema);
-    },
+const registerSchema = function (schema) {
+    /*
+       A schema ia an object with each member represent the name of the type and the value is an object enumerating
+       the properties of the type. The properties are strings with name of the fieldName and the type description of the fieldName
+       The type description of a fieldName is a string  with words separated by space.
+        The first word is string, integer, array, object, or any
+           for array the second word is the name of type and means that the array contains IDs of objects of that type
+        */
+    return expandSchemaWithTypeDetails(schema);
+}
+const newObject = function (typeName, optionalId) {
+    let typeSchema = typesRegistry[typeName];
+    let res = {};
+    for(let fieldName in typeSchema){
+        let typeDesc = typeSchema[fieldName];
+        if(fieldName === "id"){
+            if(optionalId) {
+                if(typeof optionalId !== "number"){
+                    optionalId = parseInt(optionalId);
+                    if(isNaN(optionalId)){
+                        $$.throwErrorSync("ID must be a number or a string that can be converted to a number", optionalId);
+                    }
+                }
+                res.id = convertToBase36Id(typeName,optionalId);
+            } else {
+                if(typeDesc.type === "singleton") {
+                    res.id = "singleton";
+                } else {
+                    $$.throwErrorSync("ID is required for creating an object of typeDesc", typeName);
+                }
+            }
+            continue;
+        }
+        switch(typeDesc.type){
+            case "string":
+                res[fieldName] = "";
+                break;
+            case "integer":
+                res[fieldName] = 0;
+                break;
+            case "array":
+                res[fieldName] = [];
+                break;
+            case "object":
+                res[fieldName] = {};
+                break;
+            case "any":
+                res[fieldName] = null;
+                break;
+            case "index":
+                res[fieldName] = {
+                    typeName:typeDesc.typeName,
+                    fieldName:typeDesc.fieldName,
+                    values : {}
+                };
+                break;
+            case "mindex":
+                res[fieldName] = {
+                    typeName:typeDesc.typeName,
+                    fieldName:typeDesc.fieldName,
+                    values : {unknown: {}}
+                };
+                break;
+            default:
+                $$.throwErrorSync("Unknown typeDesc", typeDesc.type);
+        }
+    }
+}
+export {
+    registerSchema,
     convertToBase36Id,
     parseObjectAndConvert,
-    newObject: function(typeName, optionalId){
-       let typeSchema = typesRegistry[typeName];
-       let res = {};
-         for(let fieldName in typeSchema){
-              let typeDesc = typeSchema[fieldName];
-              if(fieldName === "id"){
-                  if(optionalId) {
-                      if(typeof optionalId !== "number"){
-                          optionalId = parseInt(optionalId);
-                          if(isNaN(optionalId)){
-                                 $$.throwErrorSync("ID must be a number or a string that can be converted to a number", optionalId);
-                          }
-                      }
-                      res.id = convertToBase36Id(typeName,optionalId);
-                  } else {
-                      if(typeDesc.type === "singleton") {
-                          res.id = "singleton";
-                      } else {
-                          $$.throwErrorSync("ID is required for creating an object of typeDesc", typeName);
-                      }
-                  }
-                  continue;
-              }
-              switch(typeDesc.type){
-                case "string":
-                    res[fieldName] = "";
-                    break;
-                case "integer":
-                    res[fieldName] = 0;
-                    break;
-                case "array":
-                    res[fieldName] = [];
-                    break;
-                case "object":
-                    res[fieldName] = {};
-                    break;
-                case "any":
-                    res[fieldName] = null;
-                    break;
-                case "index":
-                    res[fieldName] = {
-                            typeName:typeDesc.typeName,
-                            fieldName:typeDesc.fieldName,
-                            values : {}
-                            };
-                    break;
-                case "mindex":
-                      res[fieldName] = {
-                          typeName:typeDesc.typeName,
-                          fieldName:typeDesc.fieldName,
-                          values : {unknown: {}}
-                        };
-                      break;
-                default:
-                    $$.throwErrorSync("Unknown typeDesc", typeDesc.type);
-              }
-         }
-    }
+    newObject
 }

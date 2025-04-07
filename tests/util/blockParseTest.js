@@ -12,6 +12,6 @@ let block = `
     overwrite %nob1.name "Second Name of all NOBs"
     `;
 
-let util =require("../../src/util/soplangUtil.js")
+let util = await import("../../src/util/soplangUtil.js")
 let parsedBlock = util.parseCommandBlock(undefined, undefined, block);
 console.log(parsedBlock)

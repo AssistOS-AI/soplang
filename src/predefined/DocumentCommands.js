@@ -1,13 +1,11 @@
 
-
-let persistence = await $$.loadPlugin("DefaultPersistence");
-
-
 function Document() {
     let self = this;
     let documentsPlugin;
+    let persistence;
 
     this.init = async function(docId, docInstance) {
+        persistence = await $$.loadPlugin("DefaultPersistence");
         documentsPlugin = await $$.loadPlugin("Documents");
         self.docId = docId;
         if(docInstance){
@@ -18,6 +16,7 @@ function Document() {
     }
 
     this.restore = async function(JSONSerialisation) {
+        persistence = await $$.loadPlugin("DefaultPersistence");
         documentsPlugin = await $$.loadPlugin("Documents");
         if(JSONSerialisation){
             self.docId = JSONSerialisation.docId;

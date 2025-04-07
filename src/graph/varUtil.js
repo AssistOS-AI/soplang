@@ -1,12 +1,12 @@
-const {
+import {
     parseCommandLine,
     parseTextVars,
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine } = require("../util/soplangUtil");
+    parseComplexLine } from "../util/soplangUtil.js";
 
-let customTypeRegistry = require("./customTypeRegistry");
+let customTypeRegistry = await import("./customTypeRegistry.js");
 
 let defaultPersistence = $$.loadPlugin("DefaultPersistence");
 
@@ -168,7 +168,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
 
     if(diffObjects(existingVarContext, varContext)){
         //console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
-        this.clock = undefined;
+        varContext.clock = undefined;
     } else {
         return false; //nothing changed
     }
@@ -206,7 +206,7 @@ async function getVarClock(varId){
     return varDef.clock;
 }
 
-module.exports = {
+export {
     getVarID,
     getVariable,
     getVarValue,

@@ -367,7 +367,7 @@ function parseCommandBlock(chapterId, paragraphId,  commandTextSeparatedByNewLin
 }
 
 
-module.exports = {
+export {
     parseCommandLine,
     compareObjects,
     parseTextVars,

@@ -1,7 +1,7 @@
-let util =require("../../src/util/soplangUtil.js")
+let util = await import("../../src/util/soplangUtil.js")
 let parseCommandLine = util.parseCommandLine;
 let compareObjects = util.compareObjects;
-let assert = require("assert");
+let assert = import("assert");
 
 
 let allOk = true;

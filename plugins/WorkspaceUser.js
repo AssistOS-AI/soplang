@@ -41,19 +41,19 @@ async function WorkspaceUser(){
 
 let singletonInstance = undefined;
 
-module.exports = {
-    getInstance: async function () {
-        if(!singletonInstance){
-            singletonInstance = await WorkspaceUser();
-        }
-        return singletonInstance;
-    },
-    getAllow: function(){
-        return async function(globalUserId, email, command, ...args){
-            return true;
-        }
-    },
-    getDependencies: function(){
-        return ["DefaultPersistence"];
+export async function getInstance() {
+    if (!singletonInstance) {
+        singletonInstance = await WorkspaceUser();
     }
+    return singletonInstance;
+}
+
+export function getAllow() {
+    return async function(globalUserId, email, command, ...args) {
+        return true;
+    };
+}
+
+export function getDependencies() {
+    return ["DefaultPersistence"];
 }

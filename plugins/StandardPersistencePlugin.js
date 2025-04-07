@@ -1,7 +1,8 @@
-
-const persistoModule = require('../Persisto');
-let systemLogger = require("../src/logging/WorkSpaceLogger.js").getSystemLogger();
-
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const persistoModule = require('../Persisto/index.cjs');
+import {getSystemLogger} from "../src/logging/WorkSpaceLogger.js";
+let systemLogger = getSystemLogger();
 async function createStandardPersistencePlugin(){
     let persistence = await persistoModule.initialisePersisto( systemLogger);
     await persistence.configureTypes({
@@ -105,19 +106,19 @@ async function createStandardPersistencePlugin(){
 
 let singleton = null;
 
-module.exports = {
-    getInstance: async function () {
-        if(!singleton){
-            singleton = await createStandardPersistencePlugin();
-        }
-        return singleton;
-    },
-    getAllow: function(){
-        return async function(globalUserId, email, command, ...args){
-            return true;
-        }
-    },
-    getDependencies: function(){
-        return [];
+export async function getInstance() {
+    if (!singleton) {
+        singleton = await createStandardPersistencePlugin();
     }
+    return singleton;
+}
+
+export function getAllow() {
+    return async function(globalUserId, email, command, ...args) {
+        return true;
+    };
+}
+
+export function getDependencies() {
+    return [];
 }

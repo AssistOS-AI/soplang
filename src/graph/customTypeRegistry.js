@@ -1,5 +1,5 @@
-const varUtil = require("./varUtil");
-const {} = require("./varUtil");
+//const varUtil = await import("./varUtil.js");
+const {} = import("./varUtil.js");
 const customTypes = {};
 
 const registerType = (name, typeDefinition) => {
@@ -32,7 +32,7 @@ const newInstance = async (name, ...args) => {
 
 $$.registerCustomType = registerType;
 
-module.exports = {
+export {
     registerType,
     restoreInstance,
     newInstance

@@ -1,4 +1,4 @@
-let util =require("../../src/util/soplangUtil.js")
+let util = await import("../../src/util/soplangUtil.js")
 
 let textSection = " first ignored comment 1 %var1 World % comment2 %var_2 New World %  some ignored comment 2" + "\n" +
     "ignored comment 3 %_var_3 World % comment2 %var-4%%var-5 New World  value continues with new line and" + "\n" +

@@ -1,5 +1,5 @@
-const customTypeRegistry = require("./customTypeRegistry");
-const {tableCommands} = require("../predefined/tableUtil");
+const customTypeRegistry = await import("./customTypeRegistry.js");
+import {tableCommands} from "../predefined/tableUtil.js";
 
 function CommandsRegistry( workspace) {
     let commands = {
@@ -120,18 +120,18 @@ function CommandsRegistry( workspace) {
 
 }
 
+const createRegistry = async function (workspace) {
+    let registry = null;
+    registry = new CommandsRegistry(workspace);
 
-module.exports = {
-    createRegistry: async function (workspace) {
-        let registry = null;
-        registry = new CommandsRegistry(workspace);
-
-        const {tableCommands} = await import("../predefined/tableUtil.js");
-        for(let commandName in tableCommands){
-            registry.registerCommand(commandName, tableCommands[commandName]);
-        }
-        const {init} = await import("../predefined/DocumentCommands.js");
-        await init();
-        return registry;
+    const {tableCommands} = await import("../predefined/tableUtil.js");
+    for(let commandName in tableCommands){
+        registry.registerCommand(commandName, tableCommands[commandName]);
     }
+    const {init} = await import("../predefined/DocumentCommands.js");
+    await init();
+    return registry;
+}
+export {
+    createRegistry
 }

@@ -1,6 +1,6 @@
-let {createVarsGraph} = require("../src/graph/VarsGraph.js");
-let {createRegistry} = require("../src/graph/CommandsRegistry.js");
-const customTypeRegistry = require("../src/graph/customTypeRegistry.js");
+import {createVarsGraph} from "../src/graph/VarsGraph.js";
+import {createRegistry} from "../src/graph/CommandsRegistry.js";
+const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
 
 let errorFromLastBuild = [];
@@ -36,7 +36,7 @@ async function WorkspacePlugin(){
     let persistence = await $$.loadPlugin("DefaultPersistence");
 
     let commandsRegistry = await createRegistry(self);
-    let graph = createVarsGraph(commandsRegistry, persistence);
+    let graph = await createVarsGraph(commandsRegistry, persistence);
 
     self.getGraph = function(){
         return graph;
@@ -98,19 +98,19 @@ async function WorkspacePlugin(){
 
 let singletonInstance = undefined;
 
-module.exports = {
-    getInstance: async function () {
-        if(!singletonInstance){
-            singletonInstance = await WorkspacePlugin();
-        }
-        return singletonInstance;
-    },
-    getAllow: function(){
-            return async function(globalUserId, email, command, ...args){
-                return true;
-            }
-    },
-    getDependencies: function(){
-        return ["DefaultPersistence"];
+export async function getInstance() {
+    if (!singletonInstance) {
+        singletonInstance = await WorkspacePlugin();
     }
+    return singletonInstance;
+}
+
+export function getAllow() {
+    return async function(globalUserId, email, command, ...args) {
+        return true;
+    };
+}
+
+export function getDependencies() {
+    return ["DefaultPersistence"];
 }

@@ -1,6 +1,7 @@
-const fs = require('fs').promises;
-const path = require('path');
-const process = require("process");
+import { promises as fs } from 'fs';
+import path from 'path';
+
+//const process = import("process");
 
 function WorkSpaceLogger(flushInterval = 1, logDir) {
     if (!logDir) {
@@ -105,8 +106,9 @@ function WorkSpaceLogger(flushInterval = 1, logDir) {
     });
 }
 
-module.exports = {
-    getSystemLogger: function (flushInterval, logDir) {
-        return new WorkSpaceLogger(flushInterval, logDir);
-    }
+const getSystemLogger = function (flushInterval, logDir) {
+    return new WorkSpaceLogger(flushInterval, logDir);
+}
+export {
+    getSystemLogger
 }

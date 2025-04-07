@@ -333,9 +333,10 @@ let tableCommands = {
 
 tableCommands.line = tableCommands.row;
 
-module.exports = {
-    tableCommands: tableCommands,
-    getTable: function(headerDefinition, data){
-        return new Table(headerDefinition, data);
-    }
+const getTable = function (headerDefinition, data){
+    return new Table(headerDefinition, data);
+}
+export {
+    tableCommands,
+    getTable
 }

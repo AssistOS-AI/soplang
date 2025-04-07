@@ -1,4 +1,4 @@
-let varUtil = require("./varUtil.js");
+let varUtil = await import("./varUtil.js");
 let defaultPersistence = $$.loadPlugin("DefaultPersistence");
 
 function VarsGraph(commandsRegistry) {
@@ -425,8 +425,9 @@ function VarsGraph(commandsRegistry) {
 
 }
 
-module.exports = {
-    createVarsGraph: function (commandsRegistry) {
-        return new VarsGraph(commandsRegistry);
-    }
+const createVarsGraph = async function (commandsRegistry) {
+    return new VarsGraph(commandsRegistry);
+}
+export {
+    createVarsGraph
 }
