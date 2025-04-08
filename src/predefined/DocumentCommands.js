@@ -24,9 +24,7 @@ function Document() {
     }
 
     this.setTitle = async function(inputValues, outputValues, currentDocId, workspace) {
-        await persistence.updateDocument({
-            title: inputValues[0],
-        })
+        await documentsPlugin.updateDocument(self.docId, inputValues[0]);
     }
 
     this.getTitle = async function(inputValues, outputValues, currentDocId, workspace) {
@@ -49,8 +47,12 @@ function Document() {
         let chapterTitle = inputValues[1];
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            chapter = await documentsPlugin.createChapter(self.docId, chapterTitle);
-            await documentsPlugin.changeChapterOrder(self.docId, chapter.id, chapterOder);
+            let document = await documentsPlugin.getDocument(self.docId);
+            let chapters = document.chapters;
+            for (let i = chapters.length; i < chapterOder; i++) {
+                await documentsPlugin.createChapter(self.docId, "");
+            }
+            await documentsPlugin.createChapter(self.docId, chapterTitle);
         } else {
             await documentsPlugin.updateChapter(chapter.id, chapterTitle);
         }
@@ -62,16 +64,22 @@ function Document() {
         if(chapter){
             return chapter.title;
         }
-        return "";
     }
 
     this.setChapterCommands = async function(inputValues, outputValues, currentDocId, workspace) {
         let chapterOder = parseInt(inputValues[0]);
+        if(chapterOder < 0){
+            return;
+        }
         let commands = inputValues[1];
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            chapter = await documentsPlugin.createChapter(self.docId, "", commands);
-            await documentsPlugin.changeChapterOrder(self.docId, chapter.id, chapterOder);
+            let document = await documentsPlugin.getDocument(self.docId);
+            let chapters = document.chapters;
+            for (let i = chapters.length; i < chapterOder; i++) {
+                await documentsPlugin.createChapter(self.docId, "");
+            }
+            await documentsPlugin.createChapter(self.docId, "", commands);
         } else {
             await documentsPlugin.updateChapter(chapter.id, undefined, undefined, commands);
         }
@@ -83,7 +91,6 @@ function Document() {
         if(chapter){
             return chapter.commands;
         }
-        return "";
     }
 
     this.setParagraphText = async function(inputValues, outputValues, currentDocId, workspace) {
@@ -92,13 +99,20 @@ function Document() {
         let paragraphText = inputValues[2];
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            chapter = await documentsPlugin.createChapter(self.docId, "");
-            await documentsPlugin.changeChapterOrder(self.docId, chapter.id, chapterOder);
+            let document = await documentsPlugin.getDocument(self.docId);
+            let chapters = document.chapters;
+            for (let i = chapters.length; i <= chapterOder; i++) {
+                await documentsPlugin.createChapter(self.docId, "");
+            }
         }
         let paragraph = await documentsPlugin.getParagraphAt(self.docId, chapterOder, paragraphOder);
         if(!paragraph){
-            paragraph = await documentsPlugin.createParagraph(chapter.id, paragraphText);
-            await documentsPlugin.changeParagraphOrder(chapter.id, paragraph.id, paragraphOder);
+            let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
+            let paragraphs = chapter.paragraphs;
+            for (let i = paragraphs.length; i < paragraphOder; i++) {
+                await documentsPlugin.createParagraph(chapter.id, "");
+            }
+            await documentsPlugin.createParagraph(chapter.id, paragraphText);
         } else {
             await documentsPlugin.updateParagraph(chapter.id, paragraph.id, paragraphText);
         }
@@ -110,14 +124,13 @@ function Document() {
 
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            return "";
+            return;
         }
 
         let paragraph = await documentsPlugin.getParagraphAt(self.docId, chapterOder, paragraphOder);
         if(paragraph){
             return paragraph.text;
         }
-        return "";
     }
 
     this.setParagraphCommands = async function(inputValues, outputValues, currentDocId, workspace) {
@@ -127,14 +140,21 @@ function Document() {
 
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            chapter = await documentsPlugin.createChapter(self.docId, "");
-            await documentsPlugin.changeChapterOrder(self.docId, chapter.id, chapterOder);
+            let document = await documentsPlugin.getDocument(self.docId);
+            let chapters = document.chapters;
+            for (let i = chapters.length; i <= chapterOder; i++) {
+                await documentsPlugin.createChapter(self.docId, "");
+            }
         }
 
         let paragraph = await documentsPlugin.getParagraphAt(self.docId, chapterOder, paragraphOder);
         if(!paragraph){
-            paragraph = await documentsPlugin.createParagraph(chapter.id, "", commands);
-            await documentsPlugin.changeParagraphOrder(chapter.id, paragraph.id, paragraphOder);
+            let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
+            let paragraphs = chapter.paragraphs;
+            for (let i = paragraphs.length; i < paragraphOder; i++) {
+                await documentsPlugin.createParagraph(chapter.id, "");
+            }
+            await documentsPlugin.createParagraph(chapter.id, "", commands);
         } else {
             await documentsPlugin.updateParagraph(chapter.id, paragraph.id, undefined, commands);
         }
@@ -145,13 +165,12 @@ function Document() {
         let paragraphOder = parseInt(inputValues[1]);
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(!chapter){
-            return "";
+            return;
         }
         let paragraph = await documentsPlugin.getParagraphAt(self.docId, chapterOder, paragraphOder);
         if(paragraph){
             return paragraph.commands;
         }
-        return "";
     }
 
 }
