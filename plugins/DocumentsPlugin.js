@@ -308,5 +308,5 @@ export function getAllow() {
     };
 }
 export function getDependencies() {
-    return ["DefaultPersistence", "WorkspacePlugin"];
+    return ["DefaultPersistence", "Workspace"];
 }
