@@ -100,7 +100,7 @@ function CommandsRegistry( workspace) {
                 await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${$$.dumpObject(value)}"`);
                 return;
             }
-            let result = await command(inputValues, outputValues, currentDocId, workspace);
+            let result = await command.call(value, inputValues, outputValues, currentDocId, workspace);
             //save the status of the variable just in case that the function had a side effect on its state
             console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
