@@ -228,6 +228,9 @@ async function DocumentsPlugin(){
         let chapterId = doc.chapters[chapterPosition];
         let chapter = await persistence.getChapter(chapterId);
         let paragraphId = chapter.paragraphs[paragraphPosition];
+        if(!paragraphId){
+            return undefined;
+        }
         return await persistence.getParagraph(paragraphId);
     }
     self.getParagraph = async function(paragraphId){
