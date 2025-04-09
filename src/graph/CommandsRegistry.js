@@ -1,5 +1,4 @@
 const customTypeRegistry = await import("./customTypeRegistry.js");
-import {tableCommands} from "../predefined/tableUtil.js";
 
 function CommandsRegistry( workspace) {
     let commands = {
@@ -124,7 +123,7 @@ const createRegistry = async function (workspace) {
     let registry = null;
     registry = new CommandsRegistry(workspace);
 
-    const {tableCommands} = await import("../predefined/tableUtil.js");
+    const {tableCommands} = await import("../predefined/Table.js");
     for(let commandName in tableCommands){
         registry.registerCommand(commandName, tableCommands[commandName]);
     }
