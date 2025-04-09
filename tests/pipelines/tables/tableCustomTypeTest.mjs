@@ -7,187 +7,471 @@ let allOk = true;
 
 function Table() {
     let self = this;
-    self.columns = [];
-    self.data = [];
+    self.columns = []; // Column names
+    self.data = [];    // Array of objects
 
-    this.init = async function(...args) {
+    function assertIsTable() {
+        if (!self.columns || self.columns.length === 0) {
+            console.error("Not a good table definition: empty definition");
+            return false;
+        }
+        return true;
+    }
+
+    function pseudoJsonToValidJson(pseudoJson) {
+        const split = pseudoJson.split(",");
+        const result = {};
+        split.forEach(item => {
+            let trimmed = item.trim();
+            const [key, value] = trimmed.split(":");
+            result[key.trim()] = value.trim();
+        });
+        return result;
+    }
+
+
+    // Helper function to extract an area from the table
+    function extractArea(lines_range, columns_range) {
+        let res = [];
+
+        if (lines_range === undefined || lines_range === "" || lines_range === null) {
+            lines_range = "0-" + (self.data.length - 1);
+        }
+
+        if (columns_range === undefined || columns_range === "" || columns_range === null) {
+            columns_range = "0-" + (self.columns.length - 1);
+        }
+
+        // Parse line range
+        let firstLine, lastLine;
+        let columnsList = [];
+
+        if (typeof lines_range === "string") {
+            if (lines_range.includes("-")) {
+                let range = lines_range.split("-");
+                firstLine = parseInt(range[0]);
+                lastLine = parseInt(range[1]);
+                if (isNaN(lastLine) || lastLine >= self.data.length || lastLine < 0) {
+                    lastLine = self.data.length - 1;
+                }
+                if (isNaN(firstLine) || firstLine > lastLine) {
+                    console.error("Invalid line range:", lines_range);
+                    return res;
+                }
+            } else {
+                let value = parseInt(lines_range);
+                if (isNaN(value)) {
+                    console.error("Invalid line range:", lines_range);
+                    return res;
+                }
+                firstLine = value;
+                lastLine = value;
+            }
+        } else {
+            firstLine = 0;
+            lastLine = self.data.length - 1;
+        }
+
+        // Parse column range
+        if (typeof columns_range === "string") {
+            if (columns_range.includes(",")) {
+                columnsList = columns_range.split(",").map(col => col.trim());
+            } else if (columns_range.includes("-")) {
+                let range = columns_range.split("-");
+                let firstColumn = parseInt(range[0]);
+                let lastColumn = parseInt(range[1]);
+
+                if (isNaN(firstColumn) || isNaN(lastColumn) || firstColumn > lastColumn ||
+                    firstColumn < 0 || lastColumn >= self.columns.length) {
+                    console.error("Invalid column range:", columns_range);
+                    return res;
+                }
+
+                for (let col = firstColumn; col <= lastColumn; col++) {
+                    columnsList.push(self.columns[col]);
+                }
+            } else {
+                // Single column (name or index)
+                let colNo = parseInt(columns_range);
+                if (isNaN(colNo)) {
+                    columnsList.push(columns_range);
+                } else {
+                    if (colNo >= 0 && colNo < self.columns.length) {
+                        columnsList.push(self.columns[colNo]);
+                    } else {
+                        console.error("Invalid column index:", colNo);
+                        return res;
+                    }
+                }
+            }
+        } else if (typeof columns_range === "number") {
+            if (columns_range >= 0 && columns_range < self.columns.length) {
+                columnsList.push(self.columns[columns_range]);
+            } else {
+                console.error("Invalid column index:", columns_range);
+                return res;
+            }
+        }
+
+        // Validate self.columns list
+        if (columnsList.length === 0) {
+            console.error("Invalid column range:", columns_range);
+            return res;
+        }
+
+        // Extract self.data based on ranges
+        if (lastLine >= self.data.length) {
+            lastLine = self.data.length - 1;
+        }
+
+        // Return rows with selected self.columns
+        for (let line = firstLine; line <= lastLine; line++) {
+            if (self.data[line] === undefined) {
+                console.error("Invalid line number:", line);
+                continue;
+            }
+
+            // If extracting a single column and it's a direct access (not a single column of multiple rows)
+            if (columnsList.length === 1 && firstLine === lastLine) {
+                res.push(self.data[line][columnsList[0]]);
+            } else {
+                // Otherwise extract all requested self.columns from this row
+                const rowObj = {};
+                for (const col of columnsList) {
+                    if (col in self.data[line]) {
+                        rowObj[col] = self.data[line][col];
+                    }
+                }
+                res.push(rowObj);
+            }
+        }
+
+        return res;
+    }
+
+    self.init = async function(...args) {
         self.columns = args;
     }
 
-    this.restore = async function(JSONSerialisation) {
+    self.restore = async function(JSONSerialisation) {
         if (JSONSerialisation) {
             self.columns = JSONSerialisation.columns || [];
             self.data = JSONSerialisation.data || [];
         }
     }
 
-    this.getRuntimeValue = async function() {
+    self.getRuntimeValue = async function() {
         return {
             tableHeader: self.columns,
             tableData: self.data
         };
     }
 
-    this.addRow = async function(inputValues, outputValues, currentDocId, workspace) {
-        const newRow = {};
-        // Map each input value to the corresponding column
-        for (let i = 0; i < inputValues.length && i < self.columns.length; i++) {
-            newRow[self.columns[i]] = inputValues[i];
+    self.setData = async function(inputValues, outputValues, currentDocId, workspace) {
+        // Handle direct array input
+        if (Array.isArray(inputValues[0])) {
+            self.data = [...inputValues[0]];
         }
-        self.data.push(newRow);
+        // Handle JSON string input
+        else if (typeof inputValues[0] === 'string' && inputValues[0].startsWith('[')) {
+            try {
+                // Convert single quotes to double quotes for proper JSON parsing
+                let jsonStr = inputValues[0].replace(/'/g, '"');
+                self.data = JSON.parse(jsonStr);
+            } catch (error) {
+                console.error("Error parsing JSON self.data:", error);
+            }
+        }
+
+        // If there's self.data and self.columns are not yet determined, extract them from the first row
+        if (self.data.length > 0 && self.columns.length === 0) {
+            self.columns = Object.keys(self.data[0]);
+        }
+
         return true;
     }
 
-    this.setData = async function(inputValues, outputValues, currentDocId, workspace) {
-        self.data = inputValues[0];
-        return true;
-    }
-
-    this.getData = async function(inputValues, outputValues, currentDocId, workspace) {
+    self.getData = async function(inputValues, outputValues, currentDocId, workspace) {
         return self.data;
     }
 
-    this.getColumns = async function(inputValues, outputValues, currentDocId, workspace) {
+    self.getColumns = async function(inputValues, outputValues, currentDocId, workspace) {
         return self.columns;
     }
 
-    this.area = async function(inputValues, outputValues, currentDocId, workspace) {
-        const rowRange = inputValues[0];
-        const colRange = inputValues[1];
+    // Area extraction function
+    self.area = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return [];
 
-        let startRow, endRow, selectedColumns;
+        const lines_range = inputValues[0];
+        const columns_range = inputValues[1];
 
-        // Parse row range (zero-based indexing now)
-        if (rowRange.includes('-')) {
-            [startRow, endRow] = rowRange.split('-').map(Number);
-        } else {
-            startRow = endRow = parseInt(rowRange);
-        }
+        return extractArea(lines_range, columns_range);
+    }
 
-        // Parse column range
-        if (colRange.includes('-')) {
-            const [startCol, endCol] = colRange.split('-').map(Number);
-            selectedColumns = self.columns.slice(startCol, endCol + 1);
-        } else if (colRange.includes(',')) {
-            selectedColumns = colRange.split(',').map(c => c.trim());
-        } else {
-            // Single column
-            const colIndex = parseInt(colRange);
-            if (!isNaN(colIndex)) {
-                selectedColumns = [self.columns[colIndex]];
+    // Extract a single column
+    self.column = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return [];
+
+        const columnNameOrNumber = inputValues[0];
+        return extractArea(undefined, columnNameOrNumber);
+    }
+
+    // Alias for column
+    self.col = self.column;
+
+    // Extract a single row
+    self.row = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return null;
+
+        const rowNumber = inputValues[0];
+        return extractArea(rowNumber, undefined);
+    }
+
+    // Alias for row
+    self.line = self.row;
+
+    // Filter the table
+    self.filter = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return [];
+
+        const JSFilterCode = inputValues[0];
+        const lines_range = inputValues[1];
+        const columns_range = inputValues[2];
+
+        try {
+            const filterFunc = new Function("item", JSFilterCode);
+
+            // Get self.data to filter
+            let dataToFilter;
+            if (lines_range || columns_range) {
+                dataToFilter = extractArea(lines_range, columns_range);
             } else {
-                selectedColumns = [colRange];
+                dataToFilter = self.data;
             }
+
+            return dataToFilter.filter(filterFunc);
+        } catch (error) {
+            console.error("Error in filter function:", error);
+            return [];
         }
-
-        const result = [];
-        // Collect rows in the specified range (already zero-based)
-        for (let i = startRow; i <= endRow && i < self.data.length; i++) {
-            if (i < 0) continue;
-
-            const row = self.data[i];
-            if (!row) continue;
-
-            const newRow = {};
-            for (const colName of selectedColumns) {
-                if (colName in row) {
-                    newRow[colName] = row[colName];
-                }
-            }
-            result.push(newRow);
-        }
-
-        return result;
     }
 
-    this.column = async function(inputValues, outputValues, currentDocId, workspace) {
-        const colName = inputValues[0];
-        return self.data.map(row => row[colName]);
+    // Reduce function
+    self.reduce = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return inputValues[1] || 0;
+
+        const JSReduceCode = inputValues[0];
+        const accumulatorInitialValue = inputValues[1];
+        const lines_range = inputValues[2];
+        const columns_range = inputValues[3];
+
+        try {
+            const reduceFunc = new Function("acc", "item", JSReduceCode);
+
+            // Get self.data to reduce
+            let dataToReduce;
+            if (lines_range || columns_range) {
+                dataToReduce = extractArea(lines_range, columns_range);
+            } else {
+                dataToReduce = self.data;
+            }
+
+            return dataToReduce.reduce(reduceFunc, accumulatorInitialValue);
+        } catch (error) {
+            console.error("Error in reduce function:", error);
+            return accumulatorInitialValue;
+        }
     }
 
-    this.sum = async function(inputValues, outputValues, currentDocId, workspace) {
-        let target = inputValues[0];
-        let rowRange = inputValues[1];
-        let colRange = inputValues[2];
-
-        // Handle direct array input (from column or area methods)
-        if (Array.isArray(target)) {
-            return target.reduce((sum, item) => {
+    // Sum values
+    self.sum = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) {
+            return 0;
+        }
+        // If first argument is an array, sum that directly
+        if (Array.isArray(inputValues[0])) {
+            return inputValues[0].reduce((acc, item) => {
                 if (typeof item === 'object') {
-                    // Sum all numeric properties in the object
-                    return sum + Object.values(item).reduce((objSum, val) => {
+                    return acc + Object.values(item).reduce((objSum, val) => {
                         const num = parseFloat(val);
                         return objSum + (isNaN(num) ? 0 : num);
                     }, 0);
                 } else {
-                    // Sum simple numeric value
                     const num = parseFloat(item);
-                    return sum + (isNaN(num) ? 0 : num);
+                    return acc + (isNaN(num) ? 0 : num);
                 }
             }, 0);
         }
 
-        // Handle table input (has getRuntimeValue or is already in table format)
-        if (target && (target.getRuntimeValue || (target.tableHeader && target.tableData))) {
-            let tableData = target.getRuntimeValue ?
-                (await target.getRuntimeValue()).tableData :
-                target.tableData;
+        // Otherwise interpret as lines_range and columns_range
+        const lines_range = inputValues[1];
+        const columns_range = inputValues[2];
 
-            // If row and column ranges specified, extract that area first
-            if (rowRange && colRange) {
-                const areaResult = await this.area([rowRange, colRange], outputValues, currentDocId, workspace);
-                return this.sum([areaResult], outputValues, currentDocId, workspace);
+        // Simple lambda for summing
+        const lambda = function(acc, item) {
+            const val = parseFloat(item);
+            return acc + (isNaN(val) ? 0 : val);
+        };
+
+        // Get the area to sum
+        const areaToSum = extractArea(lines_range, columns_range);
+
+        // Convert area objects to flat values for summing
+        const flatValues = [];
+        for (const item of areaToSum) {
+            if (typeof item === 'object') {
+                Object.values(item).forEach(val => flatValues.push(val));
+            } else {
+                flatValues.push(item);
             }
+        }
 
-            // If only column range specified
-            else if (colRange) {
-                let selectedColumns;
+        const result = flatValues.reduce(lambda, 0);
+        return result;
+    }
 
-                if (colRange.includes(',')) {
-                    selectedColumns = colRange.split(',').map(c => c.trim());
-                } else if (colRange.includes('-')) {
-                    const [startCol, endCol] = colRange.split('-').map(Number);
-                    selectedColumns = self.columns.slice(startCol - 1, endCol);
-                } else {
-                    // Single column
-                    selectedColumns = [colRange];
-                }
+    // Calculate minimum value
+    self.min = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return null;
 
-                // Sum all values in the selected columns across all rows
-                return tableData.reduce((sum, row) => {
-                    return sum + selectedColumns.reduce((colSum, colName) => {
-                        const val = parseFloat(row[colName]);
-                        return colSum + (isNaN(val) ? 0 : val);
-                    }, 0);
-                }, 0);
+        const lines_range = inputValues[0];
+        const columns_range = inputValues[1];
+
+        // Lambda for minimum calculation
+        const lambda = function(acc, item) {
+            const val = parseFloat(item);
+            if (isNaN(val)) return acc;
+            return acc === undefined || val < acc ? val : acc;
+        };
+
+        // Get the area to search
+        const areaToSearch = extractArea(lines_range, columns_range);
+
+        // Extract flat array of values
+        const flatValues = [];
+        for (const item of areaToSearch) {
+            if (typeof item === 'object') {
+                Object.values(item).forEach(val => flatValues.push(val));
+            } else {
+                flatValues.push(item);
             }
+        }
 
-            // Default: sum all numeric values in the table
-            return tableData.reduce((sum, row) => {
-                return sum + Object.values(row).reduce((rowSum, val) => {
+        return flatValues.reduce(lambda, undefined);
+    }
+
+    // Calculate maximum value
+    self.max = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return null;
+
+        const lines_range = inputValues[0];
+        const columns_range = inputValues[1];
+
+        // Lambda for maximum calculation
+        const lambda = function(acc, item) {
+            const val = parseFloat(item);
+            if (isNaN(val)) return acc;
+            return acc === undefined || val > acc ? val : acc;
+        };
+
+        // Get the area to search
+        const areaToSearch = extractArea(lines_range, columns_range);
+
+        // Extract flat array of values
+        const flatValues = [];
+        for (const item of areaToSearch) {
+            if (typeof item === 'object') {
+                Object.values(item).forEach(val => flatValues.push(val));
+            } else {
+                flatValues.push(item);
+            }
+        }
+
+        return flatValues.reduce(lambda, undefined);
+    }
+
+    // Calculate average
+    self.avg = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return 0;
+
+        const lines_range = inputValues[0];
+        const columns_range = inputValues[1];
+
+        // Get the area to calculate average for
+        const areaToAvg = extractArea(lines_range, columns_range);
+
+        // Extract flat array of values
+        const flatValues = [];
+        for (const item of areaToAvg) {
+            if (typeof item === 'object') {
+                Object.values(item).forEach(val => {
                     const num = parseFloat(val);
-                    return rowSum + (isNaN(num) ? 0 : num);
-                }, 0);
-            }, 0);
+                    if (!isNaN(num)) flatValues.push(num);
+                });
+            } else {
+                const num = parseFloat(item);
+                if (!isNaN(num)) flatValues.push(num);
+            }
         }
 
-        // Fallback
-        return 0;
+        return flatValues.length > 0 ?
+            flatValues.reduce((sum, val) => sum + val, 0) / flatValues.length : 0;
+    }
+
+    // Set value at specific position
+    self.setAt = async function(inputValues, outputValues, currentDocId, workspace) {
+        if (!assertIsTable()) return false;
+
+        const lineNo = parseInt(inputValues[0]);
+        let colName = inputValues[1];
+        const value = inputValues[2];
+
+        if (isNaN(lineNo) || lineNo < 0 || lineNo >= self.data.length) {
+            console.error("Invalid line number:", lineNo);
+            return false;
+        }
+
+        // Handle column as number (index) or name
+        const colIndex = parseInt(colName);
+        if (!isNaN(colIndex) && colIndex >= 0 && colIndex < self.columns.length) {
+            colName = self.columns[colIndex];
+        }
+
+        if (!self.columns.includes(colName)) {
+            console.error("Column not found:", colName);
+            return false;
+        }
+
+        self.data[lineNo][colName] = value;
+        return true;
+    }
+
+    // Append rows to the table - similar to tableUtil.js
+    self.append = async function(inputValues, outputValues, currentDocId, workspace) {
+        let validJson;
+        try {
+            let pseudoJson = inputValues[0];
+            validJson = pseudoJsonToValidJson(pseudoJson);
+        } catch (error) {
+            console.error("Error parsing JSON self.data:", error);
+            return;
+        }
+        self.data.push(validJson);  
     }
 }
 
 let testScript = `
     @t1 new Table "c1" "c2" "c3" "c4" "c5"
-    @r1 t1.addRow "a" "1" "10" "0" "1"
-    @r2 t1.addRow "b" "100" "1000" "0" "1"
-    @r3 t1.addRow "c" "10000" "100000" "0" "1"
-    @r4 t1.addRow "d" "1000000" "10000000" "0" "1"
-    @r5 t1.addRow "3" "xxx" "yyy" "0" "1"
-    
+    t1.append "c1:'a', c2:1, c3:10, c4:0, c5:1"
+    t1.append "c1:'b', c2:100, c3:1000, c4:0, c5:1"
+    t1.append "c1:'c', c2:10000, c3:100000, c4:0, c5:1"
+    t1.append "c1:'d', c2:1000000, c3:10000000, c4:0, c5:1"
+    t1.append "c1:'3', c2:'xxx', c3:'yyy', c4:0, c5:1"
     @area1 t1.area "2-3" "2-3"
     @s1 t1.sum $area1
     
-    @sarea1 t1.sum $t1 "2-3" "c2,c3,c4"
+    @sarea1 t1.sum $t1 "2-3" "1-3"
     @sarea1_cn t1.sum $t1 "2-3" "c2,c3,c4"
     
     @area2 t1.area "3" "2-4"
@@ -195,12 +479,21 @@ let testScript = `
     
     @area3 t1.area "2-3" "4"
     @s3 t1.sum $area3
-    
-    @sc2 t1.sum $t1 "" "c2"
-    
+        
     @col_c2 t1.column "c2"
     @s_col_c2 t1.sum $col_c2
 `;
+
+// # Testing append method
+// @new_row t1.append "c1:'z', c2:5000, c3:50000, c4:0, c5:1"
+// @after_append t1.getData
+//
+// @min_c2 t1.min "" "c2"
+// @max_c3 t1.max "" "c3"
+// @avg_c2 t1.avg "" "c2"
+//
+// @set_val t1.setAt "0" "c2" "999"
+// @c2_after_set t1.column "c2"
 
 await workspace.defineCustomType("Table", Table);
 
@@ -209,7 +502,6 @@ let docId = await workspace.runScript(testScript);
 await workspace.buildAll();
 await graph.printGraph();
 
-// Verify results
 await $$.check(docId, "s1", 10100000);
 await $$.check(docId, "s2", 10000001);
 await $$.check(docId, "s3", 2);
