@@ -24,7 +24,7 @@ function Document() {
     }
 
     this.setTitle = async function(inputValues, outputValues, currentDocId, workspace) {
-        await documentsPlugin.updateDocument(self.docId, inputValues[0]);
+        await persistence.updateDocument(self.docId, {title:inputValues[0]});
     }
 
     this.getTitle = async function(inputValues, outputValues, currentDocId, workspace) {
@@ -34,7 +34,7 @@ function Document() {
 
     this.setGlobalCommands = async function(inputValues, outputValues, currentDocId, workspace) {
         let commands = inputValues[0];
-        await documentsPlugin.updateDocument(self.docId, undefined, undefined, undefined, commands);
+        await persistence.updateDocument(self.docId, {commands});
     }
 
     this.getGlobalCommands = async function(inputValues, outputValues, currentDocId, workspace) {
@@ -54,7 +54,7 @@ function Document() {
             }
             await documentsPlugin.createChapter(self.docId, chapterTitle);
         } else {
-            await documentsPlugin.updateChapter(chapter.id, chapterTitle);
+            await documentsPlugin.updateChapter(chapter.id, chapterTitle, chapter.comments, chapter.commands);
         }
     }
 
@@ -81,7 +81,7 @@ function Document() {
             }
             await documentsPlugin.createChapter(self.docId, "", commands);
         } else {
-            await documentsPlugin.updateChapter(chapter.id, undefined, undefined, commands);
+            await documentsPlugin.updateChapter(chapter.id, chapter.title, chapter.comments, commands);
         }
     }
 
@@ -114,7 +114,7 @@ function Document() {
             }
             await documentsPlugin.createParagraph(chapter.id, paragraphText);
         } else {
-            await documentsPlugin.updateParagraph(chapter.id, paragraph.id, paragraphText);
+            await documentsPlugin.updateParagraph(chapter.id, paragraph.id, paragraphText, paragraph.commands, paragraph.comments);
         }
     }
 
@@ -156,7 +156,7 @@ function Document() {
             }
             await documentsPlugin.createParagraph(chapter.id, "", commands);
         } else {
-            await documentsPlugin.updateParagraph(chapter.id, paragraph.id, undefined, commands);
+            await documentsPlugin.updateParagraph(chapter.id, paragraph.id, paragraph.text, commands, paragraph.comments);
         }
     }
 
