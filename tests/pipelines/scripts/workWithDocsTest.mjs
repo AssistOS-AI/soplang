@@ -18,7 +18,8 @@ let script = `
     # and approximate equivalent would be to define a variable on the previous line and use it here directly and not as an embedded command
     # but this is just a test. The difference is that in case of changes in dependencies other then $par21, this expression will not be re-executed
     # while the other one will be re-executed. This could be usefully in some cases or could be perceived as bug or a leaking abstraction 
-                        doc.setParagraphText    1  1 [ doc.getParagraphText 2 1 ] $par21
+    @parText            := [ doc.getParagraphText 1 1 ]
+                        doc.setParagraphText    1  1 $parText $par21
                         doc.setParagraphText    2  1 $par21add
                         doc.setParagraphText    2  2 "additional content for chapter 2, paragraph 2"    
 `;
@@ -27,6 +28,9 @@ let script = `
 let docId = await workspace.runScript(script);
 await workspace.buildAll();
 await graph.printGraph();
+
+$$.check(docId, "parText", "Some content for chapter 1, paragraph 1 and some other content");
+
 
 let documentContent = await documents.dumpDocument(docId);
 console.debug("Document content for script execution:", documentContent);
