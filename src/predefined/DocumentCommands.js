@@ -27,6 +27,15 @@ function Document() {
         await persistence.updateDocument(self.docId, {title:inputValues[0]});
     }
 
+    this.setInfoText = async function(inputValues, outputValues, currentDocId, workspace) {
+        await persistence.updateDocument(self.docId, {infoText:inputValues[0]});
+    }
+
+    this.getInfoText = async function(inputValues, outputValues, currentDocId, workspace) {
+        let document = await documentsPlugin.getDocument(self.docId);
+        return document.infoText;
+    }
+
     this.getTitle = async function(inputValues, outputValues, currentDocId, workspace) {
         let document = await documentsPlugin.getDocument(self.docId);
         return document.title;

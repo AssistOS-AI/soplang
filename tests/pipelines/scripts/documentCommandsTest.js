@@ -12,6 +12,9 @@ let script = `
     doc.setTitle "Document title"
     @docTitle := [ doc.getTitle ]
     
+    doc.setInfoText "Document info"
+    @docInfo := [ doc.getInfoText ]
+    
     doc.setGlobalCommands "global commands"
     @globalCommands := [ doc.getGlobalCommands ]
     
@@ -35,6 +38,7 @@ await workspace.buildAll();
 await graph.printGraph();
 
 $$.check(docId, "docTitle", "Document title");
+$$.check(docId, "docInfo", "Document info");
 $$.check(docId, "globalCommands", "global commands");
 $$.check(docId, "chapter1title", "Title for chapter 1");
 $$.check(docId, "chapter3commands", "commands for chapter 3");
