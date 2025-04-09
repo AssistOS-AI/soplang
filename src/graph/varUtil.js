@@ -8,13 +8,14 @@ import {
 
 let customTypeRegistry = await import("./customTypeRegistry.js");
 
-let defaultPersistence = $$.loadPlugin("DefaultPersistence");
+let defaultPersistence;
 
 function getVarID(docId, varName){
     return docId + "." + varName;
 }
 
 async function getVariable(varId){
+    defaultPersistence = $$.loadPlugin("DefaultPersistence");
     return await defaultPersistence.getVariable(varId);
 }
 async function getVarValue(varId){
@@ -67,6 +68,7 @@ async function setVarValue(varId, newValue, force = false){
 
     let varDef = await getVariable(varId);
     let varValue = await getVarValue(varId);
+    defaultPersistence = $$.loadPlugin("DefaultPersistence");
 
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -140,6 +142,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     }
     let existingVarContext = {};
     let varId = getVarID(_docId, _varName);
+    defaultPersistence = $$.loadPlugin("DefaultPersistence");
 
     if(!await defaultPersistence.hasVariable(varId)){
         let obj = await defaultPersistence.createVariable({varId: varId});

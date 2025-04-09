@@ -1,8 +1,8 @@
 let varUtil = await import("./varUtil.js");
-let defaultPersistence = $$.loadPlugin("DefaultPersistence");
+let defaultPersistence;
 
 function VarsGraph(commandsRegistry) {
-
+    defaultPersistence = $$.loadPlugin("DefaultPersistence");
     let graph = {};
     let self = this;
 
