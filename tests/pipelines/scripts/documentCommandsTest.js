@@ -10,26 +10,26 @@ let script = `
     @doc new Document "doc1"
     
     doc.setTitle "Document title"
-    @docTitle := [ doc.getTitle ]
+    @docTitle doc.getTitle
     
     doc.setInfoText "Document info"
-    @docInfo := [ doc.getInfoText ]
+    @docInfo doc.getInfoText
     
     doc.setGlobalCommands "global commands"
-    @globalCommands := [ doc.getGlobalCommands ]
+    @globalCommands doc.getGlobalCommands
     
     doc.setChapterTitle 1 "Title for chapter 1"
-    @chapter1title := [ doc.getChapterTitle 1 ]
+    @chapter1title doc.getChapterTitle 1
     
     doc.setChapterCommands 3 "commands for chapter 3"
     doc.setChapterCommands -1 "invalid chapter"
-    @chapter3commands := [ doc.getChapterCommands 3 ]
+    @chapter3commands doc.getChapterCommands 3
     
     doc.setParagraphText 4 2 "Some content for chapter 4, paragraph 2"
-    @paragraph4text := [ doc.getParagraphText 4 2 ]
+    @paragraph4text doc.getParagraphText 4 2
     
     doc.setParagraphCommands 1 1 "commands for chapter 1, paragraph 1"
-    @paragraph1commands := [ doc.getParagraphCommands 1 1 ]
+    @paragraph1commands doc.getParagraphCommands 1 1 
 `;
 
 
@@ -37,13 +37,13 @@ let docId = await workspace.runScript(script);
 await workspace.buildAll();
 await graph.printGraph();
 
-$$.check(docId, "docTitle", "Document title");
-$$.check(docId, "docInfo", "Document info");
-$$.check(docId, "globalCommands", "global commands");
-$$.check(docId, "chapter1title", "Title for chapter 1");
-$$.check(docId, "chapter3commands", "commands for chapter 3");
-$$.check(docId, "paragraph4text", "Some content for chapter 4, paragraph 2");
-$$.check(docId, "paragraph1commands", "commands for chapter 1, paragraph 1");
+await $$.check(docId, "docTitle", "Document title");
+await $$.check(docId, "docInfo", "Document info");
+await $$.check(docId, "globalCommands", "global commands");
+await $$.check(docId, "chapter1title", "Title for chapter 1");
+await $$.check(docId, "chapter3commands", "commands for chapter 3");
+await $$.check(docId, "paragraph4text", "Some content for chapter 4, paragraph 2");
+await $$.check(docId, "paragraph1commands", "commands for chapter 1, paragraph 1");
 
 let documentContent = await documents.dumpDocument('doc1');
 console.log("Document content for the 'doc1':")
