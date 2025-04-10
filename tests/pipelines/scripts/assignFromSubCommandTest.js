@@ -9,6 +9,18 @@ function CustomType() {
     this.name = "CustomType";
     this.value = "1 2 3 4 5";
 
+    this.init = function (...args) {
+        this.name = args[0];
+        this.value = args[1];
+    }
+
+    this.restore = function (JSONSerialisation) {
+        if (JSONSerialisation) {
+            this.name = JSONSerialisation.name;
+            this.value = JSONSerialisation.value;
+        }
+    }
+
     this.getName = function() {
         return this.name;
     }
@@ -19,17 +31,17 @@ function CustomType() {
 }
 
 let script = `
-    @var := [ := "1 2 3 4 5" ]
-    @var2 := [ $var.getValue ]
+    @a new CustomType "doc1" "1 2 3 4 5"
+    @b := [ a.getValue ]
 `;
 
 
+await workspace.defineCustomType("CustomType", CustomType);
 let docId = await workspace.runScript(script);
 await workspace.buildAll();
 await graph.printGraph();
 
-await $$.check(docId, "var", "1 2 3 4 5");
-await $$.check(docId, "var2", "1 2 3 4 5");
+await $$.check(docId, "b", "1 2 3 4 5");
 
 console.log("All tests passed:", $$.allOk? "true" : "false");
 
