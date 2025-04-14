@@ -41,7 +41,9 @@ async function WorkspacePlugin(){
     self.getGraph = function(){
         return graph;
     }
-
+    self.getErrorFromLastBuild = function(){
+        return errorFromLastBuild;
+    }
     self.buildAll = async function () {
         errorFromLastBuild = [];
         graph.topologicalSort();
@@ -51,7 +53,9 @@ async function WorkspacePlugin(){
     self.getVarValue = async function (documentId, variableName) {
         return await graph.getVarValue(documentId, variableName);
     }
-
+    self.getEveryVariableObject = async function () {
+        return await persistence.getEveryVariableObject();
+    }
     self.setVarValue = async function (documentId, variableName, value) {
         return await graph.setVarValue(documentId, variableName, value);
     }
