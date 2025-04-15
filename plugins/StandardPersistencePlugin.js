@@ -17,7 +17,17 @@ async function createStandardPersistencePlugin(){
         agent: {
             id: "random",
             name: "string",
-            description: "string"
+            description: "string",
+            imageId: "string",
+            metadata: "any",
+            chatPrompt: "string",
+            chats: "array document",
+            contextSize: "integer",
+            voiceId: "string",
+            selectedChat: "string",
+            llms: "any",
+            telegramBot: "any",
+
         },
         user: {
             id: "random",

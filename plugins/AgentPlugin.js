@@ -2,10 +2,12 @@ async function AgentPlugin(){
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
 
-    self.createAgent = async function (name, description) {
+    self.createAgent = async function (name, description,chatId) {
         return await persistence.createAgent({
             name: name,
-            description: description
+            description: description,
+            chatId: chatId,
+            selectedChat: chatId,
         });
     }
     self.deleteAgent = async function(id){

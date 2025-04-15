@@ -99,7 +99,9 @@ function WorkSpaceLogger(flushInterval = 1, logDir) {
             return 'No logs available';
         }
     }
+    this.audit= async function(...args){
 
+    }
     process.on('exit', () => this.flush());
     process.on('SIGINT', () => {
         this.flush().then(() => process.exit());
