@@ -294,6 +294,11 @@ async function DocumentsPlugin(){
     self.getAllDocumentObjects = async function () {
         return await persistence.getEveryDocumentObject();
     }
+    self.getVariables = async function (documentId) {
+        let variables = await persistence.getEveryVariableObject();
+        variables = variables.filter(v => v.docId !== documentId);
+        return variables;
+    }
 
     return self;
 }

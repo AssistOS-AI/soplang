@@ -3,9 +3,6 @@ import assert from "assert";
 
 let workspace = await $$.loadPlugin("Workspace");
 let graph = workspace.getGraph();
-let allOk = true;
-
-import Table from "../../../src/predefined/Table.js";
 
 let testScript = `
     @t1 new Table "c1" "c2" "c3" "c4" "c5"
@@ -40,8 +37,6 @@ let testScript = `
 //
 // @set_val t1.setAt "0" "c2" "999"
 // @c2_after_set t1.column "c2"
-
-await workspace.defineCustomType("Table", Table);
 
 let docId = await workspace.runScript(testScript);
 
