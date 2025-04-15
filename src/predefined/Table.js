@@ -454,4 +454,6 @@ function Table() {
     }
 }
 
-export default Table;
+export async function init() {
+    $$.registerCustomType("Table", Table);
+}

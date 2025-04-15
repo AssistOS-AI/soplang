@@ -123,10 +123,8 @@ const createRegistry = async function (workspace) {
     let registry = null;
     registry = new CommandsRegistry(workspace);
 
-    const {tableCommands} = await import("../predefined/Table.js");
-    for(let commandName in tableCommands){
-        registry.registerCommand(commandName, tableCommands[commandName]);
-    }
+    const {init: tableInit} = await import("../predefined/Table.js");
+    await tableInit();
     const {init} = await import("../predefined/DocumentCommands.js");
     await init();
     return registry;
