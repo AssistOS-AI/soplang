@@ -6,18 +6,29 @@ let graph = workspace.getGraph();
 let allOk = true;
 
 let script = `
-    @v1 := $arg1    
-    @v2 := $v1 World!
+            
+    @world := World     
+    
+    @runTest script hello world       
+        @res := $hello $world               
+        return $res       
+    end  
+    
+    @result run runTest Hello $world
 `;
 
 
-let docId =await workspace.runScript(script , "Hello");
+await workspace.insertCode("doc1", script);
+let value = await workspace.runScript("doc1", "runTest" , "Hello");
+allOk &&= (value === "Hello World");
+value = await graph.getVarValue("doc1","result");
+allOk &&= (value === undefined);
 
 await workspace.buildAll();
 await graph.printGraph();
 
-let value = await graph.getVarValue(docId,"v2");
-allOk &&= value === "Hello World!";
+value = await graph.getVarValue("doc1","result");
+allOk &&= (value === "Hello World");
 
 await workspace.shutDown();
 

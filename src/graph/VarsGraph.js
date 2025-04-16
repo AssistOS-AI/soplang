@@ -54,11 +54,19 @@ function VarsGraph(commandsRegistry) {
 
     }
 
-    this.runScript = async function (script, ...args) {
-        if (script === "" || script === null || script === undefined) {
+    this.insertCode = async function (docId, code) {
+
+    }
+
+    this.runScript = async function (docId, scriptName, ...args) {
+        let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId,scriptName));
+        if(!scriptVar){
+            await $$.throwError(`Script '${scriptName}' not found`);
+        }
+        /*if (script === "" || script === null || script === undefined) {
             return;
         }
-        const SCRIPT_EXECUTION = "Script_Execution";
+        const SCRIPT_EXECUTION = "SED";
         let inDocId = SCRIPT_EXECUTION + "_" + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
         await defaultPersistence.createDocument({
             docId: inDocId,
@@ -76,7 +84,7 @@ function VarsGraph(commandsRegistry) {
         }
         script = initialisation + script;
         await defineVarsFromCode(inDocId, "_", "_", script);
-        return inDocId;
+        return inDocId;*/
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
@@ -332,6 +340,24 @@ function VarsGraph(commandsRegistry) {
             for (let j = 0; j < layer.length; j++) {
                 let varId = layer[j];
                 //console.debug("Computing value for", varId);
+                await computeValue(varId);
+            }
+        }
+    }
+
+    self.buildOnlyForDocument = async function (docID) {
+        let layers = self.getLayers();
+        console.debug("Building all layers", layers);
+        for (let i = 0; i < layers.length; i++) {
+            let layer = layers[i];
+            //console.debug("Building layer", i, ":", layer);
+            for (let j = 0; j < layer.length; j++) {
+                let varId = layer[j];
+                //console.debug("Computing value for", varId);
+                let varContext = await varUtil.getVariable(varId);
+                if (varContext.docId !== docID) {
+                    continue;
+                }
                 await computeValue(varId);
             }
         }
