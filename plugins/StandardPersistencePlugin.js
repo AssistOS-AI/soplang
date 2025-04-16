@@ -19,15 +19,14 @@ async function createStandardPersistencePlugin(){
             name: "string",
             description: "string",
             imageId: "string",
-            metadata: "any",
             chatPrompt: "string",
             chats: "array document",
             contextSize: "integer",
             voiceId: "string",
             selectedChat: "string",
-            llms: "any",
+            selectedTextLlm: "llm",
+            selectedChatLlm: "llm",
             telegramBot: "any",
-
         },
         user: {
             id: "random",
