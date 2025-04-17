@@ -5,6 +5,7 @@ import {getSystemLogger} from "../src/logging/WorkSpaceLogger.js";
 let systemLogger = getSystemLogger();
 async function createStandardPersistencePlugin(){
     let persistence = await persistoModule.initialisePersisto( systemLogger);
+
     await persistence.configureTypes({
         workspace: {
             id: "singleton workspace",
@@ -14,20 +15,7 @@ async function createStandardPersistencePlugin(){
             clock : "integer",
             permissions: "any"
         },
-        agent: {
-            id: "random",
-            name: "string",
-            description: "string",
-            imageId: "string",
-            chatPrompt: "string",
-            chats: "array document",
-            contextSize: "integer",
-            voiceId: "string",
-            selectedChat: "string",
-            selectedTextLlm: "llm",
-            selectedChatLlm: "llm",
-            telegramBot: "any",
-        },
+
         user: {
             id: "random",
             email: "string",
