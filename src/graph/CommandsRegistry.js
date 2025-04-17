@@ -5,6 +5,9 @@ function CommandsRegistry( workspace) {
         assign: async function (inputValues ) {
             return inputValues.join(" ");
         },
+        script: async function (inputValues) {
+            // do nothing, all information already exists
+        },
         list : async function (inputValues) {
             return inputValues;
         },

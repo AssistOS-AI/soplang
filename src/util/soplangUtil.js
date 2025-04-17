@@ -332,9 +332,211 @@ function parseComplexLine(input, makeVarName) {
     };
 }
 
+/**
+ * Encodes specific characters in a string using percent-encoding (%xx).
+ * Characters encoded: \n, ', ", [, ], %
+ * Other characters remain unchanged.
+ *
+ * @param {string} str The input string.
+ * @returns {string} The percent-encoded string.
+ */
+function encodePercentCustom(str) {
+    // Return empty string if input is not a string
+    if (typeof str !== 'string') return '';
+
+    // Replace characters that need encoding with their %xx equivalent.
+    // We must include '%' itself in the list of characters to encode,
+    // otherwise sequences like %20 (space) could be misinterpreted later.
+    return str.replace(/%|\n|'|"|\[|\]/g, (char) => {
+        // Get the Unicode character code for the character
+        const charCode = char.charCodeAt(0);
+        // Convert the character code to its hexadecimal representation (uppercase)
+        const hexCode = charCode.toString(16).toUpperCase();
+        // Pad with a leading zero if the hex code is only one digit (e.g., \n is 0A)
+        const paddedHex = hexCode.length < 2 ? '0' + hexCode : hexCode;
+        // Return the percent sign followed by the hex code
+        return '%' + paddedHex;
+    });
+}
+
+/**
+ * Decodes a string that was percent-encoded using encodePercentCustom.
+ * Replaces %xx sequences with their original characters.
+ * It assumes any valid %xx sequence found should be decoded.
+ *
+ * @param {string} encodedStr The percent-encoded string.
+ * @returns {string} The decoded string.
+ */
+function decodePercentCustom(encodedStr) {
+    // Return empty string if input is not a string
+    if (typeof encodedStr !== 'string') return '';
+
+    // Regex matches '%' followed by exactly two hexadecimal digits (0-9, A-F, case-insensitive).
+    // It captures the two hex digits into group 1.
+    return encodedStr.replace(/%([0-9A-Fa-f]{2})/g, (match, hexDigits) => {
+        // `hexDigits` contains the two hex characters (e.g., '0A', '27', '5B')
+        // Convert the hex digits (string) back to an integer character code
+        const charCode = parseInt(hexDigits, 16);
+        // Convert the character code back to its corresponding character
+        return String.fromCharCode(charCode);
+    });
+}
+
+function processEmbeddedScripts(input) {
+    // Input validation
+    if (typeof input !== 'string') {
+        console.error("Input must be a string.");
+        return "";
+    }
+
+    const lines = input.split('\n');
+    const outputLines = []; // Array to collect the processed lines
+    let currentIndex = 0; // Index of the current line being processed
+
+    /**
+     * Inner (nested) function to parse a script block starting from startIndex.
+     * Looks for the format "@scriptName script ..." and reads until "end".
+     * Returns an object with the summarized line (using URL encoding) and the next index
+     * if a complete block is found, otherwise returns null.
+     * @param {number} startIndex - The line index to start parsing from.
+     * @returns {{outputLine: string, nextIndex: number} | null} - The result or null if not a valid/complete script block.
+     */
+    function parseScriptBlock(startIndex) {
+        // Check if the index is valid
+        if (startIndex >= lines.length) {
+            return null;
+        }
+
+        const startLine = lines[startIndex];
+        const trimmedStartLine = startLine.trim();
+        // Regex: looks for @scriptName (captured) followed by 'script' and optional arguments
+        const match = trimmedStartLine.match(/^@(\S+)\s+script(?:\s+(.*))?$/);
+
+        if (!match) {
+            // The line does not match the "@name script ..." format
+            return null;
+        }
+
+        // Extract script name and arguments
+        const scriptName = match[1]; // Script name is captured from the regex
+        const argsStringFromLine = match[2] || ""; // Argument part (or empty string)
+        const args = argsStringFromLine.split(/\s+/).filter(arg => arg.length > 0); // Split arguments
+        const scriptBodyLines = []; // Collect lines for the script body
+        let currentScriptIndex = startIndex + 1; // Start searching for the body from the next line
+
+        // Iterate through subsequent lines looking for 'end'
+        while (currentScriptIndex < lines.length) {
+            const currentLine = lines[currentScriptIndex];
+            const trimmedCurrentLine = currentLine.trim();
+
+            if (trimmedCurrentLine.toLowerCase() === 'end') {
+                // Found the end of the script block
+
+                // Prepare data for URL encoding
+                // Join arguments and lines with newline. Note: This assumes individual args/lines
+                // do not consist *only* of a newline if that distinction is critical.
+                // Empty arrays will result in empty strings before encoding.
+                const argsString = args.join(',');
+                const linesString = scriptBodyLines.join('\n');
+
+                // Encode the joined strings using URL encoding (percent-encoding)
+                const encodedArgs = encodePercentCustom(argsString);
+                const encodedLines = encodePercentCustom(linesString);
+
+                // Create the summarized output line: @scriptName script <args_urlencoded> <lines_urlencoded>
+                // A space separates the two URL encoded parts.
+                const outputLine = `@${scriptName} script "${encodedArgs}" "${encodedLines}"`;
+
+                // To Decode later:
+                // 1. Find the part after "@scriptName script ".
+                // 2. Split that part by the first space to get encodedArgs and encodedLines.
+                // 3. Decode each part: decodeURIComponent(encodedPart)
+                // 4. Split the decoded strings by '\n' to get the original arrays.
+                //    (Note: Decoding an empty string and splitting by '\n' yields [''], not [])
+
+                // Return the line and the index of the line *after* 'end'
+                return {
+                    outputLine: outputLine,
+                    nextIndex: currentScriptIndex + 1
+                };
+            } else {
+                console.debug(`Adding line to script '${scriptName}':`, currentLine);
+                scriptBodyLines.push(currentLine.trim());
+                currentScriptIndex++; // Move to the next line
+            }
+        }
+
+        // If the loop finishes without finding 'end', the script is unterminated
+        console.warn(`Warning: Script '${scriptName}' starting on line ${startIndex + 1} was not closed with 'end'. Treating start line as regular text.`);
+        // Return null to indicate a complete block was not processed
+        return null;
+    }
+
+    // --- Main loop for processing lines ---
+    while (currentIndex < lines.length) {
+        // Attempt to parse a script block starting at the current line
+        const scriptParseResult = parseScriptBlock(currentIndex);
+
+        if (scriptParseResult) {
+            // Successfully found and parsed a complete script block
+            outputLines.push(scriptParseResult.outputLine); // Add the summary line
+            currentIndex = scriptParseResult.nextIndex; // Set the index to continue after the script block
+        } else {
+            // The current line is NOT the start of a valid script OR the script was unterminated
+            outputLines.push(lines[currentIndex].trim()); // Add the original line
+            currentIndex++; // Move to the next line
+        }
+    }
+
+    // Join the processed lines back into a single string
+    return outputLines.join('\n');
+}
+
+
+function expandScript(executionPrefix, parsedCommand,  ...args) {
+    let initialisation = "";
+    let declaredArgs = parsedCommand.inputVars[0];
+    let variables = {};
+    let declaredArgsList = declaredArgs.split(",");
+    for(let i = 0; i < declaredArgsList.length; i++){
+        let argName = declaredArgsList[i].trim();
+        variables[argName] = executionPrefix + "_" + argName;
+        initialisation += `@${variables[argName]} := ${args[i]}\n`;
+    }
+
+    let scriptCode = parsedCommand.inputVars[1];
+    scriptCode = decodePercentCustom(scriptCode);
+    //detect all occurrences of @varName or ~varName and add in variables with the executionPrefix
+    let regex = /([@$~])([a-zA-Z0-9_]+)/g;
+    let match;
+    while ((match = regex.exec(scriptCode)) !== null) {
+        let varName = match[2];
+        if(!variables[varName]){
+            variables[varName] = executionPrefix + "_" + varName;
+        }
+    }
+
+    for(let varName in variables){
+        //replace each occurrence of var name prefixed by $ @ or ~  but keep the prefix
+        let regex = new RegExp("([@$~])" + varName, "g");
+        scriptCode = scriptCode.replace(regex, (match, prefix) => {
+            return prefix + variables[varName];
+        });
+    }
+    // replace return with @executionPrefix :=
+    regex = /return/g;
+    scriptCode = scriptCode.replace(regex, (match) => {
+        return `@${executionPrefix} assign`;
+    });
+
+    return initialisation + scriptCode;
+}
 
 function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine) {
     let varCounter = 0;
+    commandTextSeparatedByNewLine = processEmbeddedScripts(commandTextSeparatedByNewLine);
+    console.debug("Command text:", commandTextSeparatedByNewLine);
+
     function makeVarNames() {
         varCounter++;
         return makeNameForSpecialVars(chapterId, paragraphId, "TMP" + varCounter, true);
@@ -377,5 +579,7 @@ export {
     renameSpecialVars,
     makeNameForSpecialVars,
     parseComplexLine,
-    replaceDotVariables
+    replaceDotVariables,
+    processEmbeddedScripts,
+    expandScript
 }

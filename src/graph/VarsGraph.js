@@ -1,4 +1,5 @@
 let varUtil = await import("./varUtil.js");
+let sopLangUtil = await import("../util/soplangUtil.js");
 let defaultPersistence;
 
 function VarsGraph(commandsRegistry) {
@@ -48,14 +49,12 @@ function VarsGraph(commandsRegistry) {
     }
 
     this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine) {
-
-        defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
-
-
+        await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
     }
 
-    this.insertCode = async function (docId, code) {
 
+    this.insertCode = async function (inDocId, code) {
+        await defineVarsFromCode(inDocId, "_", "_", code);
     }
 
     this.runScript = async function (docId, scriptName, ...args) {
@@ -63,28 +62,28 @@ function VarsGraph(commandsRegistry) {
         if(!scriptVar){
             await $$.throwError(`Script '${scriptName}' not found`);
         }
-        /*if (script === "" || script === null || script === undefined) {
-            return;
+        let script = scriptVar.parsedCommand;
+        if (script.command !== "script") {
+            await $$.throwError(`Script '${scriptName}' is not a script`);
         }
-        const SCRIPT_EXECUTION = "SED";
+
+        const SCRIPT_EXECUTION = "SRNO";
         let inDocId = SCRIPT_EXECUTION + "_" + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
+        script = sopLangUtil.expandScript(inDocId, scriptVar.parsedCommand, ...args);
+
         await defaultPersistence.createDocument({
             docId: inDocId,
             title: inDocId,
             category: SCRIPT_EXECUTION,
             commands: script
         });
-        let initialisation = "@arg0 := " + inDocId + "\n";
-        if (Array.isArray(args)) {
-            for (let i = 0; i < args.length; i++) {
-                initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
-            }
-        } else {
-            initialisation += ("@arg1 := " + args + "\n");
-        }
-        script = initialisation + script;
+
+
         await defineVarsFromCode(inDocId, "_", "_", script);
-        return inDocId;*/
+        self.topologicalSort();
+        await self.buildOnlyForDocument(inDocId);
+        let scriptResult = await self.getVarValue(inDocId, inDocId);
+        return scriptResult;
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {

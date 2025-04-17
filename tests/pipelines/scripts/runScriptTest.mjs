@@ -5,8 +5,7 @@ let graph = workspace.getGraph();
 
 let allOk = true;
 
-let script = `
-            
+let script = `            
     @world := World     
     
     @runTest script hello world       
@@ -14,15 +13,16 @@ let script = `
         return $res       
     end  
     
-    @result run runTest Hello $world
+    @result runTest Hello $world
 `;
 
 
 await workspace.insertCode("doc1", script);
-let value = await workspace.runScript("doc1", "runTest" , "Hello");
-allOk &&= (value === "Hello World");
+let value = await workspace.runScript("doc1", "runTest" , "Hello", "World!");
+allOk &&= (value === "Hello World!");
 value = await graph.getVarValue("doc1","result");
 allOk &&= (value === undefined);
+console.debug(">>>>>>>>>>>>>>> Lets now run a build for the graph... This far the test is ok? " + allOk);
 
 await workspace.buildAll();
 await graph.printGraph();
