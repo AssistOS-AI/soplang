@@ -84,6 +84,8 @@ async function createStandardPersistencePlugin(){
     await persistence.createGrouping("documents", "document", "category");
     await persistence.createGrouping("snapshots", "snapshot", "document");
 
+    await persistence.createGrouping("variables", "variable", "docId");
+
     await persistence.createIndex("graph", "alias");
 
     try{
