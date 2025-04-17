@@ -64,8 +64,8 @@ async function WorkspacePlugin(){
         commandsRegistry.addCommand(commandName, commandFunction);
     }
 
-    self.runScript = async function (script, ...args) {
-        return await graph.runScript(script, ...args);
+    self.runScript = async function (docId, scriptName, ...args) {
+        return await graph.runScript(docId, scriptName, ...args);
     }
 
     self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
