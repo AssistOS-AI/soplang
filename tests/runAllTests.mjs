@@ -12,10 +12,15 @@ const tests = [
     './pipelines/documents/mainSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
-    './pipelines/scripts/runScriptTest.mjs',
     './pipelines/customTypes/simpleCustomTypesTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/scripts/workWithDocsTest.mjs',
+    './pipelines/scripts/runScriptTest.mjs',
+    './pipelines/scripts/runDefinedScriptTest.mjs',
+    './pipelines/scripts/reactivityScriptTest.mjs',
+    './pipelines/scripts/embeddedScriptTest.mjs',
+    './pipelines/scripts/assignFromSubCommandTest.js',
+    './pipelines/scripts/assignValueFromDocumentSubcommand.js' //to be refactored
 ];
 
 async function runTestsSequentially(tests) {

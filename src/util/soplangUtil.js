@@ -460,7 +460,7 @@ function processEmbeddedScripts(input) {
                     nextIndex: currentScriptIndex + 1
                 };
             } else {
-                console.debug(`Adding line to script '${scriptName}':`, currentLine);
+                //console.debug(`Adding line to script '${scriptName}':`, currentLine);
                 scriptBodyLines.push(currentLine.trim());
                 currentScriptIndex++; // Move to the next line
             }
@@ -535,7 +535,7 @@ function expandScript(executionPrefix, parsedCommand,  ...args) {
 function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine) {
     let varCounter = 0;
     commandTextSeparatedByNewLine = processEmbeddedScripts(commandTextSeparatedByNewLine);
-    console.debug("Command text:", commandTextSeparatedByNewLine);
+    //console.debug("Command text:", commandTextSeparatedByNewLine);
 
     function makeVarNames() {
         varCounter++;

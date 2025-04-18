@@ -26,7 +26,7 @@ function VarsGraph(commandsRegistry) {
             return;
         }
         let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
-        console.debug(">>>>>Defining variables from code:", lines);
+        //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
@@ -57,6 +57,32 @@ function VarsGraph(commandsRegistry) {
         await defineVarsFromCode(inDocId, "_", "_", code);
     }
 
+    this.runCode = async function (code, ...args) {
+        if (code === "" || code === null || code === undefined) {
+            return;
+        }
+        const CODE_EXECUTION = "CodeExecution";
+        let inDocId = CODE_EXECUTION + "_" + await defaultPersistence.getNextNumber(CODE_EXECUTION);
+        await defaultPersistence.createDocument({
+            docId: inDocId,
+            title: inDocId,
+            category: CODE_EXECUTION,
+            commands: code
+        });
+        let initialisation = "@arg0 := " + inDocId + "\n";
+        if (Array.isArray(args)) {
+            for (let i = 0; i < args.length; i++) {
+                initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
+            }
+        } else {
+            initialisation += ("@arg1 := " + args + "\n");
+        }
+        code = initialisation + code;
+        await defineVarsFromCode(inDocId, "_", "_", code);
+        await self.buildOnlyForDocument(inDocId);
+        return inDocId;
+    }
+
     this.runScript = async function (docId, scriptName, ...args) {
         let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId,scriptName));
         if(!scriptVar){
@@ -67,7 +93,7 @@ function VarsGraph(commandsRegistry) {
             await $$.throwError(`Script '${scriptName}' is not a script`);
         }
 
-        const SCRIPT_EXECUTION = "SRNO";
+        const SCRIPT_EXECUTION = "SRUN";
         let inDocId = SCRIPT_EXECUTION + "_" + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
         script = sopLangUtil.expandScript(inDocId, scriptVar.parsedCommand, ...args);
 
@@ -80,10 +106,8 @@ function VarsGraph(commandsRegistry) {
 
 
         await defineVarsFromCode(inDocId, "_", "_", script);
-        self.topologicalSort();
         await self.buildOnlyForDocument(inDocId);
-        let scriptResult = await self.getVarValue(inDocId, inDocId);
-        return scriptResult;
+        return await self.getVarValue(inDocId, inDocId);
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
@@ -149,6 +173,18 @@ function VarsGraph(commandsRegistry) {
             };
             await defaultPersistence.updateGraph("GRAPH", {state: graph});
         }
+    }
+
+    this.resetVarLevel = async function (varId) {
+        graph[varId].layer = 0;
+        graph[varId].deps = await varUtil.getDependencies(varId);
+        //we also have to reset the layer to 0 for all the variables that depend on this variable
+        for (let varName in graph) {
+            if (graph[varName].deps.includes(varId)) {
+                graph[varName].layer = 0;
+            }
+        }
+        await defaultPersistence.updateGraph("GRAPH", {state: graph});
     }
 
     this.topologicalSort = function () {
@@ -224,6 +260,11 @@ function VarsGraph(commandsRegistry) {
 
     async function resolveValue(varId) {
         let varContext = await varUtil.getVariable(varId);
+
+        if(varContext.referencedVariable){
+            return  await resolveValue(varContext.referencedVariable);
+        }
+
         if (varContext.parsedCommand.command === 'alias') {
             return await self.getVarValue(varContext.parsedCommand.inputVars[0], varContext.parsedCommand.inputVars[1]);
         }
@@ -246,6 +287,42 @@ function VarsGraph(commandsRegistry) {
         let parsedCommand = targetVar.parsedCommand;
         let inputValues = []
         let debugActivatedForCommand = false;
+
+        let intendedCommand = parsedCommand.command;
+
+        if(targetVar.referencedVariable){
+            //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph
+            return await resolveValue(targetVar.referencedVariable);
+        }
+
+        if(!commandsRegistry.commandExists(intendedCommand)){
+            let scriptVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, intendedCommand));
+            if(!scriptVar){
+                $$.recordBuildInfo(`#DEBUG Failed to find command '${intendedCommand}' The command will be ignored and the variable will remain undefined`);
+                return undefined;
+            }
+            const RETURN_VALUE_PREFIX = "EXEC";
+            let returnVarName = RETURN_VALUE_PREFIX + "_" + await defaultPersistence.getNextNumber(RETURN_VALUE_PREFIX);
+            let scriptArguments = [];
+            for (let i = 0; i < parsedCommand.inputVars.length; i++) {
+                if(parsedCommand.varTypes[i] === "var"){
+                    //remove thd docId from the varName
+                    let varName = "$"+varUtil.getLocalVarName(targetVar.docId,parsedCommand.inputVars[i]);
+                    scriptArguments.push(varName);
+                }
+                else{
+                    scriptArguments.push(parsedCommand.inputVars[i]);
+                }
+            }
+
+            let script = sopLangUtil.expandScript(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
+            await self.insertCode(targetVar.docId, script);
+            self.restartBuild();
+            await varUtil.markAsReferenceToVariable(targetVar.varId, varUtil.getVarID(targetVar.docId,returnVarName));
+            await self.resetVarLevel(targetVar.varId);
+            return undefined;
+        }
+
 
         for (let i = 0; i < parsedCommand.inputVars.length; i++) {
             let value = parsedCommand.inputVars[i];
@@ -278,7 +355,7 @@ function VarsGraph(commandsRegistry) {
             return await resolveValue(targetVar.varId);
         }
 
-        let intendedCommand = parsedCommand.command;
+
         if (intendedCommand[0] === "?") {
             intendedCommand = intendedCommand.substring(1);
             //all input values must be defined, cant pe null, empty string or undefined
@@ -288,6 +365,8 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
+
+
         let result = await commandsRegistry.runCommand(
             intendedCommand,
             inputValues,
@@ -325,41 +404,93 @@ function VarsGraph(commandsRegistry) {
         // let value = await varUtil.getVarValue(varId);
         if (mustRecompute) {
             let variable = await varUtil.getVariable(varId);
+            if(variable.referencedVariable){
+                //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph
+                return await resolveValue(variable.referencedVariable);
+            }
             let value = await runCommand(variable);
+            if(buildRestartedDuringExecution){
+                // nothing to save, the build will be restarted anyway
+                return ;
+            }
             await varUtil.setVarValue(varId, value, true);
         }
     }
 
-    self.buildAll = async function () {
-        let layers = self.getLayers();
-        console.debug("Building all layers", layers);
-        for (let i = 0; i < layers.length; i++) {
-            let layer = layers[i];
-            //console.debug("Building layer", i, ":", layer);
-            for (let j = 0; j < layer.length; j++) {
-                let varId = layer[j];
-                //console.debug("Computing value for", varId);
-                await computeValue(varId);
-            }
+    let buildPromise = undefined;
+    let buildRestartedDuringExecution = false;
+
+    self.restartBuild = function () {
+        buildRestartedDuringExecution = true;
+    }
+
+    self.buildAll = async function (onlyForDocId) {
+        if(buildPromise){
+            return await buildPromise;
         }
+        let resolveBuild, rejectBuild;
+        buildPromise = new Promise((res, rej) => {
+            resolveBuild = res;
+            rejectBuild = rej;
+        });
+
+        // Use .finally to ensure cleanup regardless of success/failure
+        buildPromise.finally(() => {
+            console.debug("Build promise finished, clearing lock.");
+            buildPromise = null; // Reset *after* completion
+        });
+
+        async function restartableBuild(){
+            try{
+                    self.topologicalSort();
+                    await self.printGraph();
+                    let layers = self.getLayers();
+                    console.debug("Building all layers", layers);
+                    for (let i = 0; i < layers.length; i++) {
+                        let layer = layers[i];
+                        //console.debug("Building layer", i, ":", layer);
+                        for (let j = 0; j < layer.length; j++) {
+                            let varId = layer[j];
+                            if(onlyForDocId){
+                                let varContext = await varUtil.getVariable(varId);
+                                if (varContext.docId !== onlyForDocId) {
+                                    continue;
+                                }
+                            }
+                            await computeValue(varId);
+                            if(buildRestartedDuringExecution){
+                                console.debug("Build restarted during execution");
+                                buildRestartedDuringExecution = false;
+                                return true;
+                            }
+                        }
+                    }
+                } catch(e){
+                    console.error("Error during build", e);
+                    $$.recordBuildError("Error during build", e);
+                    return false;
+                }
+                return false;
+            }
+            let restarts = 0;
+            while(await restartableBuild()){
+                //do nothing but this is ensuring that the build is restarted until no new expansion of scripts is found
+                restarts++;
+                if(restarts > 100){
+                    console.warn("Too many restarts of the build. Stopping the build");
+                    $$.recordBuildError("Too many restarts of the build. Stopping the build");
+                    rejectBuild();
+                    break;
+                }
+            }
+        resolveBuild();
     }
 
     self.buildOnlyForDocument = async function (docID) {
-        let layers = self.getLayers();
-        console.debug("Building all layers", layers);
-        for (let i = 0; i < layers.length; i++) {
-            let layer = layers[i];
-            //console.debug("Building layer", i, ":", layer);
-            for (let j = 0; j < layer.length; j++) {
-                let varId = layer[j];
-                //console.debug("Computing value for", varId);
-                let varContext = await varUtil.getVariable(varId);
-                if (varContext.docId !== docID) {
-                    continue;
-                }
-                await computeValue(varId);
-            }
+        if(buildPromise){
+            await buildPromise;
         }
+        await self.buildAll(docID);
     }
 
     function generateCSV(header, values) {
@@ -399,6 +530,9 @@ function VarsGraph(commandsRegistry) {
 
             let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Dependencies: [${deps}]`;
 
+            if(varInfo.referencedVariable){
+                info += `, Referenced variable: ${varInfo.referencedVariable}`;
+            }
             async function dumpObjOrValue(value) {
                 function dumpObjectSingleLine(obj) {
                     let res = "{";

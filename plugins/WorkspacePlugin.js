@@ -68,6 +68,10 @@ async function WorkspacePlugin(){
         return await graph.runScript(docId, scriptName, ...args);
     }
 
+    self.runCode = async function (code, ...args) {
+        return await graph.runCode(code, ...args);
+    }
+
     self.insertCode = async function (docId, code) {
         return await graph.insertCode(docId, code);
     }

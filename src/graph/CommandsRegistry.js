@@ -120,6 +120,9 @@ function CommandsRegistry( workspace) {
         commands[commandName] = commandFunction;
     }
 
+    this.commandExists = function (commandName) {
+        return commands[commandName] !== undefined;
+    }
 }
 
 const createRegistry = async function (workspace) {

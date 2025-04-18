@@ -38,10 +38,7 @@ let testScript = `
 // @set_val t1.setAt "0" "c2" "999"
 // @c2_after_set t1.column "c2"
 
-let docId = await workspace.runScript(testScript);
-
-await workspace.buildAll();
-await graph.printGraph();
+let docId = await workspace.runCode(testScript);
 
 await $$.check(docId, "s1", 10100000);
 await $$.check(docId, "s2", 10000001);

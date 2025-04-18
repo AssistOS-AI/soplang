@@ -9,14 +9,43 @@ import {
 let customTypeRegistry = await import("./customTypeRegistry.js");
 
 let defaultPersistence;
+function getDefaultPersistence(){
+    if(!defaultPersistence){
+        defaultPersistence = $$.loadPlugin("DefaultPersistence");
+    }
+    return defaultPersistence;
+}
+
 
 function getVarID(docId, varName){
     return docId + "." + varName;
 }
 
+function getLocalVarName(docId, fullVarName){
+    //reverse getVarId
+    let splitVarName = fullVarName.split(".");
+    if(splitVarName.length === 1){
+        return getVarID(docId, fullVarName);
+    }
+    if(splitVarName.length === 2){
+        if(splitVarName[0] === docId){
+            return splitVarName[1];
+        } else {
+            $$.throwErrorSync("Invalid variable name", fullVarName, "for document", docId);
+        }
+    }
+    if(splitVarName.length > 2){
+        $$.throwErrorSync("Invalid variable name", fullVarName, "for document", docId);
+    }
+}
+
 async function getVariable(varId){
-    defaultPersistence = $$.loadPlugin("DefaultPersistence");
-    return await defaultPersistence.getVariable(varId);
+    try{
+        return await getDefaultPersistence().getVariable(varId);
+    } catch(err){
+        console.debug("Error getting variable", varId, err);
+        return undefined;
+    }
 }
 async function getVarValue(varId){
     let varDef = await getVariable(varId);
@@ -24,6 +53,12 @@ async function getVarValue(varId){
         $$.recordBuildError(`Variable ${varId} not found`);
         return undefined;
     }
+
+    if(varDef.referencedVariable) {
+        //the only dependency is now the variable it is referencing
+        return await getVarValue(varDef.referencedVariable);
+    }
+
     //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.customType);
     if(varDef.customType){
         return customTypeRegistry.restoreInstance(varDef.customType, varDef.value);
@@ -68,7 +103,7 @@ async function setVarValue(varId, newValue, force = false){
 
     let varDef = await getVariable(varId);
     let varValue = await getVarValue(varId);
-    defaultPersistence = $$.loadPlugin("DefaultPersistence");
+    let defaultPersistence = getDefaultPersistence();
 
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -98,11 +133,18 @@ async function setVarValue(varId, newValue, force = false){
     await defaultPersistence.updateVariable(varId, {value: serialiseValue(newValue), clock: defaultPersistence.getLogicalTimestamp()});
 }
 async function getDependencies(varId){
-    let deps = [];
+
     let varDef = await getVariable(varId);
     if(!varDef){
         await $$.throwError("Variable not found", varId);
     }
+    let deps = [];
+
+    if(varDef.referencedVariable) {
+        //the only dependency is now the variable it is referenced
+        deps = [varDef.referencedVariable];
+    }
+
     if(!varDef.parsedCommand){
         return deps;
     }
@@ -136,13 +178,28 @@ async function getDependencies(varId){
     return deps;
 }
 
+async function markAsReferenceToVariable(varId, referencedVarId){
+    let defaultPersistence = getDefaultPersistence();
+    let varDef = await getVariable(varId);
+    if(!varDef){
+        await $$.throwError("Variable not found", varId);
+    }
+    if(varDef.referencedVariable){
+        if(varDef.referencedVariable === referencedVarId){
+            //already has the reference
+            return;
+        }
+        await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
+    }
+    await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
+}
 async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _parsedCommand) {
     if (!_docId) {
         throw new Error("Document ID is required");
     }
     let existingVarContext = {};
     let varId = getVarID(_docId, _varName);
-    defaultPersistence = $$.loadPlugin("DefaultPersistence");
+    let defaultPersistence = getDefaultPersistence();
 
     if(!await defaultPersistence.hasVariable(varId)){
         let obj = await defaultPersistence.createVariable({varId: varId});
@@ -206,6 +263,10 @@ async function getVarClock(varId){
         console.debug("Variable", varId, "not found");
         return undefined;
     }
+    if(varDef.referencedVariable){
+        //the real clock is now the clock of the variable it is referencing
+        return await getVarClock(varDef.referencedVariable);
+    }
     return varDef.clock;
 }
 
@@ -222,5 +283,7 @@ export {
     makeNameForSpecialVars,
     parseComplexLine,
     parseCommandLine,
-    parseTextVars
+    parseTextVars,
+    markAsReferenceToVariable,
+    getLocalVarName
 }

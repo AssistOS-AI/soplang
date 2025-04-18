@@ -13,20 +13,22 @@ let script = `
         return $res       
     end  
     
-    @result runTest Hello $world
+    @intResult runTest Hello $world
+    @result := $intResult
 `;
 
 
 await workspace.insertCode("doc1", script);
-let value = await workspace.runScript("doc1", "runTest" , "Hello", "World!");
 
+await workspace.buildAll();
+await graph.printGraph();
+await graph.setVarValue("doc1","world", "New World");
+await workspace.buildAll();
+await graph.printGraph();
 
+let value = await graph.getVarValue("doc1","result");
 console.debug(">>>>>>>>>>>>>>> The result is: " + value);
-allOk &&= (value === "Hello World!");
-value = await graph.getVarValue("doc1","result");
-console.debug(">>>>>>>>>>>>>>> The result is: " + value);
-allOk &&= (value === undefined);
-console.debug(">>>>>>>>>>>>>>> Lets now run a build for the graph... This far the test is ok? " + allOk);
+allOk &&= (value === "Hello New World");
 
 await workspace.shutDown();
 
