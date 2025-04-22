@@ -1,8 +1,12 @@
 const customTypeRegistry = await import("./customTypeRegistry.js");
+let varUtil = await import("./varUtil.js");
 
 function CommandsRegistry( workspace) {
     let commands = {
         assign: async function (inputValues ) {
+            if(inputValues.length === 0){
+                return "";
+            }
             return inputValues.join(" ");
         },
         macro: async function (inputValues) {
@@ -13,6 +17,9 @@ function CommandsRegistry( workspace) {
         },
         chainAlias: async function (inputValues) {
             // do nothing, it is treated as a special case during execution
+        },
+        __DocId: async function (inputValues, outputValues, currentDocId) {
+            return currentDocId;
         }
     };
 
@@ -27,7 +34,33 @@ function CommandsRegistry( workspace) {
     commands.overwrite = async function (inputValues, outputValues, currentDocId) {
         let varName = inputValues[0];
         if(varName[0] !== "~"){
-            await $$.throwError("Invalid variable name. Variable names must start with ~");
+            $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
+            return undefined;
+        }
+        let fullVarName = varUtil.getVarID(currentDocId, varName.slice(1));
+        let varDef = await varUtil.getVariable(fullVarName);
+        if(varDef === undefined){
+            $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
+            return;
+        }
+        //console.debug(">>>>> Overwriting variable", varDef);
+        let commandName = varDef.parsedCommand.command;
+        switch(commandName){
+            case "assign":
+                if(varDef.parsedCommand.varTypes.includes("var")){
+                    $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that has dependencies of another vars");
+                    return;
+                }
+                break;
+            case "alias":
+                console.debug(">>>>Overwriting alias", varName, "with", inputValues[1]);
+                break;
+            case "chainAlias":
+                console.debug(">>>>Overwriting chainAlias", varName, "with", inputValues[1]);
+                break;
+            default:
+                $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is not declared with the assign command");
+                return;
         }
         await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
     }

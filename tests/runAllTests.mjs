@@ -13,15 +13,17 @@ const tests = [
     './pipelines/documents/mainSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
-    './pipelines/customTypes/simpleCustomTypesTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
-    './pipelines/macros/runMacroTest.mjs',
-    './pipelines/macros/runDefinedMacroTest.mjs',
-    './pipelines/macros/reactivityMacroTest.mjs',
-    './pipelines/macros/callMacroInMacroTest.mjs',
+    './pipelines/macros/basic/runMacroTest.mjs',
+    './pipelines/macros/basic/runDefinedMacroTest.mjs',
+    './pipelines/macros/basic/reactivityMacroTest.mjs',
+    './pipelines/macros/basic/callMacroInMacroTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
     './pipelines/documents/workWithDocsTest.mjs',
+    './pipelines/overwrite/customTypesTest.mjs',
+    './pipelines/overwrite/basicOverwriteTest.mjs',
+    './pipelines/macros/advanced/containersTest.mjs',
 ];
 
 import fs from 'node:fs/promises';

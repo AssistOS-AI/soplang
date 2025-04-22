@@ -38,9 +38,10 @@ let docId = await workspace.runCode(testCode);
 await workspace.buildAll();
 
 console.debug("Checking var, var0 and var1 after the first build");
+await $$.check(docId, "varX", "NOB1_2");    // why!?
 await $$.check(docId, "var0", "NOB1_1");
 await $$.check(docId, "var1", "NOB1_2");
-await $$.check(docId, "varX", "NOB1_2");
+
 //await graph.printGraph();
 
 await workspace.buildAll();

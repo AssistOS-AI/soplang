@@ -207,7 +207,7 @@ function VarsGraph(commandsRegistry) {
                     $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
                 }
                 if (!dep) {
-                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Build stopped!`);
+                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Consider it as a permanently undefined variable!`);
                     $$.throwErrorSync( `Dependency ${depName} not found for variable ${varName}. Build stopped!`);
                 }
                 else if (dep.layer === 0) {

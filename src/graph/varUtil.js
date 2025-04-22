@@ -109,10 +109,15 @@ async function setVarValue(varId, newValue, force = false){
         await $$.throwError("Variable not found", varId);
     }
 
+    if(varDef.referencedVariable){
+        //the only dependency is now the variable it is referencing
+        return await setVarValue(varDef.referencedVariable, newValue);
+    }
+    /*
     if(varDef.parsedCommand.command === "alias" && !force){
         //TODO: investigate if writing to an alias is a good idea, currently  it is ignoring the request, and the value of the alias is not updated
         await defaultPersistence.updateVariable(varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
-    }
+    } */
 
     if(varDef.parsedCommand.command === "chainAlias"){
         let targetVarId = varDef.parsedCommand.inputVars[2];
@@ -123,11 +128,6 @@ async function setVarValue(varId, newValue, force = false){
         obj[varDef.parsedCommand.inputVars[1]] = newValue;
         await defaultPersistence.updateVariable(targetVarId, {value: serialiseValue(obj), clock: defaultPersistence.getLogicalTimestamp()});
         return await defaultPersistence.updateVariable(varDef.varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
-    }
-
-    if(varDef.parsedCommand.command === "table"){
-        //TODO: make tables as typed objects! (@daniel)
-        newValue = {tableHeader: varDef.parsedCommand.inputVars, tableData:newValue};
     }
 
     await defaultPersistence.updateVariable(varId, {value: serialiseValue(newValue), clock: defaultPersistence.getLogicalTimestamp()});
