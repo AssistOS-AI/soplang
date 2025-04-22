@@ -1,3 +1,5 @@
+import {markAsReferenceToVariable} from "./varUtil.js";
+
 const customTypeRegistry = await import("./customTypeRegistry.js");
 let varUtil = await import("./varUtil.js");
 
@@ -12,13 +14,11 @@ function CommandsRegistry( workspace) {
         macro: async function (inputValues) {
             // do nothing, all information already exists
         },
-        alias: async function (inputValues) {
-            // do nothing, it is treated as a special case during execution
-        },
         chainAlias: async function (inputValues) {
             // do nothing, it is treated as a special case during execution
         },
-        __DocId: async function (inputValues, outputValues, currentDocId) {
+        currentDocId: async function (inputValues, outputValues, currentDocId) {
+            console.debug(">>> __DocId", currentDocId);
             return currentDocId;
         }
     };

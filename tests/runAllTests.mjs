@@ -85,12 +85,15 @@ async function runTestsSequentially(tests) {
         }
     }
 
-    console.log("Following paths does not exist:", missingPaths);
-    console.log(`\n🏁 Finished: ${passed} passed, ${failed} failed.`);
+    console.log(`\n\nSummary:`);
     if(failed > 0) {
-        console.log(`\nFailed tests:`);
-        failedTests.forEach(test => console.log(`- ${test.testPath} \n${identAndCleanStdErr(test.stdErrResult)}`));
+        console.log(`\tFailed tests:`);
+        failedTests.forEach(test => console.log(`\t- ${test.testPath} \n${identAndCleanStdErr(test.stdErrResult)}`));
     }
+    if(missingPaths.length){
+        console.log("\tFollowing paths does not exist:", missingPaths);
+    }
+    console.log(`\t🏁 Finished: ${passed} passed, ${failed} failed.`);
     process.exit(failed > 0 ? 1 : 0);
 }
 

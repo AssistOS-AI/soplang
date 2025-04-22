@@ -21,6 +21,9 @@ await $$.registerPlugin("Documents", "../plugins/DocumentsPlugin.js");
 
 $$.allOk = true;
 $$.check = async function (docId, varName, expectedValue, prefixText) {
+    if (prefixText === undefined) {
+        prefixText = "";
+    }
     let workspace = await $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
     let value = await graph.getVarValue(docId, varName);

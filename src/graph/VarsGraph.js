@@ -11,6 +11,16 @@ function VarsGraph(commandsRegistry) {
         $$.throwErrorSync("Commands Registry is mandatory");
     }
 
+    commandsRegistry.registerCommand("alias", async function (inputValues, outputValues, currentDocId) {
+            let targetDocumentId = inputValues[0];
+            let targetVarName = inputValues[1];
+            let targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
+            let myVarId = varUtil.getVarID(currentDocId, outputValues[0]);
+            console.debug(">>>>>>>>> New alias", myVarId, "to", targetVarId);
+            await varUtil.markAsReferenceToVariable(myVarId, targetVarId);
+            await self.resetVarLevel(myVarId);
+            await self.restartBuild();
+    });
 
     this.analiseChapterTile = async function (docId, chapterId, title) {
         //define special variable for chapter title
@@ -207,8 +217,7 @@ function VarsGraph(commandsRegistry) {
                     $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
                 }
                 if (!dep) {
-                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Consider it as a permanently undefined variable!`);
-                    $$.throwErrorSync( `Dependency ${depName} not found for variable ${varName}. Build stopped!`);
+                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Inserting a fake dependency!`);
                 }
                 else if (dep.layer === 0) {
                     determineLayer(depName, dep);
@@ -217,6 +226,9 @@ function VarsGraph(commandsRegistry) {
             node.layer = 1;
             for (let i = 0; i < node.deps.length; i++) {
                 let dep = graph[node.deps[i]];
+                if(!dep){
+                    continue;
+                }
                 node.layer = Math.max(node.layer, dep.layer + 1);
             }
             // console.debug("Layer of", varName, "is", node.layer);
@@ -265,9 +277,10 @@ function VarsGraph(commandsRegistry) {
             return  await resolveValue(varContext.referencedVariable);
         }
 
+        /*
         if (varContext.parsedCommand.command === 'alias') {
             return await self.getVarValue(varContext.parsedCommand.inputVars[0], varContext.parsedCommand.inputVars[1]);
-        }
+        } */
 
         if(varContext.parsedCommand.command === "chainAlias"){
             //console.debug("Chain alias", varContext.parsedCommand.inputVars);
@@ -372,7 +385,7 @@ function VarsGraph(commandsRegistry) {
                     inputValues.push(value);
             }
         }
-        if (parsedCommand.command === "alias" || parsedCommand.command === "chainAlias") {
+        if (/*parsedCommand.command === "alias" || */parsedCommand.command === "chainAlias") {
             return await resolveValue(targetVar.varId);
         }
 

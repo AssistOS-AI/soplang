@@ -158,15 +158,10 @@ async function getDependencies(varId){
         deps.push(objVarId);
     }
 
-    if(varDef.parsedCommand.command ===  "alias"){
-        deps.push( getVarID(varDef.parsedCommand.inputVars[0], varDef.parsedCommand.inputVars[1]));
-    } else if(varDef.parsedCommand.inputVars.length > 0){
+    if(varDef.parsedCommand.inputVars.length > 0){
         for(let i = 0; i < varDef.parsedCommand.inputVars.length; i++){
             let inputVar = varDef.parsedCommand.inputVars[i];
             const varType = varDef.parsedCommand.varTypes[i];
-            if(varType === "alias"){
-                deps.push(inputVar);
-            }
             if(varType === "var"){
                 deps.push(inputVar);
             }
