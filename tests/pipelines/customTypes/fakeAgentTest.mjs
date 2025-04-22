@@ -45,11 +45,11 @@ function FakeAgent() {
     }
 }
 
-let testScript = `
+let testCode = `
     @agent1 new FakeAgent 007Agent
     @agent2 lookup FakeAgent Einstein  # it was created before and now loaded from persistence
     @agent3 lookup FakeAgent BigAnonymous  #  was not created before and now loaded from persistence   
-    @agent4 alias Script_Execution_1 agent1     
+    @agent4 alias CODEX_1 agent1     
     @resp1  agent1.ask "What is your name?" #debug
     @resp2  agent2.ask "What is your name?" #debug
     @resp3  agent3.ask "What is your name?" #debug        
@@ -59,10 +59,7 @@ let testScript = `
 
 await workspace.defineCustomType("FakeAgent", FakeAgent);
 
-let docId = await workspace.runScript(testScript);
-
-await workspace.buildAll();
-let value = undefined;
+let docId = await workspace.runCode(testCode);
 
 console.debug("Checking var, var0 and var1 after the first build");
 $$.check(docId, "resp1", "I am a fake James Bond!");
@@ -70,5 +67,4 @@ $$.check(docId, "resp2", "I am:[Einstein] Prompt was: 'You are an useful agent n
 $$.check(docId, "resp3", "I am:[BigAnonymous] Prompt was: 'You are an useful agent named BigAnonymous What is your name?  Please respond!'");
 $$.check(docId, "resp4", "I am a fake James Bond!");
 
-await workspace.shutDown();
-console.log("All tests passed:", $$.allOk ? "true" : "false");
+await $$.exit();

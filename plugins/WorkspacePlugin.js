@@ -46,7 +46,6 @@ async function WorkspacePlugin(){
     }
     self.buildAll = async function () {
         errorFromLastBuild = [];
-        graph.topologicalSort();
         return await graph.buildAll();
     }
 
@@ -64,8 +63,8 @@ async function WorkspacePlugin(){
         commandsRegistry.addCommand(commandName, commandFunction);
     }
 
-    self.runScript = async function (docId, scriptName, ...args) {
-        return await graph.runScript(docId, scriptName, ...args);
+    self.runMacro = async function (docId, scriptName, ...args) {
+        return await graph.runMacro(docId, scriptName, ...args);
     }
 
     self.runCode = async function (code, ...args) {

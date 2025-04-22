@@ -28,4 +28,18 @@ $$.check = async function (docId, varName, expectedValue) {
     console.assert(value === expectedValue, `Expected '${expectedValue}' but got '${value}' for '${varName}'`);
 }
 
-process.set
+$$.checkDocVar = $$.check;
+
+$$.checkValue = function (value,  expectedValue) {
+    $$.allOk &&= (value === expectedValue);
+    console.assert(value === expectedValue, `Expected '${expectedValue}' but got '${value}'`);
+}
+
+
+$$.exit = async function () {
+    let workspace = await $$.loadPlugin("Workspace");
+    await workspace.shutDown();
+    console.log("All tests passed:", $$.allOk ? "true" : "false");
+    process.exit($$.allOk ? 0 : 1);
+}
+$$.endTest = $$.exit;

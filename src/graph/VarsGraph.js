@@ -61,7 +61,7 @@ function VarsGraph(commandsRegistry) {
         if (code === "" || code === null || code === undefined) {
             return;
         }
-        const CODE_EXECUTION = "CodeExecution";
+        const CODE_EXECUTION = "CODEX";
         let inDocId = CODE_EXECUTION + "_" + await defaultPersistence.getNextNumber(CODE_EXECUTION);
         await defaultPersistence.createDocument({
             docId: inDocId,
@@ -83,29 +83,29 @@ function VarsGraph(commandsRegistry) {
         return inDocId;
     }
 
-    this.runScript = async function (docId, scriptName, ...args) {
-        let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId,scriptName));
+    this.runMacro = async function (docId, macroName, ...args) {
+        let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId,macroName));
         if(!scriptVar){
-            await $$.throwError(`Script '${scriptName}' not found`);
+            await $$.throwError(`Variable '${macroName}' not found`);
         }
-        let script = scriptVar.parsedCommand;
-        if (script.command !== "script") {
-            await $$.throwError(`Script '${scriptName}' is not a script`);
+        let macroCode = scriptVar.parsedCommand;
+        if (macroCode.command !== "macro") {
+            await $$.throwError(`Variable '${macroName}' is not a macro`);
         }
 
-        const SCRIPT_EXECUTION = "SRUN";
-        let inDocId = SCRIPT_EXECUTION + "_" + await defaultPersistence.getNextNumber(SCRIPT_EXECUTION);
-        script = sopLangUtil.expandScript(inDocId, scriptVar.parsedCommand, ...args);
+        const MACRO_RUN = "MRUN";
+        let inDocId = MACRO_RUN + "_" + await defaultPersistence.getNextNumber(MACRO_RUN);
+        macroCode = sopLangUtil.expandMacro(inDocId, scriptVar.parsedCommand, ...args);
 
         await defaultPersistence.createDocument({
             docId: inDocId,
             title: inDocId,
-            category: SCRIPT_EXECUTION,
-            commands: script
+            category: MACRO_RUN,
+            commands: macroCode
         });
 
 
-        await defineVarsFromCode(inDocId, "_", "_", script);
+        await defineVarsFromCode(inDocId, "_", "_", macroCode);
         await self.buildOnlyForDocument(inDocId);
         return await self.getVarValue(inDocId, inDocId);
     }
@@ -284,6 +284,26 @@ function VarsGraph(commandsRegistry) {
     }
 
     async function runCommand(targetVar) {
+        function isChain(command) {
+            return command.includes(".");
+        }
+
+        async function macroExists(command) {
+            if(isChain(command) || commandsRegistry.commandExists(command)){
+                //even if it exists, will be ignored
+                return false;
+            }
+            try{
+                let macroVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, command));
+                if(!macroVar){
+                    return false;
+                }
+                return macroVar.parsedCommand.command === "macro";
+            } catch(e){
+                return false;
+            }
+        }
+
         let parsedCommand = targetVar.parsedCommand;
         let inputValues = []
         let debugActivatedForCommand = false;
@@ -295,7 +315,8 @@ function VarsGraph(commandsRegistry) {
             return await resolveValue(targetVar.referencedVariable);
         }
 
-        if(!commandsRegistry.commandExists(intendedCommand)){
+        //console.debug(">>>>Running command", intendedCommand, "for variable", targetVar.varId, "with input values", parsedCommand.inputVars, isChain(intendedCommand), commandsRegistry.commandExists(intendedCommand));
+        if(await macroExists(intendedCommand)){
             let scriptVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, intendedCommand));
             if(!scriptVar){
                 $$.recordBuildInfo(`#DEBUG Failed to find command '${intendedCommand}' The command will be ignored and the variable will remain undefined`);
@@ -315,7 +336,7 @@ function VarsGraph(commandsRegistry) {
                 }
             }
 
-            let script = sopLangUtil.expandScript(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
+            let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
             await self.insertCode(targetVar.docId, script);
             self.restartBuild();
             await varUtil.markAsReferenceToVariable(targetVar.varId, varUtil.getVarID(targetVar.docId,returnVarName));
@@ -443,9 +464,8 @@ function VarsGraph(commandsRegistry) {
         async function restartableBuild(){
             try{
                     self.topologicalSort();
-                    await self.printGraph();
                     let layers = self.getLayers();
-                    console.debug("Building all layers", layers);
+                    //console.debug("Building all layers", layers);
                     for (let i = 0; i < layers.length; i++) {
                         let layer = layers[i];
                         //console.debug("Building layer", i, ":", layer);

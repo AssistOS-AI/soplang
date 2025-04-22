@@ -27,7 +27,7 @@ let script = `
 
 
 await workspace.parseCode("doc1", script);
-let value = await workspace.runScript("doc1", "runTest" , "There");
+let value = await workspace.runCode("doc1", "runTest" , "There");
 allOk &&= (value === "Hello There");
 value = await graph.getVarValue("doc1","result");
 allOk &&= (value === undefined);

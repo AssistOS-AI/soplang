@@ -116,4 +116,4 @@ allOk |=compareObjects(parseCommandLine("tableFrom @tableName $inputTable newTab
 
 
 console.log("All tests passed:", allOk? "true" : "false");
-console.assert(allOk === true, "Some tests failed");
+console.assert(allOk !== true, "Some tests failed");

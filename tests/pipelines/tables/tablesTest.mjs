@@ -4,7 +4,7 @@ import assert from "assert";
 let workspace = await $$.loadPlugin("Workspace");
 let graph = workspace.getGraph();
 
-let testScript = `
+let testCode = `
     @t1 new Table "c1" "c2" "c3" "c4" "c5"
     t1.append "c1:'a', c2:1, c3:10, c4:0, c5:1"
     t1.append "c1:'b', c2:100, c3:1000, c4:0, c5:1"
@@ -38,13 +38,12 @@ let testScript = `
 // @set_val t1.setAt "0" "c2" "999"
 // @c2_after_set t1.column "c2"
 
-let docId = await workspace.runCode(testScript);
+let docId = await workspace.runCode(testCode);
 
-await $$.check(docId, "s1", 10100000);
-await $$.check(docId, "s2", 10000001);
-await $$.check(docId, "s3", 2);
-await $$.check(docId, "sarea1_cn", 11110000);
-await $$.check(docId, "sarea1", 11110000);
+await $$.checkDocVar(docId, "s1", 10100000);
+await $$.checkDocVar(docId, "s2", 10000001);
+await $$.checkDocVar(docId, "s3", 2);
+await $$.checkDocVar(docId, "sarea1_cn", 11110000);
+await $$.checkDocVar(docId, "sarea1", 11110000);
 
-await workspace.shutDown();
-console.log("All tests passed:", $$.allOk ? "true" : "false");
+await $$.exit();

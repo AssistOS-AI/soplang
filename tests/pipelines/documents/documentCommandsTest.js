@@ -1,4 +1,4 @@
-import {} from "../../../deps/clean.mjs";
+import {} from "../../deps/clean.mjs";
 import assert from "assert";
 let workspace = await $$.loadPlugin("Workspace");
 let documents = await $$.loadPlugin("Documents");
@@ -33,7 +33,7 @@ let script = `
 `;
 
 
-let docId = await workspace.runScript(script);
+let docId = await workspace.runCode(script);
 await workspace.buildAll();
 await graph.printGraph();
 

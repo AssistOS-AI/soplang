@@ -1,24 +1,24 @@
 let util = await import("../../src/util/soplangUtil.js")
 let parseCommandLine = util.parseCommandLine;
 let compareObjects = util.compareObjects;
-let expandScript = util.expandScript;
+let expandCode = util.expandMacro;
 let assert = import("assert");
 
 
 let allOk = true;
 
-let parsedCommand = parseCommandLine( '@runTest script "hello,world" "@res := $hello $world %0Areturn $res "');
+let parsedCommand = parseCommandLine( '@runTest macro "hello,world" "@res := $hello $world %0Areturn $res "');
 console.log(parsedCommand);
 
 allOk |= compareObjects(parsedCommand, {
-    command: "script",
+    command: "macro",
     outputVars: ["runTest"],
     inputVars: ["hello,world", "@res := $hello $world %0A return $res "],
     varTypes: ['text',  'text']
 });
 
-let expandedScript = expandScript('exec1001', parsedCommand , "$a", "b" , "c");
-console.log(expandedScript);
+let expandedCode = expandCode('exec1001', parsedCommand , "$a", "b" , "c");
+console.log(expandedCode);
 
 console.log("All tests passed:", allOk? "true" : "false");
 console.assert(allOk !== true, "Some tests failed");

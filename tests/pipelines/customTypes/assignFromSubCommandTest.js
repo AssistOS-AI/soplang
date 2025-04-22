@@ -1,4 +1,4 @@
-import {} from "../../../deps/clean.mjs";
+import {} from "../../deps/clean.mjs";
 import assert from "assert";
 let workspace = await $$.loadPlugin("Workspace");
 let documents = await $$.loadPlugin("Documents");
@@ -37,7 +37,7 @@ let script = `
 
 
 await workspace.defineCustomType("CustomType", CustomType);
-let docId = await workspace.runScript(script);
+let docId = await workspace.runCode(script);
 await workspace.buildAll();
 await graph.printGraph();
 
@@ -46,3 +46,4 @@ await $$.check(docId, "b", "1 2 3 4 5");
 console.log("All tests passed:", $$.allOk? "true" : "false");
 
 assert(allOk === true, "Some tests failed");
+await workspace.shutDown();

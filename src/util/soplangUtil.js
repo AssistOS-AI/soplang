@@ -382,7 +382,7 @@ function decodePercentCustom(encodedStr) {
     });
 }
 
-function processEmbeddedScripts(input) {
+function processEmbeddedCodes(input) {
     // Input validation
     if (typeof input !== 'string') {
         console.error("Input must be a string.");
@@ -401,7 +401,7 @@ function processEmbeddedScripts(input) {
      * @param {number} startIndex - The line index to start parsing from.
      * @returns {{outputLine: string, nextIndex: number} | null} - The result or null if not a valid/complete script block.
      */
-    function parseScriptBlock(startIndex) {
+    function parseMacroBlock(startIndex) {
         // Check if the index is valid
         if (startIndex >= lines.length) {
             return null;
@@ -410,7 +410,7 @@ function processEmbeddedScripts(input) {
         const startLine = lines[startIndex];
         const trimmedStartLine = startLine.trim();
         // Regex: looks for @scriptName (captured) followed by 'script' and optional arguments
-        const match = trimmedStartLine.match(/^@(\S+)\s+script(?:\s+(.*))?$/);
+        const match = trimmedStartLine.match(/^@(\S+)\s+macro(?:\s+(.*))?$/);
 
         if (!match) {
             // The line does not match the "@name script ..." format
@@ -418,15 +418,15 @@ function processEmbeddedScripts(input) {
         }
 
         // Extract script name and arguments
-        const scriptName = match[1]; // Script name is captured from the regex
+        const scriptName = match[1]; // Code name is captured from the regex
         const argsStringFromLine = match[2] || ""; // Argument part (or empty string)
         const args = argsStringFromLine.split(/\s+/).filter(arg => arg.length > 0); // Split arguments
         const scriptBodyLines = []; // Collect lines for the script body
-        let currentScriptIndex = startIndex + 1; // Start searching for the body from the next line
+        let currentCodeIndex = startIndex + 1; // Start searching for the body from the next line
 
         // Iterate through subsequent lines looking for 'end'
-        while (currentScriptIndex < lines.length) {
-            const currentLine = lines[currentScriptIndex];
+        while (currentCodeIndex < lines.length) {
+            const currentLine = lines[currentCodeIndex];
             const trimmedCurrentLine = currentLine.trim();
 
             if (trimmedCurrentLine.toLowerCase() === 'end') {
@@ -445,7 +445,7 @@ function processEmbeddedScripts(input) {
 
                 // Create the summarized output line: @scriptName script <args_urlencoded> <lines_urlencoded>
                 // A space separates the two URL encoded parts.
-                const outputLine = `@${scriptName} script "${encodedArgs}" "${encodedLines}"`;
+                const outputLine = `@${scriptName} macro "${encodedArgs}" "${encodedLines}"`;
 
                 // To Decode later:
                 // 1. Find the part after "@scriptName script ".
@@ -457,17 +457,17 @@ function processEmbeddedScripts(input) {
                 // Return the line and the index of the line *after* 'end'
                 return {
                     outputLine: outputLine,
-                    nextIndex: currentScriptIndex + 1
+                    nextIndex: currentCodeIndex + 1
                 };
             } else {
                 //console.debug(`Adding line to script '${scriptName}':`, currentLine);
                 scriptBodyLines.push(currentLine.trim());
-                currentScriptIndex++; // Move to the next line
+                currentCodeIndex++; // Move to the next line
             }
         }
 
         // If the loop finishes without finding 'end', the script is unterminated
-        console.warn(`Warning: Script '${scriptName}' starting on line ${startIndex + 1} was not closed with 'end'. Treating start line as regular text.`);
+        console.warn(`Warning: macro variable '${scriptName}' starting on line ${startIndex + 1} was not closed with 'end'. Treating start line as regular text.`);
         // Return null to indicate a complete block was not processed
         return null;
     }
@@ -475,7 +475,7 @@ function processEmbeddedScripts(input) {
     // --- Main loop for processing lines ---
     while (currentIndex < lines.length) {
         // Attempt to parse a script block starting at the current line
-        const scriptParseResult = parseScriptBlock(currentIndex);
+        const scriptParseResult = parseMacroBlock(currentIndex);
 
         if (scriptParseResult) {
             // Successfully found and parsed a complete script block
@@ -493,7 +493,7 @@ function processEmbeddedScripts(input) {
 }
 
 
-function expandScript(executionPrefix, parsedCommand,  ...args) {
+function expandMacro(executionPrefix, parsedCommand, ...args) {
     let initialisation = "";
     let declaredArgs = parsedCommand.inputVars[0];
     let variables = {};
@@ -504,12 +504,12 @@ function expandScript(executionPrefix, parsedCommand,  ...args) {
         initialisation += `@${variables[argName]} := ${args[i]}\n`;
     }
 
-    let scriptCode = parsedCommand.inputVars[1];
-    scriptCode = decodePercentCustom(scriptCode);
+    let macroCode = parsedCommand.inputVars[1];
+    macroCode = decodePercentCustom(macroCode);
     //detect all occurrences of @varName or ~varName and add in variables with the executionPrefix
     let regex = /([@$~])([a-zA-Z0-9_]+)/g;
     let match;
-    while ((match = regex.exec(scriptCode)) !== null) {
+    while ((match = regex.exec(macroCode)) !== null) {
         let varName = match[2];
         if(!variables[varName]){
             variables[varName] = executionPrefix + "_" + varName;
@@ -519,22 +519,22 @@ function expandScript(executionPrefix, parsedCommand,  ...args) {
     for(let varName in variables){
         //replace each occurrence of var name prefixed by $ @ or ~  but keep the prefix
         let regex = new RegExp("([@$~])" + varName, "g");
-        scriptCode = scriptCode.replace(regex, (match, prefix) => {
+        macroCode = macroCode.replace(regex, (match, prefix) => {
             return prefix + variables[varName];
         });
     }
     // replace return with @executionPrefix :=
     regex = /return/g;
-    scriptCode = scriptCode.replace(regex, (match) => {
+    macroCode = macroCode.replace(regex, (match) => {
         return `@${executionPrefix} assign`;
     });
 
-    return initialisation + scriptCode;
+    return initialisation + macroCode;
 }
 
 function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine) {
     let varCounter = 0;
-    commandTextSeparatedByNewLine = processEmbeddedScripts(commandTextSeparatedByNewLine);
+    commandTextSeparatedByNewLine = processEmbeddedCodes(commandTextSeparatedByNewLine);
     //console.debug("Command text:", commandTextSeparatedByNewLine);
 
     function makeVarNames() {
@@ -580,6 +580,6 @@ export {
     makeNameForSpecialVars,
     parseComplexLine,
     replaceDotVariables,
-    processEmbeddedScripts,
-    expandScript
+    processEmbeddedCodes,
+    expandMacro
 }

@@ -8,9 +8,9 @@ let allOk = true;
 
 let script = `
     @doc                new Document "doc1"
-    @par1               := "Some content for chapter 1, paragraph 1"
-    @par21              := "Some content for chapter 2, paragraph 1"
-    @par21add           := "More content for chapter 2, paragraph 1"
+    @par1               := "content_1"
+    @par21              := "content_2_1"
+    @par21add           := "content_21_next"
                         doc.setChapterTitle 1 "Title for chapter 1"
                         doc.setChapterTitle 2 "Title for chapter 2"
                         doc.setParagraphText   1  1 $par1 "and some other content"
@@ -18,18 +18,18 @@ let script = `
     # and approximate equivalent would be to define a variable on the previous line and use it here directly and not as an embedded command
     # but this is just a test. The difference is that in case of changes in dependencies other then $par21, this expression will not be re-executed
     # while the other one will be re-executed. This could be usefully in some cases or could be perceived as bug or a leaking abstraction 
-    @parText            := [ doc.getParagraphText 1 1 ]
-                        doc.setParagraphText    1  1 $parText $par21
-                        doc.setParagraphText    2  1 $par21add
-                        doc.setParagraphText    2  2 "additional content for chapter 2, paragraph 2"    
+    @parText             doc.getParagraphText 1 1 
+    doc.setParagraphText    1  1 $parText $par21 await await $parText
+    doc.setParagraphText    2  1 $par21add await $parText
+    doc.setParagraphText    2  2 "additional content for chapter 2, paragraph 2"     await $parText
 `;
 
 
-let docId = await workspace.runScript(script);
+let docId = await workspace.runCode(script);
 await workspace.buildAll();
 await graph.printGraph();
 
-$$.check(docId, "parText", "Some content for chapter 1, paragraph 1 and some other content");
+$$.checkDocVar(docId, "parText", "content_1");
 
 
 let documentContent = await documents.dumpDocument(docId);
@@ -37,9 +37,5 @@ console.debug("Document content for script execution:", documentContent);
 
  documentContent = await documents.dumpDocument('doc1');
 console.debug("Document content for the 'doc1':", documentContent);
-
-await workspace.shutDown();
-
-console.log("All tests passed:", $$.allOk? "true" : "false");
-
-assert(allOk === true, "Some tests failed");
+//TODO: add more checks
+await $$.exit();

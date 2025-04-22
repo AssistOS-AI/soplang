@@ -11,7 +11,7 @@ let script = `
 `;
 
 
-let docId = await workspace.runScript(script);
+let docId = await workspace.runCode(script);
 
 await workspace.buildAll();
 await graph.printGraph();

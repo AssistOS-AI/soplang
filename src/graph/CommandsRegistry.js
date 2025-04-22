@@ -5,17 +5,14 @@ function CommandsRegistry( workspace) {
         assign: async function (inputValues ) {
             return inputValues.join(" ");
         },
-        script: async function (inputValues) {
+        macro: async function (inputValues) {
             // do nothing, all information already exists
         },
-        list : async function (inputValues) {
-            return inputValues;
+        alias: async function (inputValues) {
+            // do nothing, it is treated as a special case during execution
         },
-        equal : async function (inputValues) {
-            return inputValues[0] === inputValues[1];
-        },
-        unequal : async function (inputValues) {
-            return inputValues[0] !== inputValues[1];
+        chainAlias: async function (inputValues) {
+            // do nothing, it is treated as a special case during execution
         }
     };
 
@@ -104,7 +101,7 @@ function CommandsRegistry( workspace) {
             }
             let result = await command.call(value, inputValues, outputValues, currentDocId, workspace);
             //save the status of the variable just in case that the function had a side effect on its state
-            console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
+            //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
             return result; // the result of the command will be immediately  assigned to the output variable
         }

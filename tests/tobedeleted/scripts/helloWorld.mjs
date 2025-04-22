@@ -30,10 +30,10 @@ await graph.buildAll();
 
 //console.log("Graph dump:", graph.dump());
 
-await graph.runScript(script, "doc1", "v1");
+await graph.runCode(script, "doc1", "v1");
 allOk &&= graph.getVariable("doc1","v1") === "Hello World!";
 
-await graph.runScript(script, "doc1", "v1" );
+await graph.runCode(script, "doc1", "v1" );
 allOk &&= graph.getVariable("doc1","v1") === "Better World!";
 
 
