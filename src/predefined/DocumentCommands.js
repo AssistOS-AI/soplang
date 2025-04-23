@@ -181,7 +181,6 @@ function Document() {
             return paragraph.commands;
         }
     }
-
 }
 
 export async function init() {

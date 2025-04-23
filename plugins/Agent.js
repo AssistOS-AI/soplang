@@ -1,6 +1,5 @@
 import path from "path";
 import {promises as fsPromises} from "fs";
-import archiver from "archiver";
 
 async function Agent() {
     let self = {};
@@ -113,6 +112,8 @@ async function Agent() {
         //return await storage.getDownloadURL("image/png", imageId);
     }
     self.exportPersonality = async function (id) {
+        await $$.throwAsyncError("Exporting personalities is not supported yet");
+        //import archiver from "archiver";
         let agent = await self.getAgent(id);
         const contentBuffer = Buffer.from(JSON.stringify(agent), 'utf-8');
         const archive = archiver('zip', {zlib: {level: 9}});
