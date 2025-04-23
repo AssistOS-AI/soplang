@@ -4,11 +4,11 @@ import assert from "assert";
 
 let workSpaceCore = $$.loadPlugin("WorkspacePlugin");
 let UserPlugin = $$.loadPlugin("WorkspaceUserPlugin");
-let AgentPlugin = $$.loadPlugin("AgentPlugin");
+let Agent = $$.loadPlugin("Agent");
 
 let owner = await UserPlugin.createUser("user1@email.com", "Owner 1", "owner");
 await workSpaceCore.createWorkspace("Test Workspace", owner.id);
-await AgentPlugin.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
+await Agent.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
 let doc1 = await workSpaceCore.createDocument("doc1", "category");
 
 await workSpaceCore.applyTemplate(doc1.id, {
