@@ -1,9 +1,14 @@
 import {createVarsGraph} from "../src/graph/VarsGraph.js";
 import {createRegistry} from "../src/graph/CommandsRegistry.js";
-import constants from "../../globalServerlessAPI/constants.js";
+
+const ROLES = {
+    OWNER: "owner",
+    ADMIN: "admin",
+    WRITE: "member",
+    GUEST: "guest",
+}
 
 const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
-
 
 let errorFromLastBuild = [];
 let infoFromLastBuild = [];
@@ -82,7 +87,7 @@ async function WorkspacePlugin() {
         return await graph.insertCode(docId, code);
     }
 
-    self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
         return await persistence.createWorkspace({
             id: workspaceName,
             ownerId: ownerId,
@@ -90,10 +95,6 @@ async function WorkspacePlugin() {
             documents: [],
             clock: 0
         });
-    }
-    self.createWorkspace = async function (spaceName, spaceId, ownerId, email) {
-        await self.createWorkspace(spaceName, ownerId, spaceId);
-        await WorkspaceUser.createUser(email, email, constants.ROLES.OWNER);
     }
     self.getCollaborators = async function () {
         const userIds = await WorkspaceUser.getAllUsers();
@@ -124,7 +125,7 @@ async function WorkspacePlugin() {
     self.removeCollaborator = async function (email) {
         let allUsers = await self.getCollaborators();
         let user = await allUsers.find(user => user.email === email);
-        if (user === constants.ROLES.OWNER) {
+        if (user === ROLES.OWNER) {
             let owners = self.getOwnersCount(allUsers);
             if (owners === 1) {
                 return "Can't delete the last owner of the space";
@@ -135,9 +136,9 @@ async function WorkspacePlugin() {
     self.setCollaboratorRole = async function (email, role) {
         let allUsers = await self.getCollaborators();
         let user = await allUsers.find(user => user.email === email);
-        if (user === constants.ROLES.OWNER) {
+        if (user === ROLES.OWNER) {
             let owners = self.getOwnersCount(allUsers);
-            if (owners === 1 && role !== constants.ROLES.OWNER) {
+            if (owners === 1 && role !== ROLES.OWNER) {
                 return "Can't change the role of the last owner of the space";
             }
         }
@@ -147,7 +148,7 @@ async function WorkspacePlugin() {
     self.getOwnersCount = function (users) {
         let owners = 0;
         for (let id in users) {
-            if (users[id].role === constants.ROLES.OWNER) {
+            if (users[id].role === ROLES.OWNER) {
                 owners++;
             }
         }

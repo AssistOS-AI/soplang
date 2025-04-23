@@ -1,4 +1,4 @@
-import {} from "../deps/clean.mjs";
+import "../deps/clean.mjs";
 import assert from "assert";
 import { getInstance } from "../fakes/plugins/LLM.js";
 import mockBinaries from "../fakes/utils/binaries.js";
