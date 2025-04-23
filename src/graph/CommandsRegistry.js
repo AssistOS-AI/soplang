@@ -120,19 +120,23 @@ function CommandsRegistry( workspace) {
             return;
         }
         if(splitCommand.length === 2){
-            let value = await workspace.getVarValue(currentDocId, splitCommand[0]);
+            let methodCommand = splitCommand[1].trim();
+            let varName = splitCommand[0].trim();
+            let value = await workspace.getVarValue(currentDocId, varName);
             if(value === undefined){
-                await $$.throwError("Variable not found:", splitCommand[0]);
+                //await $$.throwError("Variable not found:", splitCommand[0]);
+                $$.recordBuildError(`Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
                 return;
             }
 
-            const command = value[splitCommand[1]];
-            if(!command){
-                console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + $$.dumpObject(value));
-                await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${$$.dumpObject(value)}"`);
+            const commandFunction = value[methodCommand];
+            if(!commandFunction){
+                //console.debug(">>>>>>>> Value of" + ` ${currentDocId}.${splitCommand[0]} is` + $$.dumpObject(value));
+                //await $$.throwError(`Command not found: ${splitCommand[1]} in Object "${$$.dumpObject(value)}"`);
+                $$.recordBuildError(`Method command not found: '${methodCommand}' in Object "${$$.dumpObject(value)}" Defaulting to undefined`);
                 return;
             }
-            let result = await command.call(value, inputValues, outputValues, currentDocId, workspace);
+            let result = await commandFunction.call(value, inputValues, outputValues, currentDocId, workspace);
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
@@ -159,10 +163,11 @@ const createRegistry = async function (workspace) {
     let registry = null;
     registry = new CommandsRegistry(workspace);
 
-    const {init: tableInit} = await import("../predefined/Table.js");
-    await tableInit();
-    const {init} = await import("../predefined/DocumentCommands.js");
-    await init();
+    await import("../predefined/Table.js");
+    await import("../predefined/DocumentCommands.js");
+    await import("../predefined/Set.js");
+    await import("../predefined/Agent.js");
+
     return registry;
 }
 export {

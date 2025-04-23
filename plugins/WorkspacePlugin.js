@@ -36,7 +36,9 @@ $$.dumpObject = function (obj) {
         }
         res += key + ": " + obj[key] + ", ";
     }
-    res += `type: ${obj?.constructor?.name || typeof obj}`;
+    if(!obj.__type){
+        res += `type: ${obj?.constructor?.name || typeof obj}`;
+    }
     res += "}";
     return res;
 }

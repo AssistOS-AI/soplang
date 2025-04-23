@@ -1,26 +1,41 @@
 function Agent(){
     let self = this;
-    let documentsPlugin, persistence, LLMPlugin;
-    this.init = async function(){
+    let documentsPlugin, persistence, agentPlugin;
+    this.agentName = undefined;
+    let agentInstance = undefined;
+
+    this.init = async function(agentName){
         persistence = await $$.loadPlugin("DefaultPersistence");
-        documentsPlugin = await $$.loadPlugin("Documents");
-        self.docId = docId;
-        if(docInstance){
-            self.docInstance = docInstance;
-        } else {
-            self.docInstance = await persistence.createDocument({docId:self.docId, chapters: []});
-        }
+        self.agentName = agentName;
+        agentInstance = await persistence.createAgent({agentName});
     }
 
     this.restore = async function(JSONSerialisation) {
         persistence = await $$.loadPlugin("DefaultPersistence");
-        documentsPlugin = await $$.loadPlugin("Documents");
         if(JSONSerialisation){
-            self.docId = JSONSerialisation.docId;
+            this.agentName = JSONSerialisation.agentName;
+            agentInstance = await persistence.getAgent(this.agentName);
         }
     }
+    /*
+    Methods:
+
+    expand  expectedSize prompt
+    ask prompt
+    respond prompt
+    yesOrNo prompt
+    score #maxNumber prompt
+    brainstorm #nrOptions prompt
+    rank set #nrCriterias prompt
+    questions #number prompt
+    learn docId
+    plan #noC #noP prompt
+    research $plan $discussion $targetDoc #sz
+    review $sourcetDoc $reviewDocument
+    fix $sourcetDoc $reviewDocument $target
+
+     */
 
 }
-export async function init() {
-    $$.registerCustomType("Agent", Agent);
-}
+
+$$.registerCustomType("Agent", Agent);

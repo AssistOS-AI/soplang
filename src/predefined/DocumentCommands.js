@@ -183,6 +183,4 @@ function Document() {
     }
 }
 
-export async function init() {
-    $$.registerCustomType("Document", Document);
-}
+$$.registerCustomType("Document", Document);

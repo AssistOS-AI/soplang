@@ -3,6 +3,24 @@ function Table() {
     self.columns = []; // Column names
     self.data = [];    // Array of objects
 
+    self.init = async function (...args) {
+        self.columns = args;
+    }
+
+    self.restore = async function (JSONSerialisation) {
+        if (JSONSerialisation) {
+            self.columns = JSONSerialisation.columns || [];
+            self.data = JSONSerialisation.data || [];
+        }
+    }
+
+    self.getRuntimeValue = async function () {
+        return {
+            tableHeader: self.columns,
+            tableData: self.data
+        };
+    }
+
     function assertIsTable() {
         if (!self.columns || self.columns.length === 0) {
             console.error("Not a good table definition: empty definition");
@@ -142,23 +160,7 @@ function Table() {
         return res;
     }
 
-    self.init = async function (...args) {
-        self.columns = args;
-    }
 
-    self.restore = async function (JSONSerialisation) {
-        if (JSONSerialisation) {
-            self.columns = JSONSerialisation.columns || [];
-            self.data = JSONSerialisation.data || [];
-        }
-    }
-
-    self.getRuntimeValue = async function () {
-        return {
-            tableHeader: self.columns,
-            tableData: self.data
-        };
-    }
 
     self.setData = async function (inputValues, outputValues, currentDocId, workspace) {
         // Handle direct array input
@@ -454,6 +456,4 @@ function Table() {
     }
 }
 
-export async function init() {
-    $$.registerCustomType("Table", Table);
-}
+$$.registerCustomType("Table", Table);
