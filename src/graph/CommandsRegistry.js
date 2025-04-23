@@ -56,8 +56,8 @@ function CommandsRegistry( workspace) {
                 console.debug(">>>>Overwriting alias", varName, "with", inputValues[1]);
                 break;
             case "chainAlias":
-                console.debug(">>>>Overwriting chainAlias", varName, "with", inputValues[1]);
-                break;
+                $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is a chain alias of a custom type. Use commands associated with the custom type instead!");
+                return;
             default:
                 $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is not declared with the assign command");
                 return;
