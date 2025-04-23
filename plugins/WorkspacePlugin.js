@@ -1,7 +1,7 @@
 import {createVarsGraph} from "../src/graph/VarsGraph.js";
 import {createRegistry} from "../src/graph/CommandsRegistry.js";
 import constants from "../../globalServerlessAPI/constants.js";
-import configs from "../../../data-volume/config/config.json";
+
 const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
 
@@ -9,7 +9,7 @@ let errorFromLastBuild = [];
 let infoFromLastBuild = [];
 $$.recordBuildError = function (text, err) {
     console.debug("WARNING: Recording build error", text);
-    if(!err){
+    if (!err) {
         err = new Error(text);
     }
     errorFromLastBuild.push({
@@ -25,8 +25,8 @@ $$.recordBuildInfo = function (text) {
 
 $$.dumpObject = function (obj) {
     let res = "{";
-    for(let key in obj){
-        if(typeof obj[key] === "function"){
+    for (let key in obj) {
+        if (typeof obj[key] === "function") {
             continue;
         }
         res += key + ": " + obj[key] + ", ";
@@ -36,7 +36,7 @@ $$.dumpObject = function (obj) {
     return res;
 }
 
-async function WorkspacePlugin(){
+async function WorkspacePlugin() {
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
     let Email = await $$.loadPlugin("Email");
@@ -45,10 +45,10 @@ async function WorkspacePlugin(){
     let commandsRegistry = await createRegistry(self);
     let graph = await createVarsGraph(commandsRegistry, persistence);
 
-    self.getGraph = function(){
+    self.getGraph = function () {
         return graph;
     }
-    self.getErrorFromLastBuild = function(){
+    self.getErrorFromLastBuild = function () {
         return errorFromLastBuild;
     }
     self.buildAll = async function () {
@@ -91,7 +91,7 @@ async function WorkspacePlugin(){
             clock: 0
         });
     }
-    self.createWorkspace = async function(spaceName, spaceId, ownerId, email) {
+    self.createWorkspace = async function (spaceName, spaceId, ownerId, email) {
         await self.createWorkspace(spaceName, ownerId, spaceId);
         await WorkspaceUser.createUser(email, email, constants.ROLES.OWNER);
     }
@@ -104,7 +104,7 @@ async function WorkspacePlugin(){
         }
         return users;
     }
-    self.addCollaborators = async function(referrerEmail, collaborators, spaceName) {
+    self.addCollaborators = async function (referrerEmail, collaborators, spaceName) {
         const users = await self.getCollaborators();
         let existingUserEmails = users.map(user => user.email);
         let existingCollaborators = [];
@@ -114,12 +114,10 @@ async function WorkspacePlugin(){
                 continue;
             }
             await WorkspaceUser.createUser(collaborator.email, collaborator.email, collaborator.role);
-            if (configs.ENABLE_EMAIL_SERVICE) {
-                let subject = "You have been added to a space";
-                let text = `You have been added to the space ${spaceName} by ${referrerEmail}`;
-                let html = `<p>You have been added to the space ${spaceName} by ${referrerEmail}</p>`;
-                await Email.sendEmail(collaborator.email, process.env.SENDGRID_SENDER_EMAIL, subject, text, html);
-            }
+            let subject = "You have been added to a space";
+            let text = `You have been added to the space ${spaceName} by ${referrerEmail}`;
+            let html = `<p>You have been added to the space ${spaceName} by ${referrerEmail}</p>`;
+            await Email.sendEmail(collaborator.email, process.env.SENDGRID_SENDER_EMAIL, subject, text, html);
         }
         return existingCollaborators;
     }
@@ -155,7 +153,7 @@ async function WorkspacePlugin(){
         }
         return owners;
     }
-    self.getDefaultAgentId = async function(){
+    self.getDefaultAgentId = async function () {
         return "Assistant";
     }
     self.getWorkspace = async function (globalId) {
@@ -190,11 +188,11 @@ export async function getInstance() {
 }
 
 export function getAllow() {
-    return async function(globalUserId, email, command, ...args) {
+    return async function (globalUserId, email, command, ...args) {
         return true;
     };
 }
 
 export function getDependencies() {
-    return ["DefaultPersistence","Email","WorkspaceUser"];
+    return ["DefaultPersistence", "Email", "WorkspaceUser"];
 }

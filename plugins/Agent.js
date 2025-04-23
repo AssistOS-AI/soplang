@@ -1,8 +1,6 @@
-const path = require("path");
-const {promises: fsPromises} = require("fs");
-
-const storage = require("../../apihub-component-utils/storage");
-const archiver = require("archiver");
+import path from "path";
+import {promises as fsPromises} from "fs";
+import archiver from "archiver";
 
 async function Agent() {
     let self = {};
@@ -54,7 +52,7 @@ async function Agent() {
     }
 
     self.updateAgent = async function (id, values) {
-        return await  persistence.updateAgent(id, values);
+        return await persistence.updateAgent(id, values);
     }
 
     self.addChat = async function (id, chatId) {
@@ -112,7 +110,7 @@ async function Agent() {
     self.getPersonalityImageUrl = async function (id) {
         const agent = await self.getAgent(id);
         const imageId = agent.imageId;
-        return await storage.getDownloadURL("image/png", imageId);
+        //return await storage.getDownloadURL("image/png", imageId);
     }
     self.exportPersonality = async function (id) {
         let agent = await self.getAgent(id);
@@ -290,19 +288,20 @@ async function Agent() {
 }
 
 let singletonInstance;
-module.exports = {
-    getInstance: async function () {
-        if (!singletonInstance) {
-            singletonInstance = await Agent();
-        }
-        return singletonInstance;
-    },
-    getAllow: function () {
-        return async function (id, name, command, ...args) {
-            return true;
-        }
-    },
-    getDependencies: function () {
-        return ["Chat", 'LLM','defaultPersistence'];
+
+export async function getInstance() {
+    if (!singletonInstance) {
+        singletonInstance = await Agent();
     }
+    return singletonInstance;
+}
+
+export function getAllow() {
+    return async function (id, name, command, ...args) {
+        return true;
+    }
+}
+
+export function getDependencies() {
+    return ["Chat", 'LLM', 'defaultPersistence'];
 }
