@@ -1,7 +1,7 @@
 import {} from "../../deps/clean.mjs"
 await $$.clean();
 let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
-let AgentPlugin =  $$.loadPlugin("AgentPlugin");
+let Agent =  $$.loadPlugin("Agent");
 let UserPlugin =  $$.loadPlugin("WorkspaceUserPlugin");
 
 let ownerId = await UserPlugin.createUser("user1@email.com", "User 1 1", "owner").id;
@@ -10,13 +10,13 @@ await WorkspacePlugin.createWorkspace("Test Workspace", ownerId);
 await UserPlugin.createUser("user2@email.com", "User 2", "read");
 
 
-await AgentPlugin.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
-await AgentPlugin.createAgent("agent2", "Default Agent in workspace Test Workspace. Be short and polite");
+await Agent.createAgent("agent1", "Default Agent in workspace Test Workspace. Be short and polite");
+await Agent.createAgent("agent2", "Default Agent in workspace Test Workspace. Be short and polite");
 await WorkspacePlugin.createDocument("doc1", "category1");
 await WorkspacePlugin.createDocument("doc2", "category1");
 await WorkspacePlugin.createDocument("doc3", "category2");
 
-let agentByName = await AgentPlugin.getAgent("agent1");
+let agentByName = await Agent.getAgent("agent1");
 console.assert(agentByName.name === "agent1", "Expected agent1");
 
 let allDocumentInCategory1 = await WorkspacePlugin.getDocumentsByCategory("category1");

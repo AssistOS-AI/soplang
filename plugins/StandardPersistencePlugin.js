@@ -15,7 +15,6 @@ async function createStandardPersistencePlugin(){
             clock : "integer",
             permissions: "any"
         },
-
         user: {
             id: "random",
             email: "string",
