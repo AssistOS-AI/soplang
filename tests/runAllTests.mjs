@@ -24,7 +24,7 @@ const tests = [
     './pipelines/overwrite/customTypesTest.mjs',
     './pipelines/overwrite/basicOverwriteTest.mjs',
     './pipelines/macros/advanced/containersTest.mjs',
-    './integration/llmIntegrationTest.mjs',
+    './integration/llmFacadeTest.mjs',
 ];
 
 import fs from 'node:fs/promises';

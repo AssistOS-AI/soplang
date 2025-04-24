@@ -1,47 +1,55 @@
+const {default: Provider} = await import('../utils/provider.js')
+
 async function LLM() {
-    const providers = {};
-    const self = {};
+    const providers = {}
+    const self = {}
 
-
-    self.getModels = async () => mockLlms;
-    self.getProviderModels = async (provider) => mockLlms.filter(m => m.provider === provider);
-    self.getLlmById = async (id) => mockLlms.find(m => m.id === id);
-    self.getLlmByName = async (name) => mockLlms.find(m => m.name === name);
-
-    self.registerProvider = async (providerObject) => {
-
-
+    self.registerLlmProvider = async (providerData) => {
+        const p = new Provider(providerData)
+        providers[p.name] = p
     }
 
-    self.getTextResponse = async (provider,  modelName, prompt, options = {}) => {
+    self.getModels = async () => (await Promise.all(Object.values(providers).map(p => p.getModels()))).flat()
+    self.getProviderModels = async (name) => providers[name]?.getModels() ?? []
 
-    };
+    self.getLlmById = async (id) => {
+        for (const p of Object.values(providers))
+            for (const m of await p.getModels()) if (m.id === id) return m
+    }
 
-    self.getTextStreamingResponse = async (provider,  modelName, prompt, options = {}, onDataChunk) => {
+    self.getLlmByName = async (name) => {
+        for (const p of Object.values(providers))
+            for (const m of await p.getModels()) if (m.name === name) return m
+    }
 
-    };
+    self.getTextResponse = async (provider, model, prompt, options = {}) =>
+        providers[provider].getTextResponse(model, prompt, options)
 
-    self.getChatCompletionResponse = async (provider,  modelName, messages, options = {}) => {
+    self.getTextStreamingResponse = async (provider, model, prompt, options = {}, onDataChunk) => {
+        return providers[provider].getTextStreamingResponse(model, prompt, options, onDataChunk)
+    }
 
-    };
+    self.getChatCompletionResponse = async (provider, model, messages, options = {}) => {
+        return providers[provider].getChatCompletionResponse(model, messages, options)
+    }
 
-    self.getChatCompletionStreamingResponse = async (provider,  modelName, messages, options = {}, onDataChunk) => {
+    self.getChatCompletionStreamingResponse = async (provider, model, messages, options = {}, onDataChunk) => {
+        return providers[provider].getChatCompletionStreamingResponse(model, messages, options, onDataChunk)
+    }
 
-    };
-
-    return self;
+    return self
 }
 
-let singletonInstance;
+let singleton
 
 export async function getInstance() {
-    return singletonInstance || (singletonInstance = await LLM());
+    return singleton || (singleton = await LLM())
 }
 
 export function getAllow() {
-    return async () => true;
+    return async () => true
 }
 
 export function getDependencies() {
-    return ["defaultPersistence"];
+    return []
 }
