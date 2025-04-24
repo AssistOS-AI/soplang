@@ -9,7 +9,6 @@ async function Agent() {
     const Chat = await $$.loadPlugin("Chat");
     const Llm = await $$.loadPlugin("LLM");
 
-
     await persistence.configureTypes({
             agent: {
                 id: "random",

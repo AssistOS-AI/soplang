@@ -2,7 +2,7 @@ import {createVarsGraph} from "../src/graph/VarsGraph.js";
 import {createRegistry} from "../src/graph/CommandsRegistry.js";
 const customTypeRegistry = import("../src/graph/customTypeRegistry.js");
 
-async function DocumentsPlugin(){
+async function Documents(){
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
     let workspace = await $$.loadPlugin("Workspace");
@@ -304,7 +304,7 @@ async function DocumentsPlugin(){
 let singletonInstance = undefined;
 export async function getInstance() {
     if (!singletonInstance) {
-        singletonInstance = await DocumentsPlugin();
+        singletonInstance = await Documents();
     }
     return singletonInstance;
 }

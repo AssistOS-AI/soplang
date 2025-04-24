@@ -1,7 +1,7 @@
 import {} from "../../deps/clean.mjs"
 await $$.clean();
 
-let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
+let WorkspacePlugin =  $$.loadPlugin("Workspace");
 let UserPlugin = $$.loadPlugin("WorkspaceUserPlugin");
 console.debug("Start of the test");
 

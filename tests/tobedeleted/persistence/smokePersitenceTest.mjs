@@ -2,7 +2,7 @@ import {} from "../../deps/clean.mjs"
 await $$.clean();
 import assert from "assert";
 
-let workSpaceCore = $$.loadPlugin("WorkspacePlugin");
+let workSpaceCore = $$.loadPlugin("Workspace");
 let UserPlugin = $$.loadPlugin("WorkspaceUserPlugin");
 let Agent = $$.loadPlugin("Agent");
 

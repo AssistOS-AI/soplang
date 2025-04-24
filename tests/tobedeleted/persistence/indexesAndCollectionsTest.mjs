@@ -1,6 +1,6 @@
 import {} from "../../deps/clean.mjs"
 await $$.clean();
-let WorkspacePlugin =  $$.loadPlugin("WorkspacePlugin");
+let WorkspacePlugin =  $$.loadPlugin("Workspace");
 let Agent =  $$.loadPlugin("Agent");
 let UserPlugin =  $$.loadPlugin("WorkspaceUserPlugin");
 

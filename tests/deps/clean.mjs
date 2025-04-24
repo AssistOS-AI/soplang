@@ -12,11 +12,11 @@ console.log("Start initialisation...");
 import {} from "../../Persisto/clean.mjs";
 
 await $$.clean();
-await $$.registerPlugin("DefaultPersistence", "../plugins/StandardPersistencePlugin.js");
-await $$.registerPlugin("Workspace", "../plugins/WorkspacePlugin.js");
+await $$.registerPlugin("DefaultPersistence", "../plugins/StandardPersistence.js");
+await $$.registerPlugin("Workspace", "../plugins/Workspace.js");
 await $$.registerPlugin("Agents", "../plugins/Agent.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
-await $$.registerPlugin("Documents", "../plugins/DocumentsPlugin.js");
+await $$.registerPlugin("Documents", "../plugins/Documents.js");
 
 
 $$.allOk = true;
