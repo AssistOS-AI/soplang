@@ -15,13 +15,13 @@ let script = `
     end  
     @hello := Hello
     
-    @result worldSet.forEach sayHello $hello item
+    @result worldSet.map sayHello $hello 
     overwrite ~world1 "New World 1" await $result
     overwrite ~world2 "New World 2" await $result    
-    @res0 result.at 0
+    @res0 result.getAt 0
     @res1 result.first
-    @res2 result.at 1    
-    @res1 result.at 2
+    @res2 result.getAt 1    
+    @res1 result.getAt 2
 `;
 
 
