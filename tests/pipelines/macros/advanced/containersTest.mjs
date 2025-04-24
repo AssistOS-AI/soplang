@@ -7,7 +7,7 @@ let script = `
     @world1 := "World1"
     @world2 := "World2"
     @world3 := "World3"
-    @worldSet new Set ~world1 ~world2 ~world3      
+    @worldSet new Set world1 world2 world3      
     
     @sayHello macro hello world        
         @res := $hello $world                       

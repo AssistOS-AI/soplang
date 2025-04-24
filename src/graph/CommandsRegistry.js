@@ -68,23 +68,19 @@ function CommandsRegistry( workspace) {
     commands.new = async function (inputValues, outputValues, currentDocId) {
         const typeName = inputValues[0];
         const args = inputValues.slice(1);
-        return customTypeRegistry.newInstance(typeName, ...args);
+        return customTypeRegistry.newInstance(currentDocId, typeName, ...args);
     }
 
-    commands.lookup = async function (inputValues, outputValues, currentDocId, workspace) {
+
+    commands.lookup = async function (inputValues, outputValues, currentDocId, graph) {
+        if(inputValues.length < 2){
+            await $$.recordBuildError(`Invalid lookup command. Expected at least 2 arguments. The output variable ${outputValues[0]} will remain undefined`);
+            return undefined;
+        }
         const typeName = inputValues[0];
         const primaryKey = inputValues[1];
-        const persistence = $$.loadPlugin("DefaultPersistence");
-        let typeNameForMethods = typeName.charAt(0).toUpperCase() + typeName.slice(1);
-        let getMethod = "get" + typeNameForMethods;
-        //let createMethod = "create" + typeNameForMethods;
-        let existingPersistentObject= undefined;
-        try{
-            existingPersistentObject = await persistence[getMethod](primaryKey);
-        } catch (err){
-            // ignore !?
-        }
-        return customTypeRegistry.newInstance(typeName, primaryKey, existingPersistentObject);
+        const args = inputValues.slice(2);
+        return customTypeRegistry.lookupInstance(currentDocId, typeName, primaryKey, ...args);
     }
 
     commands.if = async function (inputValues) {
@@ -136,7 +132,7 @@ function CommandsRegistry( workspace) {
                 $$.recordBuildError(`Method command not found: '${methodCommand}' in Object "${$$.dumpObject(value)}" Defaulting to undefined`);
                 return;
             }
-            let result = await commandFunction.call(value, inputValues, outputValues, currentDocId, workspace);
+            let result = await commandFunction.call(value, inputValues, outputValues, currentDocId, workspace.getGraph());
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
@@ -147,7 +143,7 @@ function CommandsRegistry( workspace) {
             await $$.throwError("Unknown command '" + commandName + "'");
         }
        // console.debug(">>>>>>> Running command", commandName);
-        return await commandFunction(inputValues, outputValues, currentDocId, workspace);
+        return await commandFunction(inputValues, outputValues, currentDocId, workspace.getGraph());
     }
 
     this.registerCommand = function (commandName, commandFunction) {

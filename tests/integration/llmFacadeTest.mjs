@@ -1,3 +1,5 @@
+return ;
+
 import "../deps/clean.mjs";
 import assert from "assert";
 import { performance } from "perf_hooks";

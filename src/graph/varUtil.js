@@ -21,6 +21,17 @@ function getVarID(docId, varName){
     return docId + "." + varName;
 }
 
+
+function getDocIdFromVarId(varId){
+    let splitVarId = varId.split(".");
+    if(splitVarId.length === 1){
+        return undefined;
+    }
+    if(splitVarId.length >= 2){
+        return splitVarId[0];
+    }
+}
+
 function getLocalVarName(docId, fullVarName){
     //reverse getVarId
     let splitVarName = fullVarName.split(".");
@@ -61,11 +72,12 @@ async function getVarValue(varId){
 
     //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.customType);
     if(varDef.customType){
-        return customTypeRegistry.restoreInstance(varDef.customType, varDef.value);
+        return customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.customType, varDef.value);
     }
+    /*
     if(typeof varDef.value === "object" && typeof varDef.value.customType === "string"){
         return customTypeRegistry.restoreInstance(varDef.value.customType, varDef.value);
-    }
+    }*/
     return varDef.value;
 }
 
@@ -113,12 +125,6 @@ async function setVarValue(varId, newValue, force = false){
         //the only dependency is now the variable it is referencing
         return await setVarValue(varDef.referencedVariable, newValue);
     }
-    /*
-    if(varDef.parsedCommand.command === "alias" && !force){
-        //TODO: investigate if writing to an alias is a good idea, currently  it is ignoring the request, and the value of the alias is not updated
-        await defaultPersistence.updateVariable(varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
-    } */
-
     if(varDef.parsedCommand.command === "chainAlias"){
         let targetVarId = varDef.parsedCommand.inputVars[2];
         let obj = await defaultPersistence.getVariable(targetVarId);
@@ -130,7 +136,11 @@ async function setVarValue(varId, newValue, force = false){
         return await defaultPersistence.updateVariable(varDef.varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
     }
 
-    await defaultPersistence.updateVariable(varId, {value: serialiseValue(newValue), clock: defaultPersistence.getLogicalTimestamp()});
+    let varContext = {value: serialiseValue(newValue), clock: defaultPersistence.getLogicalTimestamp()};
+    if(newValue !== undefined && newValue.__type !== undefined){
+        varContext.customType = newValue.__type;
+    }
+    await defaultPersistence.updateVariable(varId, varContext);
 }
 async function getDependencies(varId){
 
@@ -255,7 +265,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
 async function getVarClock(varId){
     let varDef = await getVariable(varId);
     if(!varDef){
-        console.debug("Variable", varId, "not found");
+        $$.recordBuildError(`Variable ${varId} not found in getVarClock`);
         return undefined;
     }
     if(varDef.referencedVariable){

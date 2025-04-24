@@ -3,6 +3,7 @@ function Agent(){
     let documentsPlugin, persistence, agentPlugin;
     this.agentName = undefined;
     let agentInstance = undefined;
+    self.__type = "Agent";
 
     this.init = async function(agentName){
         persistence = await $$.loadPlugin("DefaultPersistence");

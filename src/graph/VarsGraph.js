@@ -277,11 +277,6 @@ function VarsGraph(commandsRegistry) {
             return  await resolveValue(varContext.referencedVariable);
         }
 
-        /*
-        if (varContext.parsedCommand.command === 'alias') {
-            return await self.getVarValue(varContext.parsedCommand.inputVars[0], varContext.parsedCommand.inputVars[1]);
-        } */
-
         if(varContext.parsedCommand.command === "chainAlias"){
             //console.debug("Chain alias", varContext.parsedCommand.inputVars);
             let obj = await self.getVarValue(varContext.parsedCommand.inputVars[2]);
@@ -296,25 +291,55 @@ function VarsGraph(commandsRegistry) {
         return value;
     }
 
+
+    self.expandInlineMacro = async function (docId, targetVarId,  intendedCommand, parsedCommand) {
+        let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId, intendedCommand));
+        if(!scriptVar){
+            $$.recordBuildInfo(`#DEBUG Failed to find macro  '${intendedCommand}' The output variable ${targetVarId} will remain undefined`);
+            return undefined;
+        }
+        const RETURN_VALUE_PREFIX = "EXEC";
+        let returnVarName = RETURN_VALUE_PREFIX + "_" + await defaultPersistence.getNextNumber(RETURN_VALUE_PREFIX);
+        let scriptArguments = [];
+        for (let i = 0; i < parsedCommand.inputVars.length; i++) {
+            if(parsedCommand.varTypes[i] === "var"){
+                //remove thd docId from the varName
+                let varName = "$"+varUtil.getLocalVarName(docId,parsedCommand.inputVars[i]);
+                scriptArguments.push(varName);
+            }
+            else{
+                scriptArguments.push(parsedCommand.inputVars[i]);
+            }
+        }
+
+        let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
+        await self.insertCode(docId, script);
+        self.restartBuild();
+        await varUtil.markAsReferenceToVariable(targetVarId, varUtil.getVarID(docId,returnVarName));
+        await self.resetVarLevel(targetVarId);
+        return returnVarName;
+    }
+
     async function runCommand(targetVar) {
         function isChain(command) {
             return command.includes(".");
         }
+
 
         async function macroExists(command) {
             if(isChain(command) || commandsRegistry.commandExists(command)){
                 //even if it exists, will be ignored
                 return false;
             }
-            try{
-                let macroVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, command));
-                if(!macroVar){
-                    return false;
-                }
-                return macroVar.parsedCommand.command === "macro";
-            } catch(e){
+
+            let marcoVarId = varUtil.getVarID(targetVar.docId, command);
+            let hasVariable = await defaultPersistence.hasVariable(marcoVarId);
+            if(!hasVariable){
                 return false;
             }
+            //check if the command is a macro
+            let macroVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, command));
+            return macroVar.parsedCommand.command === "macro";
         }
 
         let parsedCommand = targetVar.parsedCommand;
@@ -330,30 +355,7 @@ function VarsGraph(commandsRegistry) {
 
         //console.debug(">>>>Running command", intendedCommand, "for variable", targetVar.varId, "with input values", parsedCommand.inputVars, isChain(intendedCommand), commandsRegistry.commandExists(intendedCommand));
         if(await macroExists(intendedCommand)){
-            let scriptVar = await varUtil.getVariable(varUtil.getVarID(targetVar.docId, intendedCommand));
-            if(!scriptVar){
-                $$.recordBuildInfo(`#DEBUG Failed to find command '${intendedCommand}' The command will be ignored and the variable will remain undefined`);
-                return undefined;
-            }
-            const RETURN_VALUE_PREFIX = "EXEC";
-            let returnVarName = RETURN_VALUE_PREFIX + "_" + await defaultPersistence.getNextNumber(RETURN_VALUE_PREFIX);
-            let scriptArguments = [];
-            for (let i = 0; i < parsedCommand.inputVars.length; i++) {
-                if(parsedCommand.varTypes[i] === "var"){
-                    //remove thd docId from the varName
-                    let varName = "$"+varUtil.getLocalVarName(targetVar.docId,parsedCommand.inputVars[i]);
-                    scriptArguments.push(varName);
-                }
-                else{
-                    scriptArguments.push(parsedCommand.inputVars[i]);
-                }
-            }
-
-            let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
-            await self.insertCode(targetVar.docId, script);
-            self.restartBuild();
-            await varUtil.markAsReferenceToVariable(targetVar.varId, varUtil.getVarID(targetVar.docId,returnVarName));
-            await self.resetVarLevel(targetVar.varId);
+            await self.expandInlineMacro(targetVar.docId, targetVar.varId,  intendedCommand, parsedCommand);
             return undefined;
         }
 
