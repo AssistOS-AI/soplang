@@ -43,7 +43,7 @@ function FakeAgent() {
         }
     }
 
-    this.ask = async function(inputValues, outputValues, currentDocId, workspace) {
+    this.ask = async function(inputValues, parsedCommand, currentDocId, workspace) {
         let prompt = `You are an useful agent named ${self.agentName} ${inputValues.join(" ")}  Please respond!`;
         if(self.agentName === "007Agent"){
             return "I am a fake James Bond!";

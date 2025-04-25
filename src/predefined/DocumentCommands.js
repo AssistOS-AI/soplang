@@ -24,35 +24,35 @@ function Document(docId, graph) {
         }
     }
 
-    this.setTitle = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setTitle = async function(inputValues, parsedCommand, currentDocId, graph) {
         await persistence.updateDocument(self.docId, {title:inputValues[0]});
     }
 
-    this.setInfoText = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setInfoText = async function(inputValues, parsedCommand, currentDocId, graph) {
         await persistence.updateDocument(self.docId, {infoText:inputValues[0]});
     }
 
-    this.getInfoText = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getInfoText = async function(inputValues, parsedCommand, currentDocId, graph) {
         let document = await documentsPlugin.getDocument(self.docId);
         return document.infoText;
     }
 
-    this.getTitle = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getTitle = async function(inputValues, parsedCommand, currentDocId, graph) {
         let document = await documentsPlugin.getDocument(self.docId);
         return document.title;
     }
 
-    this.setGlobalCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setGlobalCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let commands = inputValues[0];
         await persistence.updateDocument(self.docId, {commands});
     }
 
-    this.getGlobalCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getGlobalCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let document = await documentsPlugin.getDocument(self.docId);
         return document.commands;
     }
 
-    this.setChapterTitle = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setChapterTitle = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let chapterTitle = inputValues[1];
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
@@ -68,7 +68,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.getChapterTitle = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getChapterTitle = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(chapter){
@@ -76,7 +76,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.setChapterCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setChapterCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         if(chapterOder < 0){
             return;
@@ -95,7 +95,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.getChapterCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getChapterCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);
         if(chapter){
@@ -103,7 +103,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.setParagraphText = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setParagraphText = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let paragraphOder = parseInt(inputValues[1]);
         let paragraphText = inputValues[2];
@@ -128,7 +128,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.getParagraphText = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getParagraphText = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let paragraphOder = parseInt(inputValues[1]);
 
@@ -143,7 +143,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.setParagraphCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.setParagraphCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let paragraphOder = parseInt(inputValues[1]);
         let commands = inputValues[2];
@@ -170,7 +170,7 @@ function Document(docId, graph) {
         }
     }
 
-    this.getParagraphCommands = async function(inputValues, outputValues, currentDocId, graph) {
+    this.getParagraphCommands = async function(inputValues, parsedCommand, currentDocId, graph) {
         let chapterOder = parseInt(inputValues[0]);
         let paragraphOder = parseInt(inputValues[1]);
         let chapter = await documentsPlugin.getChapterAt(self.docId, chapterOder);

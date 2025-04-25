@@ -18,7 +18,7 @@ function NamedObject() {
         }
     }
 
-    this.setName = async function(inputValues, outputValues, currentDocId, workspace) {
+    this.setName = async function(inputValues, parsedCommand, currentDocId, workspace) {
         self.name = inputValues[0];
         return true;
     }

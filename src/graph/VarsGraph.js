@@ -11,11 +11,11 @@ function VarsGraph(commandsRegistry) {
         $$.throwErrorSync("Commands Registry is mandatory");
     }
 
-    commandsRegistry.registerCommand("alias", async function (inputValues, outputValues, currentDocId) {
+    commandsRegistry.registerCommand("alias", async function (inputValues, parsedCommand, currentDocId) {
             let targetDocumentId = inputValues[0];
             let targetVarName = inputValues[1];
             let targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
-            let myVarId = varUtil.getVarID(currentDocId, outputValues[0]);
+            let myVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
             console.debug(">>>>>>>>> New alias", myVarId, "to", targetVarId);
             await varUtil.markAsReferenceToVariable(myVarId, targetVarId);
             await self.resetVarLevel(myVarId);
@@ -294,12 +294,14 @@ function VarsGraph(commandsRegistry) {
 
     self.expandInlineMacro = async function (docId, targetVarId,  intendedCommand, parsedCommand) {
         let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId, intendedCommand));
-        if(!scriptVar){
-            $$.recordBuildInfo(`#DEBUG Failed to find macro  '${intendedCommand}' The output variable ${targetVarId} will remain undefined`);
-            return undefined;
-        }
         const RETURN_VALUE_PREFIX = "EXEC";
         let returnVarName = RETURN_VALUE_PREFIX + "_" + await defaultPersistence.getNextNumber(RETURN_VALUE_PREFIX);
+
+        if(!scriptVar){
+            $$.recordBuildInfo(`#DEBUG Failed to find macro  '${intendedCommand}' The output variable ${returnVarName} and upstream dependencies will remain undefined`);
+            return undefined;
+        }
+
         let scriptArguments = [];
         for (let i = 0; i < parsedCommand.inputVars.length; i++) {
             if(parsedCommand.varTypes[i] === "var"){
@@ -315,8 +317,11 @@ function VarsGraph(commandsRegistry) {
         let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
         await self.insertCode(docId, script);
         self.restartBuild();
-        await varUtil.markAsReferenceToVariable(targetVarId, varUtil.getVarID(docId,returnVarName));
-        await self.resetVarLevel(targetVarId);
+        if(targetVarId){
+            await varUtil.markAsReferenceToVariable(targetVarId, varUtil.getVarID(docId,returnVarName));
+            await self.resetVarLevel(targetVarId);
+        }
+
         return returnVarName;
     }
 
@@ -406,7 +411,7 @@ function VarsGraph(commandsRegistry) {
         let result = await commandsRegistry.runCommand(
             intendedCommand,
             inputValues,
-            parsedCommand.outputVars,
+            parsedCommand,
             targetVar.docId
         );
 

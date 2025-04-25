@@ -86,7 +86,7 @@ async function runTestsSequentially(tests) {
         }
     }
 
-    console.log(`\n\nSummary:`);
+    console.log(`\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Summary:`);
     if(failed > 0) {
         console.log(`\tFailed tests:`);
         failedTests.forEach(test => console.log(`\t- ${test.testPath} \n${identAndCleanStdErr(test.stdErrResult)}`));

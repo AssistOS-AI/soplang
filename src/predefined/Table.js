@@ -163,7 +163,7 @@ function Table() {
 
 
 
-    self.setData = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.setData = async function (inputValues, parsedCommand, currentDocId, workspace) {
         // Handle direct array input
         if (Array.isArray(inputValues[0])) {
             self.data = [...inputValues[0]];
@@ -187,16 +187,16 @@ function Table() {
         return true;
     }
 
-    self.getData = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.getData = async function (inputValues, parsedCommand, currentDocId, workspace) {
         return self.data;
     }
 
-    self.getColumns = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.getColumns = async function (inputValues, parsedCommand, currentDocId, workspace) {
         return self.columns;
     }
 
     // Area extraction function
-    self.area = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.area = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return [];
 
         const lines_range = inputValues[0];
@@ -206,7 +206,7 @@ function Table() {
     }
 
     // Extract a single column
-    self.column = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.column = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return [];
 
         const columnNameOrNumber = inputValues[0];
@@ -217,7 +217,7 @@ function Table() {
     self.col = self.column;
 
     // Extract a single row
-    self.row = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.row = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return null;
 
         const rowNumber = inputValues[0];
@@ -228,7 +228,7 @@ function Table() {
     self.line = self.row;
 
     // Filter the table
-    self.filter = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.filter = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return [];
 
         const JSFilterCode = inputValues[0];
@@ -254,7 +254,7 @@ function Table() {
     }
 
     // Reduce function
-    self.reduce = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.reduce = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return inputValues[1] || 0;
 
         const JSReduceCode = inputValues[0];
@@ -281,7 +281,7 @@ function Table() {
     }
 
     // Sum values
-    self.sum = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.sum = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) {
             return 0;
         }
@@ -328,7 +328,7 @@ function Table() {
     }
 
     // Calculate minimum value
-    self.min = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.min = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return null;
 
         const lines_range = inputValues[0];
@@ -358,7 +358,7 @@ function Table() {
     }
 
     // Calculate maximum value
-    self.max = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.max = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return null;
 
         const lines_range = inputValues[0];
@@ -388,7 +388,7 @@ function Table() {
     }
 
     // Calculate average
-    self.avg = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.avg = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return 0;
 
         const lines_range = inputValues[0];
@@ -416,7 +416,7 @@ function Table() {
     }
 
     // Set value at specific position
-    self.setAt = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.setAt = async function (inputValues, parsedCommand, currentDocId, workspace) {
         if (!assertIsTable()) return false;
 
         const lineNo = parseInt(inputValues[0]);
@@ -444,7 +444,7 @@ function Table() {
     }
 
     // Append rows to the table - similar to tableUtil.js
-    self.append = async function (inputValues, outputValues, currentDocId, workspace) {
+    self.append = async function (inputValues, parsedCommand, currentDocId, workspace) {
         let validJson;
         try {
             let pseudoJson = inputValues[0];

@@ -17,7 +17,7 @@ function CommandsRegistry( workspace) {
         chainAlias: async function (inputValues) {
             // do nothing, it is treated as a special case during execution
         },
-        currentDocId: async function (inputValues, outputValues, currentDocId) {
+        currentDocId: async function (inputValues, parsedCommand, currentDocId) {
             console.debug(">>> __DocId", currentDocId);
             return currentDocId;
         }
@@ -25,13 +25,14 @@ function CommandsRegistry( workspace) {
 
     commands.as = commands.assign;
 
-    commands.def = commands.define = async function (inputValues, outputValues) {
+    commands.def = commands.define = async function (inputValues, parsedCommand) {
         let code = "(function(args){" + inputValues[0] + "})";
-        console.debug("Define:", outputValues[0], inputValues[0], code);
-        commands[outputValues[0]] = eval(code);
+        console.debug(">>> Defining function", parsedCommand, inputValues, code);
+        console.debug("Define:", parsedCommand.outputVars[0], inputValues[0], code);
+        commands[parsedCommand.outputVars[0]] = eval(code);
     };
 
-    commands.overwrite = async function (inputValues, outputValues, currentDocId) {
+    commands.overwrite = async function (inputValues, parsedCommand, currentDocId) {
         let varName = inputValues[0];
         if(varName[0] !== "~"){
             $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
@@ -65,16 +66,16 @@ function CommandsRegistry( workspace) {
         await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
     }
 
-    commands.new = async function (inputValues, outputValues, currentDocId) {
+    commands.new = async function (inputValues, parsedCommand, currentDocId) {
         const typeName = inputValues[0];
         const args = inputValues.slice(1);
         return customTypeRegistry.newInstance(currentDocId, typeName, ...args);
     }
 
 
-    commands.lookup = async function (inputValues, outputValues, currentDocId, graph) {
+    commands.lookup = async function (inputValues, parsedCommand, currentDocId, graph) {
         if(inputValues.length < 2){
-            await $$.recordBuildError(`Invalid lookup command. Expected at least 2 arguments. The output variable ${outputValues[0]} will remain undefined`);
+            await $$.recordBuildError(`Invalid lookup command. Expected at least 2 arguments. The output variable ${parsedCommand.outputVars[0]} will remain undefined`);
             return undefined;
         }
         const typeName = inputValues[0];
@@ -109,7 +110,7 @@ function CommandsRegistry( workspace) {
         }
     }
 
-    this.runCommand =  async function (commandName, inputValues, outputValues, currentDocId) {
+    this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId) {
         let splitCommand = commandName.split(".");
         if(splitCommand.length > 2){
             await $$.throwError("Invalid command name. Expected at most one dot in command name");
@@ -132,7 +133,7 @@ function CommandsRegistry( workspace) {
                 $$.recordBuildError(`Method command not found: '${methodCommand}' in Object "${$$.dumpObject(value)}" Defaulting to undefined`);
                 return;
             }
-            let result = await commandFunction.call(value, inputValues, outputValues, currentDocId, workspace.getGraph());
+            let result = await commandFunction.call(value, inputValues, parsedCommand, currentDocId, workspace.getGraph());
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
@@ -143,7 +144,7 @@ function CommandsRegistry( workspace) {
             await $$.throwError("Unknown command '" + commandName + "'");
         }
        // console.debug(">>>>>>> Running command", commandName);
-        return await commandFunction(inputValues, outputValues, currentDocId, workspace.getGraph());
+        return await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph());
     }
 
     this.registerCommand = function (commandName, commandFunction) {

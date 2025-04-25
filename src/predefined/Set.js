@@ -57,6 +57,14 @@ function SetContainer(docId){
         }
     }
 
+    function getCorrespondence (outputVarId, memberVarId) {
+        let status = self.executionStatuses[outputVarId];
+        if(status === undefined) {
+            self.executionStatuses[outputVarId] = {};
+            return undefined;
+        }
+        return status[memberVarId];
+    }
 
 
     self.init = async function(...args){
@@ -75,7 +83,7 @@ function SetContainer(docId){
         }
     }
 
-    self.add = async function(inputValues, outputValues, currentDocId, graph) {
+    self.add = async function(inputValues, parsedCommand, currentDocId, graph) {
         for(let i = 0; i < inputValues.length; i++){
             let varId = varUtil.getVarID(docId, inputValues[i]);
             self.vars.push(varId);
@@ -92,8 +100,8 @@ function SetContainer(docId){
         }
     }
 
-    async function decideWhatToDO(inputValues, outputValues, currentDocId, graph){
-        let outputVarId = outputValues[0];
+    async function decideWhatToDO(inputValues, parsedCommand, currentDocId, graph){
+        let outputVarId = parsedCommand.outputVars[0];
         console.debug(">>> Set.map for:", outputVarId, self.vars, self.executionStatuses[outputVarId]);
         let whatToDO = {
             outputVarValue:undefined,
@@ -109,50 +117,75 @@ function SetContainer(docId){
         return whatToDO;
     }
 
-    self.map = async function(inputValues, outputValues, currentDocId, graph) {
-        let whatToDO = await decideWhatToDO(inputValues, outputValues, currentDocId, graph);
+    self.map = async function(inputValues, parsedCommand, currentDocId, graph) {
+        let whatToDO = await decideWhatToDO(inputValues, parsedCommand, currentDocId, graph);
         let macroName = inputValues[0];
-        let macroArgs = inputValues.slice(1);
-        //for the new vars, we need to expand the macro and add the result od the macro execution to the output var
-        let newVars = whatToDO.newVars;
-        // expand the macro for each new var
-        for(let i = 0; i < newVars.length; i++){
-            let varId = newVars[i];
-            //docId, targetVarId,  intendedCommand, parsedCommand
-            let macroResultVarId = await graph.expandInlineMacro(currentDocId, varId, macroName, macroArgs);
-            setCorrespondingReturnVar(whatToDO.outputVarId, varId, macroResultVarId);
-        }
 
         //for the deleted vars, we need to remove them from the output var
         let deletedVars = whatToDO.deletedVars;
         for(let i = 0; i < deletedVars.length; i++){
             let varId = deletedVars[i];
-         whatToDO.outputVarValue.remove([varId]);
+            let macroResultVarId = getCorrespondence(whatToDO.outputVarId, varId);
+            whatToDO.outputVarValue.remove([macroResultVarId]);
+        }
+
+        //for the new vars, we need to expand the macro and add the result od the macro execution to the output var
+        let newVars = whatToDO.newVars;
+        // expand the macro for each new var
+        for(let i = 0; i < newVars.length; i++){
+            let macroResultVarId;
+            let currentItemId = newVars[i];
+            macroResultVarId = getCorrespondence(whatToDO.outputVarId, currentItemId);
+            if(macroResultVarId){
+                whatToDO.outputVarValue.add([macroResultVarId]);
+            }
+            let preparedParsedCommand = {
+                command: macroName
+            }
+
+            preparedParsedCommand.inputValues = [currentItemId];
+            preparedParsedCommand.varTypes = ["var"];
+
+            for(let j = 1; j < parsedCommand.varTypes.length; j++){
+                let varType = parsedCommand.varTypes[j];
+                preparedParsedCommand.varTypes.push(varType);
+                if(varType === "var"){
+                    let varName = "$"+varUtil.getLocalVarName(docId,parsedCommand.inputVars[j]);
+                } else {
+                    preparedParsedCommand.inputValues.push(inputValues[j]);
+                }
+            }
+
+            console.debug(">>> Dump parsedCommand", parsedCommand, "preparedParsedCommand:", preparedParsedCommand);
+
+            macroResultVarId = await graph.expandInlineMacro(currentDocId, undefined, macroName, preparedParsedCommand);
+            whatToDO.outputVarValue.add([macroResultVarId]);
+            setCorrespondingReturnVar(whatToDO.outputVarId, currentItemId, macroResultVarId);
         }
 
         return whatToDO.outputVarValue;
     }
 
-    self.filter = async function(inputValues, outputValues, currentDocId, graph) {
-        let whatToDO = decideWhatToDO(inputValues, outputValues, currentDocId, graph);
+    self.filter = async function(inputValues, parsedCommand, currentDocId, graph) {
+        let whatToDO = decideWhatToDO(inputValues, parsedCommand, currentDocId, graph);
         return whatToDO.outputVarValue;
     }
 
-    self.reduce = async function(inputValues, outputValues, currentDocId, graph) {
+    self.reduce = async function(inputValues, parsedCommand, currentDocId, graph) {
         return undefined;
     }
 
 
 
-    self.getAt = async function(inputValues, outputValues, currentDocId, graph) {
+    self.getAt = async function(inputValues, parsedCommand, currentDocId, graph) {
 
     }
 
-    self.first = async function(inputValues, outputValues, currentDocId, graph) {
+    self.first = async function(inputValues, parsedCommand, currentDocId, graph) {
 
     }
 
-    self.rest = async function(inputValues, outputValues, currentDocId, graph) {
+    self.rest = async function(inputValues, parsedCommand, currentDocId, graph) {
 
     }
 

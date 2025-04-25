@@ -9,7 +9,7 @@ let script = `
     @world3 := "World3"
     @worldSet new Set world1 world2 world3      
     
-    @sayHello macro hello world        
+    @sayHello macro world hello         
         @res := $hello $world                       
         return $res       
     end  
