@@ -1,76 +1,94 @@
 import "../deps/clean.mjs";
 import assert from "assert";
-import { performance } from "perf_hooks";
-import { getInstance } from "../fakes/plugins/LLM.js";
 
-const llm = await getInstance();
+import FakeProvider from "../fakes/fakeProvider.js";
+import { getInstance } from "../../../globalServerlessAPI/workspacePlugins/LLM.js";
 
-await llm.registerLlmProvider({
-    name: "demo",
-    models: [
-        { id: "demo-1", name: "demo-a", provider: "demo" },
-        { id: "demo-2", name: "demo-b", provider: "demo" }
-    ]
-});
+const persistence = await $$.loadPlugin("DefaultPersistence");
+const llm = await getInstance(FakeProvider);
 
-const all = await llm.getModels();
-assert.strictEqual(all.length, 2);
-assert.deepStrictEqual(await llm.getProviderModels("demo"), all);
-assert.deepStrictEqual(await llm.getProviderModels("unknown"), []);
 
-for (const m of all) {
-    assert.deepStrictEqual(await llm.getLlmById(m.id), m);
-    assert.deepStrictEqual(await llm.getLlmByName(m.name), m);
+const TEST_PROMPT = "What is the answer to life?";
+const TEST_STREAM = "This is a streamed response";
+const TEST_CHAT = [{ role: "user", content: "Hello" }];
+const TEST_CHAT_STREAM = ["Thinking...", "Here's", " the answer"];
+
+async function setupProvider() {
+    await persistence.createProvider({
+        name: "FakeProvider",
+        models: [
+            { name: "text-model", provider: "FakeProvider" },
+            { name: "chat-model", provider: "FakeProvider" }
+        ]
+    });
+
+    const provider = await llm.getProvider("FakeProvider");
+    provider.setResponse(TEST_PROMPT, "42");
+    provider.setResponse(TEST_CHAT, "Hello! How can I help?");
 }
 
-const promptA = "hello world";
-const promptB = "another input";
+async function runTests() {
+    try {
+        await setupProvider();
 
-const textA1 = await llm.getTextResponse("demo", "demo-a", promptA, {});
-const textA2 = await llm.getTextResponse("demo", "demo-a", promptA, {});
-const textB  = await llm.getTextResponse("demo", "demo-b", promptB, {});
+        const models = await llm.getProviderModels("FakeProvider");
+        assert.deepStrictEqual(models.map(m => m.name), ["text-model", "chat-model"],
+            "Should return configured models");
 
-assert.strictEqual(textA1, textA2);
+        const textResponse = await llm.getTextResponse("FakeProvider", "text-model", TEST_PROMPT);
+        assert.strictEqual(textResponse, "42", "Should return preset text response");
 
-const chunks = [];
-const stamps = [];
+        const streamChunks = [];
+        const streamResponse = await llm.getTextStreamingResponse(
+            "FakeProvider",
+            "text-model",
+            TEST_PROMPT,
+            {},
+            chunk => streamChunks.push(chunk.data)
+        );
+        assert.strictEqual(streamResponse.data, TEST_STREAM, "Should return full stream response");
+        assert.deepStrictEqual(streamChunks, TEST_STREAM.split(' '), "Should receive all chunks");
 
-await llm.getTextStreamingResponse(
-    "demo",
-    "demo-a",
-    promptA,
-    {},
-    (c) => { chunks.push(c); stamps.push(performance.now()); }
-);
+        const chatResponse = await llm.getChatCompletionResponse(
+            "FakeProvider",
+            "chat-model",
+            TEST_CHAT
+        );
+        assert.strictEqual(chatResponse, "Hello! How can I help?", "Should return preset chat response");
 
-assert.strictEqual(chunks.join(""), textA1);
-assert.ok(chunks.length >= textA1.length);
+        const chatStreamChunks = [];
+        const chatStreamResponse = await llm.getChatCompletionStreamingResponse(
+            "FakeProvider",
+            "chat-model",
+            TEST_CHAT,
+            {},
+            chunk => chatStreamChunks.push(chunk.data)
+        );
+        assert.strictEqual(chatStreamResponse.data.join(''), TEST_CHAT_STREAM.join(''),
+            "Should return full chat stream");
+        assert.deepStrictEqual(chatStreamChunks, TEST_CHAT_STREAM,
+            "Should receive all chat chunks in order");
 
+        try {
+            await llm.getTextResponse("InvalidProvider", "model", "test");
+            assert.fail("Should throw provider not found error");
+        } catch (e) {
+            assert.match(e.message, /Provider InvalidProvider not found/);
+        }
 
-for (let i = 1; i < Math.min(10, stamps.length); i++) {
-    const dt = stamps[i] - stamps[i - 1];
-    assert.ok(dt >= 95 && dt <= 510, `interval ${dt} ms out of bounds`);
+        try {
+            await llm.getTextResponse("FakeProvider", "invalid-model", "test");
+            assert.fail("Should throw model not found error");
+        } catch (e) {
+            assert.match(e.message, /Model invalid-model not found/);
+        }
+        console.log("✅ All LLM tests passed");
+    } catch (error) {
+        console.error("❌ Test failed:", error);
+        throw error;
+    } finally {
+        await $$.endTest();
+    }
 }
 
-
-const messages = [
-    { role: "user", content: "alpha" },
-    { role: "assistant", content: "beta" },
-    { role: "user", content: "gamma" }
-];
-const joined = messages.map(m => m.content).join(" ");
-
-const chat = await llm.getChatCompletionResponse("demo", "demo-b", messages, {});
-
-const cChunks = [];
-await llm.getChatCompletionStreamingResponse(
-    "demo",
-    "demo-b",
-    messages,
-    {},
-    c => cChunks.push(c)
-);
-assert.strictEqual(cChunks.join(""), chat);
-
-console.log("✅  All detailed LLM façade tests passed");
-await $$.endTest();
+await runTests();
