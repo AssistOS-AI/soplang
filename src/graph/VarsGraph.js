@@ -315,6 +315,7 @@ function VarsGraph(commandsRegistry) {
         }
 
         let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
+        //console.debug(">>> Expanded macro is:", script, " For parsedCommand:", parsedCommand);
         await self.insertCode(docId, script);
         self.restartBuild();
         if(targetVarId){
@@ -322,6 +323,7 @@ function VarsGraph(commandsRegistry) {
             await self.resetVarLevel(targetVarId);
         }
 
+        console.debug(`DEBUG# Expanding inline macro '${intendedCommand}' for return variable '${returnVarName}' with input vars [${parsedCommand.inputVars}]`);
         return returnVarName;
     }
 

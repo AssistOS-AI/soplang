@@ -66,8 +66,12 @@ function CommandsRegistry( workspace) {
         await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
     }
 
-    commands.new = async function (inputValues, parsedCommand, currentDocId) {
+    commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
         const typeName = inputValues[0];
+        let outputVarId = parsedCommand.outputVars[0];
+        if(await varUtil.isDefined(outputVarId)){
+            return graph.getVarValue(outputVarId);
+        }
         const args = inputValues.slice(1);
         return customTypeRegistry.newInstance(currentDocId, typeName, ...args);
     }

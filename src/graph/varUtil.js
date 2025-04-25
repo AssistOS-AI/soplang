@@ -50,11 +50,16 @@ function getLocalVarName(docId, fullVarName){
     }
 }
 
+async function isDefined(varId){
+    let persistence = await getDefaultPersistence();
+    return await persistence.hasVariable(varId);
+}
+
 async function getVariable(varId){
     try{
-        return await getDefaultPersistence().getVariable(varId);
+        let persistence = await getDefaultPersistence();
+        return persistence.getVariable(varId);
     } catch(err){
-        console.debug("Error getting variable", varId, err);
         return undefined;
     }
 }
@@ -198,6 +203,26 @@ async function markAsReferenceToVariable(varId, referencedVarId){
     }
     await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
 }
+
+async function markAsMutableReferenceToVariable(varId, referencedVarId, graph){
+    let defaultPersistence = getDefaultPersistence();
+    let varDef = await getVariable(varId);
+    if(!varDef){
+        await $$.throwError("Variable not found", varId);
+    }
+    if(varDef.referencedVariable){
+        if(varDef.referencedVariable === referencedVarId){
+            //already has the same reference
+            return;
+        }
+    }
+    await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
+    graph.resetVarLevel(varId);
+    graph.restartBuild();
+}
+
+
+
 async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _parsedCommand) {
     if (!_docId) {
         throw new Error("Document ID is required");
@@ -289,6 +314,8 @@ export {
     parseComplexLine,
     parseCommandLine,
     parseTextVars,
-    markAsReferenceToVariable,
-    getLocalVarName
+    markAsReferenceToVariable,         // does not allow changing the referenced variable. It is used during script expansion and the referenced variable should not change
+    markAsMutableReferenceToVariable, // allow the referenced variable to be changed. It is used by commands from Set types and in any advanced cases where the value changes
+    getLocalVarName,
+    isDefined
 }

@@ -1,7 +1,7 @@
 let varUtil = await import("../graph/varUtil.js");
-async function createSet(docId){
+async function createSet(docId, ...args){
     let newSet = new SetContainer(docId);
-    await newSet.init();
+    await newSet.init(...args);
     return newSet;
 }
 
@@ -13,59 +13,8 @@ function SetContainer(docId){
     self.vars = [];
 
     if(!docId){
-        throw new Error("SetContainer: docId is undefined");
+        throw new Error("SetContainer: docId is undefined but it is required for sets because they store variable IDs. Invalid initialisation of the set container");
     }
-     function getDeletedVars (outputVarId) {
-        let status = self.executionStatuses[outputVarId];
-        let deletedVars = [];
-        if(status === undefined) {
-            self.executionStatuses[outputVarId] = {};
-            self.executionStatuses[outputVarId] = status;
-        }
-        for(let vn in status){
-            if(self.vars.indexOf(vn) === -1){
-                deletedVars.push(vn);
-                delete status[vn];
-            }
-        }
-        return deletedVars;
-    }
-
-     function getNewVars (outputVarId) {
-        let newVars = [];
-        let status = self.executionStatuses[outputVarId];
-        if(status === undefined) {
-            self.executionStatuses[outputVarId] = {};
-            return false;
-        }
-        for (let vn of self.vars) {
-            if( status[vn] === undefined){
-                newVars.push(vn);
-            }
-        }
-        return newVars;
-    }
-
-    function setCorrespondingReturnVar (outputVarId, memberVarId, macroResultVarId) {
-        let status = self.executionStatuses[outputVarId];
-        if(status === undefined) {
-            self.executionStatuses[outputVarId] = {};
-            return false;
-        }
-        if(status[memberVarId] === undefined){
-            status[memberVarId] = macroResultVarId;
-        }
-    }
-
-    function getCorrespondence (outputVarId, memberVarId) {
-        let status = self.executionStatuses[outputVarId];
-        if(status === undefined) {
-            self.executionStatuses[outputVarId] = {};
-            return undefined;
-        }
-        return status[memberVarId];
-    }
-
 
     self.init = async function(...args){
         persistence = await $$.loadPlugin("DefaultPersistence");
@@ -78,10 +27,59 @@ function SetContainer(docId){
     self.restore = async function(JSONSerialisation) {
         persistence = await $$.loadPlugin("DefaultPersistence");
         if(JSONSerialisation){
-           self.executionStatuses = JSONSerialisation.executionStatuses;
-           self.vars = JSONSerialisation.vars;
+            self.executionStatuses = JSONSerialisation.executionStatuses;
+            self.vars = JSONSerialisation.vars;
         }
     }
+
+    function getExecutionStatus (outputVarId) {
+        let status = self.executionStatuses[outputVarId];
+        if(status === undefined){
+            status = self.executionStatuses[outputVarId] = {};
+        }
+        return status;
+    }
+     function getDeletedVars (outputVarId) {
+        let status = getExecutionStatus(outputVarId);
+        let deletedVars = [];
+        for(let vn in status){
+            if(self.vars.indexOf(vn) === -1){
+                deletedVars.push(vn);
+                delete status[vn];
+            }
+        }
+        return deletedVars;
+    }
+
+     function getNewVars (outputVarId) {
+        let newVars = [];
+        let status = getExecutionStatus(outputVarId);
+        for (let vn of self.vars) {
+            if( status[vn] === undefined){
+                newVars.push(vn);
+            }
+        }
+        return newVars;
+    }
+    function setCorrespondingReturnVar (outputVarId, memberVarId, macroResultVarId) {
+        let status = getExecutionStatus(outputVarId);
+        if(status[memberVarId] === macroResultVarId){
+            return;
+        }
+        if(status[memberVarId] === undefined){
+            status[memberVarId] = macroResultVarId;
+        } else {
+            $$.throwErrorSync(`It is not allowed to replace the output correspondences with another one. The output var id is ${outputVarId} and the member var id is ${memberVarId}. The current value is ${status[memberVarId]} and the new value is ${macroResultVarId}`);
+        }
+    }
+
+    function getCorrespondence (outputVarId, memberVarId) {
+        let status = getExecutionStatus(outputVarId);
+        return status[memberVarId];
+    }
+
+
+
 
     self.add = async function(inputValues, parsedCommand, currentDocId, graph) {
         for(let i = 0; i < inputValues.length; i++){
@@ -101,18 +99,18 @@ function SetContainer(docId){
     }
 
     async function decideWhatToDO(inputValues, parsedCommand, currentDocId, graph){
-        let outputVarId = parsedCommand.outputVars[0];
-        console.debug(">>> Set.map for:", outputVarId, self.vars, self.executionStatuses[outputVarId]);
+        let outputVarId = varUtil.getVarID(currentDocId,parsedCommand.outputVars[0]);
         let whatToDO = {
             outputVarValue:undefined,
             outputVarId,
             newVars: getNewVars(outputVarId),
             deletedVars: getDeletedVars(outputVarId)
         }
-        if(await persistence.hasVariable(outputVarId)){
-            whatToDO.outputVarValue = await varUtil.getVarValue(outputVarId);
-        } else {
+        whatToDO.outputVarValue = await varUtil.getVarValue(outputVarId);
+        if(!whatToDO.outputVarValue){
+            //console.debug(`>>> Creating new value for variable ${outputVarId} for the command ${parsedCommand.command}`);
             whatToDO.outputVarValue = await createSet(currentDocId);
+            await varUtil.setVarValue(outputVarId, whatToDO.outputVarValue);
         }
         return whatToDO;
     }
@@ -120,6 +118,7 @@ function SetContainer(docId){
     self.map = async function(inputValues, parsedCommand, currentDocId, graph) {
         let whatToDO = await decideWhatToDO(inputValues, parsedCommand, currentDocId, graph);
         let macroName = inputValues[0];
+        //console.debug(`>>> Executing 'map' command for '@${whatToDO.outputVarId}' with new members to process: [${whatToDO.newVars}], Deleted vars [${whatToDO.deletedVars}] this set is [${self.vars}] and existing set being [${whatToDO.outputVarValue.vars}]`);
 
         //for the deleted vars, we need to remove them from the output var
         let deletedVars = whatToDO.deletedVars;
@@ -129,7 +128,7 @@ function SetContainer(docId){
             whatToDO.outputVarValue.remove([macroResultVarId]);
         }
 
-        //for the new vars, we need to expand the macro and add the result od the macro execution to the output var
+        //for the new vars, we need to expand the macro and add the result of the macro expansion to the output var
         let newVars = whatToDO.newVars;
         // expand the macro for each new var
         for(let i = 0; i < newVars.length; i++){
@@ -137,32 +136,33 @@ function SetContainer(docId){
             let currentItemId = newVars[i];
             macroResultVarId = getCorrespondence(whatToDO.outputVarId, currentItemId);
             if(macroResultVarId){
+                console.debug(`!!!!! ${macroResultVarId} already exists in output set of map, but making sure that we have in output`);
                 whatToDO.outputVarValue.add([macroResultVarId]);
+                continue; // do not expand it again
             }
             let preparedParsedCommand = {
                 command: macroName
             }
 
-            preparedParsedCommand.inputValues = [currentItemId];
+            preparedParsedCommand.inputVars = [currentItemId];
             preparedParsedCommand.varTypes = ["var"];
 
             for(let j = 1; j < parsedCommand.varTypes.length; j++){
                 let varType = parsedCommand.varTypes[j];
                 preparedParsedCommand.varTypes.push(varType);
                 if(varType === "var"){
-                    let varName = "$"+varUtil.getLocalVarName(docId,parsedCommand.inputVars[j]);
+                    preparedParsedCommand.inputVars.push(parsedCommand.inputVars[j]);
                 } else {
-                    preparedParsedCommand.inputValues.push(inputValues[j]);
+                    preparedParsedCommand.inputVars.push(inputValues[j]);
                 }
             }
-
-            console.debug(">>> Dump parsedCommand", parsedCommand, "preparedParsedCommand:", preparedParsedCommand);
-
             macroResultVarId = await graph.expandInlineMacro(currentDocId, undefined, macroName, preparedParsedCommand);
             whatToDO.outputVarValue.add([macroResultVarId]);
             setCorrespondingReturnVar(whatToDO.outputVarId, currentItemId, macroResultVarId);
         }
 
+        //console.debug(`>>> Ending execution of 'map' command for '@${whatToDO.outputVarId}' with new members to process: [${whatToDO.newVars}], Deleted vars [${whatToDO.deletedVars}] this set is [${self.vars}] and final set becoming [${whatToDO.outputVarValue.vars}]`);
+        await varUtil.setVarValue(whatToDO.outputVarId, whatToDO.outputVarValue);
         return whatToDO.outputVarValue;
     }
 
@@ -176,17 +176,32 @@ function SetContainer(docId){
     }
 
 
+        async function reusableGetAt(index, outputVarId, graph) {
+            if(index < 0 || index >= self.vars.length){
+                $$.recordBuildError(`The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
+                return undefined;
+            }
+            await varUtil.markAsMutableReferenceToVariable(outputVarId, self.vars[index], graph);
+        }
 
     self.getAt = async function(inputValues, parsedCommand, currentDocId, graph) {
+        let index = parseInt(inputValues[0]);
+        if(isNaN(index)){
+            $$.recordBuildError(`The index must be a number! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
+        }
 
+        let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
+        return reusableGetAt(index, outputVarId, graph); // undefined is fine as value fo variables keeping references to other variables
     }
 
     self.first = async function(inputValues, parsedCommand, currentDocId, graph) {
-
+        let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
+        return reusableGetAt(0, outputVarId, graph);
     }
 
     self.rest = async function(inputValues, parsedCommand, currentDocId, graph) {
-
+        let rest = self.vars.slice(1);
+        return await createSet(currentDocId, ...rest);
     }
 
 }
