@@ -21,7 +21,35 @@ async function Agent() {
                 selectedTextLlm: "llm",
                 selectedChatLlm: "llm",
                 telegramBot: "any",
-            }
+            },
+        /*
+            //Most probable these will be just custom types that will be stored in normal variables
+            VarSet: {
+                id: "random",
+                vars: "array string",
+                executionStatuses: "dictionary with keys outputVars to vars versions",
+            },
+            Knowledge: {
+                id: "random",
+                documents: "array document"
+            },
+            Plan: {
+                id: "random",
+                docId: "string",//where the plan is represented
+            },
+            Context: {
+                id: "random",
+                questions: "array string",
+                answers: "array string",
+            },
+            Fact: {
+             id: "random",
+             summary: "string",
+             longText: "string",
+             reference: "string",
+             referenceURL: "string",
+             authors: "array string",
+            }*/
         }
     )
 

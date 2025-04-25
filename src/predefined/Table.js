@@ -2,6 +2,7 @@ function Table() {
     let self = this;
     self.columns = []; // Column names
     self.data = [];    // Array of objects
+    self.__type = "Table";
 
     self.init = async function (...args) {
         self.columns = args;
