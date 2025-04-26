@@ -1,4 +1,4 @@
-return ;
+process.exit(1);
 
 import "../deps/clean.mjs";
 import assert from "assert";

@@ -29,6 +29,9 @@ $$.recordBuildInfo = function (text) {
 }
 
 $$.dumpObject = function (obj) {
+    if(typeof obj !== "object"){
+        return obj;
+    }
     let res = "{";
     for (let key in obj) {
         if (typeof obj[key] === "function") {
@@ -37,7 +40,7 @@ $$.dumpObject = function (obj) {
         res += key + ": " + obj[key] + ", ";
     }
     if(!obj.__type){
-        res += `type: ${obj?.constructor?.name || typeof obj}`;
+        res += `__type: ${obj?.constructor?.name || typeof obj}`;
     }
     res += "}";
     return res;

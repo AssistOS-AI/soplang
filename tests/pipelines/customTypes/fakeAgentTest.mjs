@@ -56,7 +56,8 @@ function FakeAgent() {
 let testCode = `
     @agent1 new FakeAgent 007Agent
     @agent2 lookup FakeAgent Einstein  # it was created before and now loaded from persistence
-    @agent3 lookup FakeAgent BigAnonymous  #  was not created before 
+    @agent3 lookup FakeAgent BigAnonymous  #  was not created before
+    @agent3x lookup FakeAgent BigAnonymous  #  was not created before  
     @agent4 alias [currentDocId] agent1
     @agent5 alias CODEX_1 agent1       
     @agent6 alias $arg0 agent1
@@ -65,6 +66,7 @@ let testCode = `
     @resp1  agent1.ask "What is your name?" 
     @resp2  agent2.ask "What is your name?" 
     @resp3  agent3.ask "What is your name?"         
+    @resp3x agent3x.?ask "What is your name?"
     @resp4  agent4.ask "What is your name?" 
     @resp5  agent5.ask "What is your name?" 
     @resp6  agent6.ask "What is your name?" 
@@ -72,15 +74,17 @@ let testCode = `
     #ignored line
     `
 
+
 await workspace.defineCustomType("FakeAgent", FakeAgent);
 
 let docId = await workspace.runCode(testCode);
 
 //await graph.printGraph();
 
+await $$.check(docId, "agent3", undefined);
 await $$.check(docId, "resp1", "I am a fake James Bond!");
 await $$.check(docId, "resp2", "I am:[Einstein] Prompt was: 'You are an useful agent named Einstein What is your name?  Please respond!'");
-await $$.check(docId, "resp3", "I am:[BigAnonymous] Prompt was: 'You are an useful agent named BigAnonymous What is your name?  Please respond!'");
+await $$.check(docId, "resp3", undefined);
 await $$.check(docId, "resp4", "I am a fake James Bond!");
 await $$.check(docId, "resp5", "I am a fake James Bond!");
 await $$.check(docId, "resp6", "I am a fake James Bond!");

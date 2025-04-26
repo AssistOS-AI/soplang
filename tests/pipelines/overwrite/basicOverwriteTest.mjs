@@ -23,8 +23,8 @@ await workspace.insertCode("doc1", testCode);
 await workspace.buildAll();
 
 await $$.check("doc1", "var0", "v1", "After first build");
-await $$.check("doc1", "var1", "", "After first build");
-await $$.check("doc1", "var2", "", "After first build");
+await $$.check("doc1", "var1", "v1", "After first build");
+await $$.check("doc1", "var2", "v1", "After first build");
 
 await $$.check("doc1", "a", "B" , "After first build");
 await $$.check("doc1", "b", "B", "After first build");

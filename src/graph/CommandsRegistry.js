@@ -18,7 +18,7 @@ function CommandsRegistry( workspace) {
             // do nothing, it is treated as a special case during execution
         },
         currentDocId: async function (inputValues, parsedCommand, currentDocId) {
-            console.debug(">>> __DocId", currentDocId);
+            //console.debug("Current doc id is", currentDocId);
             return currentDocId;
         }
     };
@@ -32,7 +32,7 @@ function CommandsRegistry( workspace) {
         commands[parsedCommand.outputVars[0]] = eval(code);
     };
 
-    commands.overwrite = async function (inputValues, parsedCommand, currentDocId) {
+    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph) {
         let varName = inputValues[0];
         if(varName[0] !== "~"){
             $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
@@ -63,7 +63,10 @@ function CommandsRegistry( workspace) {
                 $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is not declared with the assign command");
                 return;
         }
-        await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
+        let diffFound = await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
+        if(diffFound){
+            graph.restartBuild();
+        }
     }
 
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
@@ -122,11 +125,18 @@ function CommandsRegistry( workspace) {
         }
         if(splitCommand.length === 2){
             let methodCommand = splitCommand[1].trim();
+            //remove ? in from of th method name if it exists
+            let isConditionalMemberCommand = false;
+            if(methodCommand[0] === "?"){
+                isConditionalMemberCommand = true;
+                methodCommand = methodCommand.slice(1);
+            }
             let varName = splitCommand[0].trim();
             let value = await workspace.getVarValue(currentDocId, varName);
             if(value === undefined){
-                //await $$.throwError("Variable not found:", splitCommand[0]);
-                $$.recordBuildError(`Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
+                if(!isConditionalMemberCommand) {
+                    $$.recordBuildError(`Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
+                }
                 return;
             }
 
@@ -137,6 +147,15 @@ function CommandsRegistry( workspace) {
                 $$.recordBuildError(`Method command not found: '${methodCommand}' in Object "${$$.dumpObject(value)}" Defaulting to undefined`);
                 return;
             }
+            if(isConditionalMemberCommand){
+                //check if any of the input values is undefined and return undefined as it is the semantic of "?" operator  in SOP Lang
+                for(let i = 0; i < inputValues.length; i++){
+                    if(inputValues[i] === undefined){
+                        return;
+                    }
+                }
+            }
+
             let result = await commandFunction.call(value, inputValues, parsedCommand, currentDocId, workspace.getGraph());
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);

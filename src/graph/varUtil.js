@@ -75,16 +75,55 @@ async function getVarValue(varId){
         return await getVarValue(varDef.referencedVariable);
     }
 
-    //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.customType);
-    if(varDef.customType){
-        return customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.customType, varDef.value);
+    //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.__type);
+    if(varDef.__type){
+        return customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varDef.value);
     }
     /*
-    if(typeof varDef.value === "object" && typeof varDef.value.customType === "string"){
-        return customTypeRegistry.restoreInstance(varDef.value.customType, varDef.value);
+    if(typeof varDef.value === "object" && typeof varDef.value.__type === "string"){
+        return customTypeRegistry.restoreInstance(varDef.value.__type, varDef.value);
     }*/
     return varDef.value;
 }
+
+function sameValue(oldValue, newValue){
+    if(oldValue === newValue){
+        return true;
+    }
+    if(typeof oldValue !== typeof newValue){
+        return false;
+    }
+    if(typeof oldValue === "object"){
+        if(Array.isArray(oldValue)){
+            if(oldValue.length !== newValue.length){
+                return false;
+            }
+            for(let i = 0; i < oldValue.length; i++){
+                if(!sameValue(oldValue[i], newValue[i])){
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            //compare the number of keys
+            let oldKeys = Object.keys(oldValue);
+            let newKeys = Object.keys(newValue);
+            if(oldKeys.length !== newKeys.length){
+                return false;
+            }
+
+            for(let key in oldValue){
+                if(!sameValue(oldValue[key], newValue[key])){
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+
 
 async function setVarValue(varId, newValue, force = false){
     function serialiseValue(newValue){
@@ -141,11 +180,18 @@ async function setVarValue(varId, newValue, force = false){
         return await defaultPersistence.updateVariable(varDef.varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
     }
 
-    let varContext = {value: serialiseValue(newValue), clock: defaultPersistence.getLogicalTimestamp()};
+    let serialisedNewValue = serialiseValue(newValue);
+    if(sameValue(varValue, serialisedNewValue)){
+        //console.debug(">>>Variable", varId, "has the same value as before. Not updating");
+        return false;
+    }
+
+    let varContext = {value: serialisedNewValue, clock: defaultPersistence.getLogicalTimestamp()};
     if(newValue !== undefined && newValue.__type !== undefined){
-        varContext.customType = newValue.__type;
+        varContext.__type = newValue.__type;
     }
     await defaultPersistence.updateVariable(varId, varContext);
+    return true;
 }
 async function getDependencies(varId){
 
@@ -253,7 +299,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;
     if (_parsedCommand.command === "new" || _parsedCommand.command === "lookup") {
-        varContext.customType = _parsedCommand.inputVars[0];
+        varContext.__type = _parsedCommand.inputVars[0];
     }
 
     if(diffObjects(existingVarContext, varContext)){

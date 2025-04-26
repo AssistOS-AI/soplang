@@ -28,7 +28,7 @@ $$.check = async function (docId, varName, expectedValue, prefixText) {
     let graph = workspace.getGraph();
     let value = await graph.getVarValue(docId, varName);
     $$.allOk &&= (value === expectedValue);
-    console.assert(value === expectedValue, `${prefixText} Expected '${expectedValue}' but got '${value}' for '${varName}'`);
+    console.assert(value === expectedValue, `${prefixText} Expected '${expectedValue}' but got '${$$.dumpObject(value)}' for '${varName}'`);
 }
 
 $$.checkDocVar = $$.check;

@@ -14,14 +14,18 @@ const restoreInstance = async (currentDocId, name, JSONSerialisation) => {
     if (typeof customTypes[name] === "undefined") {
         throw Error(`Type ${name} not registered`);
     }
+    if(!JSONSerialisation){
+        return undefined;
+    }
     let instance = new customTypes[name](currentDocId);
     try{
         await instance.restore(JSONSerialisation);
     }
     catch(e){
-        $$.recordBuildError(`Error restoring instance of type ${name}: ${e.message}`);
+        $$.recordBuildError(`Error restoring instance of type ${name}: ${e.message} with JSONSerialisation ${JSONSerialisation}. Setting restored object to undefined`);
+        return undefined;
     }
-    instance.customType = name;
+    instance.__type = name;
     return instance;
 }
 
@@ -31,7 +35,7 @@ const newInstance = async (currentDocId,  typeName, ...args) => {
     }
     let instance = new customTypes[typeName](currentDocId);
     await instance.init(...args);
-    instance.customType = typeName;
+    instance.__type = typeName;
     return instance;
 }
 
@@ -45,9 +49,11 @@ const lookupInstance = async (currentDocId,  typeName, primaryKey, ...args) => {
         await instance.lookup(primaryKey, ...args);
     } catch(e){
         $$.recordBuildError(`Error looking up instance of type ${typeName} with primary key ${primaryKey}: ${e.message}`);
+        console.debug(`Error looking up instance of type ${typeName} with primary key ${primaryKey}: ${e.message}`);
         return undefined;
     }
-    instance.customType = typeName;
+    instance.__type = typeName;
+    console.debug(`>>>>>>>>>>>> Found instance of type ${typeName} with primary key ${primaryKey}`);
     return instance;
 }
 

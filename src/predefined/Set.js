@@ -178,7 +178,7 @@ function SetContainer(docId){
 
         async function reusableGetAt(index, outputVarId, graph) {
             if(index < 0 || index >= self.vars.length){
-                $$.recordBuildError(`The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
+                $$.recordBuildError(`The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${outputVarId}`);
                 return undefined;
             }
             await varUtil.markAsMutableReferenceToVariable(outputVarId, self.vars[index], graph);
@@ -202,6 +202,10 @@ function SetContainer(docId){
     self.rest = async function(inputValues, parsedCommand, currentDocId, graph) {
         let rest = self.vars.slice(1);
         return await createSet(currentDocId, ...rest);
+    }
+
+    self.export   = async function(inputValues, parsedCommand, currentDocId, graph) {
+        return self.vars.join(",");
     }
 
 }
