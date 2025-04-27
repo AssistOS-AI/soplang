@@ -13,7 +13,7 @@ function getNextToken(str, position){
     }
 
     function isSeparator(char){
-        return " \t\"'[]()".includes(char);
+        return " \t\"'[]".includes(char);
     }
     function eatWhitespaces(){
         if(position >= str.length){
@@ -482,7 +482,7 @@ function processEmbeddedCodes(input) {
 
         if (scriptParseResult) {
             // Successfully found and parsed a complete script block
-            console.debug("!!!!!!! Parsed script block:", scriptParseResult.outputLine);
+            //console.debug("!!!!!!! Parsed script block:", scriptParseResult.outputLine);
             outputLines.push(scriptParseResult.outputLine); // Add the summary line
             currentIndex = scriptParseResult.nextIndex; // Set the index to continue after the script block
         } else {
@@ -592,5 +592,6 @@ export {
     parseComplexLine,
     replaceDotVariables,
     processEmbeddedCodes,
-    expandMacro
+    expandMacro,
+    decodePercentCustom
 }

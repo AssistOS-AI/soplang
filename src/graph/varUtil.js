@@ -4,7 +4,8 @@ import {
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine } from "../util/soplangUtil.js";
+    parseComplexLine,
+    decodePercentCustom} from "../util/soplangUtil.js";
 
 let customTypeRegistry = await import("./customTypeRegistry.js");
 
@@ -347,6 +348,7 @@ async function getVarClock(varId){
 }
 
 export {
+    decodePercentCustom,
     getVarID,
     getVariable,
     getVarValue,

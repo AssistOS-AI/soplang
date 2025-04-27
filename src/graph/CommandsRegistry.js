@@ -1,4 +1,4 @@
-import {markAsReferenceToVariable, sameValue} from "./varUtil.js";
+import {markAsReferenceToVariable, sameValue, decodePercentCustom} from "./varUtil.js";
 
 const customTypeRegistry = await import("./customTypeRegistry.js");
 let varUtil = await import("./varUtil.js");
@@ -27,9 +27,78 @@ function CommandsRegistry( workspace) {
 
     commands.def = commands.define = async function (inputValues, parsedCommand) {
         let code = "(function(args){" + inputValues[0] + "})";
-        console.debug(">>> Defining function", parsedCommand, inputValues, code);
-        console.debug("Define:", parsedCommand.outputVars[0], inputValues[0], code);
+        //console.debug(">>> Defining function", parsedCommand, inputValues, code);
+        //console.debug("Define:", parsedCommand.outputVars[0], inputValues[0], code);
         commands[parsedCommand.outputVars[0]] = eval(code);
+    };
+
+    commands.math = async function (inputValues, parsedCommand) {
+        let code = inputValues.join(" ");
+        //console.debug(">>> Defining math code", code);
+        try {
+            return eval(code);
+        } catch (e) {
+            $$.recordBuildError(`Error executing assert code: ${code}. Error: ${e.message}`);
+            return undefined;
+        }
+    }
+
+    commands.assert = async function (inputValues, parsedCommand) {
+        let code = inputValues.join(" ");
+        console.debug(">>> Defining assert code", code);
+        try {
+            return eval(code);
+        } catch (e) {
+            $$.recordBuildError(`Error executing assert code: ${code}. Error: ${e.message}`);
+            return undefined;
+        }
+    }
+
+    commands.jsdef = commands.define = async function (inputValues, parsedCommand) {
+        let declaredParams = inputValues[0].split(",");
+        let parameters = [];
+        let functionCode = varUtil.decodePercentCustom(parsedCommand.inputVars[1]);
+        let importedVariables = [];
+        //in parsedCommand.inputVars[0] if a variable starts with a ~ it means that it is a variable that will be imported otherwise is a parameter
+        for(let i = 0; i < declaredParams.length; i++){
+            let varName = declaredParams[i];
+            if(varName[0] === "~"){
+                importedVariables.push(varName.slice(1));
+            } else {
+                parameters.push(varName);
+            }
+        }
+
+        let code = `(async function(${parameters.join(",")}){${functionCode}})`;
+        //console.debug(`>>> Defining function:${parsedCommand.outputVars[0]}`, code);
+        let func = eval(code);
+        commands[parsedCommand.outputVars[0]] = async function(inputValues, parsedCommand, currentDocId, graph) {
+            let context = {
+                __parsedCommand: parsedCommand,
+                __currentDocId: currentDocId,
+                __graph: graph,
+                __varUtil: varUtil,
+            }
+            for(let v in importedVariables){
+                let varName = importedVariables[v];
+                let fullVarName = varUtil.getVarID(currentDocId, varName);
+                let varDef = await varUtil.getVariable(fullVarName);
+                if(varDef === undefined){
+                    $$.recordBuildError(`Ignoring invalid command trying to import unknown variable '${fullVarName}'`);
+                    continue;
+                }
+                if(commands[varName]){
+                    //console.debug(">>>>>> Importing variable", varName);
+                    context[varName] = function(...args){
+                        return commands[varName](args, parsedCommand, currentDocId, graph);
+                    }.bind(context);
+                } else {
+                    context[varName] = await graph.getVarValue(fullVarName);
+                }
+            }
+            let boundFunc = func.bind(context);
+            return await boundFunc(...inputValues);
+        };
     };
 
     async function doRecOverwrite(fullVarName, withValue, graph){
