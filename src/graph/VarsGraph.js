@@ -105,7 +105,7 @@ function VarsGraph(commandsRegistry) {
 
         const MACRO_RUN = "MRUN";
         let inDocId = MACRO_RUN + "_" + await defaultPersistence.getNextNumber(MACRO_RUN);
-        macroCode = sopLangUtil.expandMacro(inDocId, scriptVar.parsedCommand, ...args);
+        macroCode = sopLangUtil.expandMacro(docId, inDocId, scriptVar.parsedCommand, ...args);
 
         await defaultPersistence.createDocument({
             docId: inDocId,
@@ -319,7 +319,7 @@ function VarsGraph(commandsRegistry) {
             }
         }
 
-        let script = sopLangUtil.expandMacro(returnVarName, scriptVar.parsedCommand, ...scriptArguments);
+        let script = sopLangUtil.expandMacro(docId, returnVarName, scriptVar.parsedCommand, ...scriptArguments);
         //console.debug(">>> Expanded macro is:", script, " For parsedCommand:", parsedCommand);
         await self.insertCode(docId, script);
         self.restartBuild();

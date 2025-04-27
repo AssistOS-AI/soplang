@@ -15,8 +15,8 @@ let script = `
     @lastExecutionResult :=
     
      @runTest macro hello world ~lastExecutionResult  ~specialSign       
-        @res concatAB $hello $world $specialSign
-        overwrite ~lastExecutionResult $res                 
+        @res concatAB $hello $world $specialSign        
+        overwrite ~lastExecutionResult $specialSign                 
         return $res       
     end            
     
@@ -33,6 +33,5 @@ try {
 }
 
 await $$.checkDocVar("doc1","result", "Hello World !");
-let res = await graph.getVarValue("doc1", "result");
-console.log("Result:", res);
+await $$.checkDocVar("doc1","lastExecutionResult", "!");
 await $$.endTest();

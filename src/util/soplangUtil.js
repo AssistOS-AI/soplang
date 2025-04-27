@@ -410,14 +410,14 @@ function processEmbeddedCodes(input) {
         const startLine = lines[startIndex];
         const trimmedStartLine = startLine.trim();
         // Regex: looks for @scriptName (captured) followed by 'script' and optional arguments
-        const match = trimmedStartLine.match(/^@(\S+)\s+(macro|function)(?:\s+(.*))?$/);
+        const match = trimmedStartLine.match(/^@(\S+)\s+(macro|jsdef)(?:\s+(.*))?$/);
 
-        let isFunction = false;
+        let blockName = false;
         if (!match) {
             // The line does not match the "@name script ..." format
             return null;
         } else{
-            isFunction = (match[2] === "function");
+            blockName = match[2];
         }
 
         // Extract script name and arguments
@@ -448,7 +448,7 @@ function processEmbeddedCodes(input) {
 
                 // Create the summarized output line: @scriptName script <args_urlencoded> <lines_urlencoded>
                 // A space separates the two URL encoded parts.
-                const outputLine = `@${scriptName} ${isFunction?"function":"macro"} "${encodedArgs}" "${encodedLines}"`;
+                const outputLine = `@${scriptName} ${blockName} "${encodedArgs}" "${encodedLines}"`;
 
                 // To Decode later:
                 // 1. Find the part after "@scriptName script ".
@@ -497,15 +497,22 @@ function processEmbeddedCodes(input) {
 }
 
 
-function expandMacro(executionPrefix, parsedCommand, ...args) {
+function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
     let initialisation = "";
     let declaredArgs = parsedCommand.inputVars[0];
     let variables = {};
     let declaredArgsList = declaredArgs.split(",");
     for(let i = 0; i < declaredArgsList.length; i++){
         let argName = declaredArgsList[i].trim();
-        variables[argName] = executionPrefix + "_" + argName;
-        initialisation += `@${variables[argName]} := ${args[i]}\n`;
+        //if starts with ~ is an alias from the parent document of the macro (an import), otherwise is  a local variable
+        if(argName.startsWith("~")){
+            argName = argName.substring(1);
+            variables[argName] = executionPrefix + "_" + argName;
+            initialisation += `@${variables[argName]} alias ${macroDocId} ${argName}\n`;
+        } else {
+            variables[argName] = executionPrefix + "_" + argName;
+            initialisation += `@${variables[argName]} := ${args[i]}\n`;
+        }
     }
 
     let macroCode = parsedCommand.inputVars[1];
