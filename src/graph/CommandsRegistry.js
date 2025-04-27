@@ -32,16 +32,10 @@ function CommandsRegistry( workspace) {
         commands[parsedCommand.outputVars[0]] = eval(code);
     };
 
-    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph) {
-        let varName = inputValues[0];
-        if(varName[0] !== "~"){
-            $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
-            return undefined;
-        }
-        let fullVarName = varUtil.getVarID(currentDocId, varName.slice(1));
+    async function doRecOverwrite(fullVarName, withValue, graph){
         let varDef = await varUtil.getVariable(fullVarName);
         if(varDef === undefined){
-            $$.recordBuildError("Ignoring invalid overwrite command! Invalid variable name. Variable names must start with ~");
+            $$.recordBuildError(` Ignoring invalid overwrite command trying to overwrite unknown variable '${fullVarName}'`);
             return;
         }
         //console.debug(">>>>> Overwriting variable", varDef);
@@ -49,24 +43,44 @@ function CommandsRegistry( workspace) {
         switch(commandName){
             case "assign":
                 if(varDef.parsedCommand.varTypes.includes("var")){
-                    $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that has dependencies of another vars");
+                    $$.recordBuildError(`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to overwrite a variable with dependencies`);
                     return;
+                }
+
+                let diffFound = await graph.setValue(fullVarName, withValue);
+                if(diffFound){
+                    graph.restartBuild();
                 }
                 break;
             case "alias":
-                console.debug(">>>>Overwriting alias", varName, "with", inputValues[1]);
-                break;
+                //allow to overwrite the alias because it will actually go to overwrite the value of the actual variable
+                let referencedVariable = varDef.referencedVariable;
+                let referredVar = await varUtil.getVariable(referencedVariable);
+                if(referredVar === undefined){
+                    $$.recordBuildError(`Ignoring invalid overwrite command for variable '${fullVarName}'. The variable it refers to is not defined`);
+                    return;
+                }
+                return await doRecOverwrite(referredVar.varId, withValue, graph);
             case "chainAlias":
-                $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is a chain alias of a custom type. Use commands associated with the custom type instead!");
+                $$.recordBuildError(`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to directly overwrite a variable member of a custom type`);
                 return;
             default:
-                $$.recordBuildError("Ignoring invalid overwrite command! It is not allowed to overwrite a variable that is not declared with the assign command");
+                $$.recordBuildError(`Ignoring invalid overwrite command for variable '${fullVarName}'. Only simple variables can be overwritten`);
                 return;
         }
-        let diffFound = await workspace.setVarValue(currentDocId, inputValues[0].slice(1), inputValues[1]);
-        if(diffFound){
-            graph.restartBuild();
+
+    }
+
+    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph) {
+        let varName = inputValues[0];
+        let outputVarId = parsedCommand.outputVars[0];
+
+        if(varName[0] === "~"){
+            varName = varName.slice(1);
         }
+
+        let fullVarName = varUtil.getVarID(currentDocId, varName);
+        return doRecOverwrite(fullVarName, inputValues[1], graph);
     }
 
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {

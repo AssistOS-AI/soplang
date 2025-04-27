@@ -12,7 +12,7 @@ let testCode = `
     
     @a := A
     @b alias "doc1" a
-    overwrite ~b "B" 
+    overwrite b "B" 
     
     @x := "vx0"
     @y alias "doc1" x

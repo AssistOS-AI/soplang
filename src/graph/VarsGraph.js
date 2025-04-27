@@ -153,6 +153,11 @@ function VarsGraph(commandsRegistry) {
         return await varUtil.setVarValue(varId, value);
     }
 
+    this.setValue = async function (varId, value) {
+        return await varUtil.setVarValue(varId, value);
+    }
+
+
     this.defineVariable = async function (varName, docId, chapterId, paragraphId, parsedCommand) {
         if (typeof parsedCommand === "string") {
             parsedCommand = varUtil.parseCommandLine(parsedCommand);
