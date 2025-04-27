@@ -36,6 +36,7 @@ const newInstance = async (currentDocId,  typeName, ...args) => {
     let instance = new customTypes[typeName](currentDocId);
     await instance.init(...args);
     instance.__type = typeName;
+    instance.__initialArgs = args;
     return instance;
 }
 

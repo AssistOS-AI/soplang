@@ -1,4 +1,4 @@
-import {markAsReferenceToVariable} from "./varUtil.js";
+import {markAsReferenceToVariable, sameValue} from "./varUtil.js";
 
 const customTypeRegistry = await import("./customTypeRegistry.js");
 let varUtil = await import("./varUtil.js");
@@ -86,10 +86,19 @@ function CommandsRegistry( workspace) {
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
         const typeName = inputValues[0];
         let outputVarId = parsedCommand.outputVars[0];
-        if(await varUtil.isDefined(outputVarId)){
-            return graph.getVarValue(outputVarId);
-        }
         const args = inputValues.slice(1);
+
+        if(await varUtil.isDefined(outputVarId)){
+            let instance = graph.getVarValue(outputVarId);
+            let initialArgs = instance.__initialArgs;
+             if(!varUtil.sameValue(initialArgs, args)){
+                if(instance.reinit !== undefined){
+                    await instance.reinit(...args);
+                }
+                return instance;
+             }
+        }
+
         return customTypeRegistry.newInstance(currentDocId, typeName, ...args);
     }
 

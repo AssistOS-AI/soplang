@@ -24,6 +24,5 @@ let script = `
 await workspace.insertCode("doc1", script);
 
 await workspace.buildAll();
-$$.checkDocVar("doc1","result", "Hello World");
-
+await $$.checkDocVar("doc1","result", "Hello World");
 await $$.endTest();

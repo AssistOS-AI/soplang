@@ -410,16 +410,19 @@ function processEmbeddedCodes(input) {
         const startLine = lines[startIndex];
         const trimmedStartLine = startLine.trim();
         // Regex: looks for @scriptName (captured) followed by 'script' and optional arguments
-        const match = trimmedStartLine.match(/^@(\S+)\s+macro(?:\s+(.*))?$/);
+        const match = trimmedStartLine.match(/^@(\S+)\s+(macro|function)(?:\s+(.*))?$/);
 
+        let isFunction = false;
         if (!match) {
             // The line does not match the "@name script ..." format
             return null;
+        } else{
+            isFunction = (match[2] === "function");
         }
 
         // Extract script name and arguments
         const scriptName = match[1]; // Code name is captured from the regex
-        const argsStringFromLine = match[2] || ""; // Argument part (or empty string)
+        const argsStringFromLine = match[3] || ""; // Argument part (or empty string)
         const args = argsStringFromLine.split(/\s+/).filter(arg => arg.length > 0); // Split arguments
         const scriptBodyLines = []; // Collect lines for the script body
         let currentCodeIndex = startIndex + 1; // Start searching for the body from the next line
@@ -445,7 +448,7 @@ function processEmbeddedCodes(input) {
 
                 // Create the summarized output line: @scriptName script <args_urlencoded> <lines_urlencoded>
                 // A space separates the two URL encoded parts.
-                const outputLine = `@${scriptName} macro "${encodedArgs}" "${encodedLines}"`;
+                const outputLine = `@${scriptName} ${isFunction?"function":"macro"} "${encodedArgs}" "${encodedLines}"`;
 
                 // To Decode later:
                 // 1. Find the part after "@scriptName script ".
@@ -479,6 +482,7 @@ function processEmbeddedCodes(input) {
 
         if (scriptParseResult) {
             // Successfully found and parsed a complete script block
+            console.debug("!!!!!!! Parsed script block:", scriptParseResult.outputLine);
             outputLines.push(scriptParseResult.outputLine); // Add the summary line
             currentIndex = scriptParseResult.nextIndex; // Set the index to continue after the script block
         } else {

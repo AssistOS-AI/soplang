@@ -363,5 +363,6 @@ export {
     markAsReferenceToVariable,         // does not allow changing the referenced variable. It is used during script expansion and the referenced variable should not change
     markAsMutableReferenceToVariable, // allow the referenced variable to be changed. It is used by commands from Set types and in any advanced cases where the value changes
     getLocalVarName,
-    isDefined
+    isDefined,
+    sameValue
 }
