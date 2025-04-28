@@ -331,5 +331,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ["Chat", 'LLM', 'defaultPersistence'];
+    return ["Chat", 'LLM', 'DefaultPersistence'];
 }
