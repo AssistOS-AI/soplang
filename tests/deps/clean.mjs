@@ -37,6 +37,25 @@ $$.checkValue = function (value,  expectedValue) {
     $$.allOk &&= (value === expectedValue);
     console.assert(value === expectedValue, `Expected '${expectedValue}' but got '${value}'`);
 }
+$$.deepEqual = function(obj1, obj2) {
+    function deepEqual(a, b) {
+        if (a === b) return true
+        if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false
+        const keysA = Object.keys(a)
+        const keysB = Object.keys(b)
+        if (keysA.length !== keysB.length) return false
+        for (const key of keysA) {
+            if (!keysB.includes(key) || !deepEqual(a[key], b[key])) return false
+        }
+        return true
+    }
+    const areEqual = deepEqual(obj1, obj2)
+    $$.allOk &&= areEqual
+    if (!areEqual) console.assert(false, {expected: obj2, got: obj1})
+}
+
+
+
 
 
 $$.exit = async function () {
