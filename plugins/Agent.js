@@ -52,6 +52,7 @@ async function Agent() {
             }*/
         }
     )
+    await persistence.createIndex("agent", "name");
 
     self.getAgent = async function (id) {
         return await persistence.getAgent(id);

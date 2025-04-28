@@ -87,6 +87,9 @@ async function Workspace() {
     self.runCode = async function (code, ...args) {
         return await graph.runCode(code, ...args);
     }
+    self.buildOnlyForDocument = async function (docId) {
+        return await graph.buildOnlyForDocument(docId);
+    }
 
     self.insertCode = async function (docId, code) {
         return await graph.insertCode(docId, code);

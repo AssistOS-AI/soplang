@@ -76,7 +76,6 @@ async function createStandardPersistencePlugin(){
     await persistence.createIndex("workspace", "spaceGlobalId");
     await persistence.createIndex("user", "email");
 
-    await persistence.createIndex("agent", "name");
     await persistence.createIndex("variable", "varId");
     await persistence.createIndex("document", "docId");
 
