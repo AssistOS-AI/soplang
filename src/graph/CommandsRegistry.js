@@ -43,9 +43,55 @@ function CommandsRegistry( workspace) {
         }
     }
 
-    commands.assert = async function (inputValues, parsedCommand) {
-        let code = inputValues.join(" ");
-        console.debug(">>> Defining assert code", code);
+    let operators = ["+", "-", "*", "/", "%", "==", "!=", "===", "!==", "<", "<=", ">", ">=", "&&", "||", "&", "|", "^" , "(" , ")"];
+    function isOperator(st){
+        return operators.includes(st);
+    }
+
+    function normalize(value) {
+        const num = Number(value);
+        if (!isNaN(num) && value.trim() !== '') {
+            return value;
+        } else {
+            return `"${value}"`;
+        }
+    }
+
+
+    commands.assert = async function (inputValues, parsedCommand, currentDocId, graph) {
+        //console.debug(">>> Defining assert code", parsedCommand, inputValues);
+        let code = "";
+        let inputVars = parsedCommand.inputVars;
+        for(let i = 0; i < inputVars.length; i++){
+            let element;
+            if(parsedCommand.varTypes[i] === "text"){
+                element = inputVars[i];
+                if(!isOperator(element)){
+                    element = normalize(element);
+                }
+            }
+            else {
+                element = normalize(inputValues[i]);
+            }
+            code += ` ${element} `;
+        }
+
+        // //replace "~" with nothing in the code
+        // let codePrefix = "";
+        // for(let varName in detectedVars){
+        //     let varValue = detectedVars[varName];
+        //     //if varValue is a number, convert it to a number
+        //     if(!isNaN(varValue)){
+        //         varValue = parseFloat(varValue);
+        //     } else {
+        //         varValue = `"${varValue}"`;
+        //     }
+        //     codePrefix += `let ${varName} = ${varValue}; `;
+        // }
+        // code = code.replaceAll("~", "");
+        // code = "function(){" + codePrefix + "return " + code + "}()";
+
+        //console.debug(">>> Defining assert code", code);
         try {
             return eval(code);
         } catch (e) {
