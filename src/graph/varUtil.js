@@ -223,6 +223,7 @@ async function setVarValue(varId, newValue, options){
 }
 
 async function updateErrorInfo(varId, errorMessage){
+    console.debug("ERROR: Updating error info for variable", varId, "with message", errorMessage);
     try{
         let varContext = { updateTime : Date.now(), errorInfo : errorMessage, value: undefined};
         await defaultPersistence.updateVariable(varId, varContext);

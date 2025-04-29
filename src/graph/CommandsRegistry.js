@@ -83,7 +83,7 @@ function CommandsRegistry( workspace) {
         }
     }
 
-    commands.jsdef = commands.define = async function (inputValues, parsedCommand) {
+    commands.jsdef = commands.define = async function (inputValues, parsedCommand, originalCurrentDocId, graph) {
         let declaredParams = inputValues[0].split(",");
         let parameters = [];
         let functionCode = varUtil.decodePercentCustom(parsedCommand.inputVars[1]);
@@ -101,16 +101,16 @@ function CommandsRegistry( workspace) {
         let code = `(async function(${parameters.join(",")}){${functionCode}})`;
         //console.debug(`>>> Defining function:${parsedCommand.outputVars[0]}`, code);
         let func = eval(code);
-        commands[parsedCommand.outputVars[0]] = async function(inputValues, parsedCommand, currentDocId, graph) {
+        commands[parsedCommand.outputVars[0]] = async function(inputValues, parsedCommand) {
             let context = {
                 __parsedCommand: parsedCommand,
-                __currentDocId: currentDocId,
+                __currentDocId: originalCurrentDocId,
                 __graph: graph,
                 __varUtil: varUtil,
             }
             for(let v in importedVariables){
                 let varName = importedVariables[v];
-                let fullVarName = varUtil.getVarID(currentDocId, varName);
+                let fullVarName = varUtil.getVarID(originalCurrentDocId, varName);
                 let varDef = await varUtil.getVariable(fullVarName);
                 if(varDef === undefined){
                     await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Ignoring invalid command trying to import unknown variable '${fullVarName}`);
@@ -119,7 +119,7 @@ function CommandsRegistry( workspace) {
                 if(commands[varName]){
                     //console.debug(">>>>>> Importing variable", varName);
                     context[varName] = function(...args){
-                        return commands[varName](args, parsedCommand, currentDocId, graph);
+                        return commands[varName](args, parsedCommand, originalCurrentDocId, graph);
                     }.bind(context);
                 } else {
                     context[varName] = await graph.getVarValue(fullVarName);
@@ -129,6 +129,20 @@ function CommandsRegistry( workspace) {
             return await boundFunc(...inputValues);
         };
     };
+
+    this.runJSDefCommand = function (commandName, ...args) {
+        let commandFunc = commands[commandName];
+        if(!commandFunc){
+            $$.recordBuildError(`Command ${commandName} not found`);
+            return undefined;
+        }
+        let virtualParsedCommand = {
+            command: commandName,
+            inputVars: args,
+            outputVars: [`Result of executing JSDef  command '${commandName}'`]
+        }
+        return commandFunc(args, virtualParsedCommand);
+    }
 
     async function doRecOverwrite(fullVarName, withValue, graph){
         let varDef = await varUtil.getVariable(fullVarName);
@@ -303,6 +317,9 @@ function CommandsRegistry( workspace) {
     this.commandExists = function (commandName) {
         return commands[commandName] !== undefined;
     }
+
+
+
 }
 
 const createRegistry = async function (workspace) {

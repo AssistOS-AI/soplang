@@ -124,7 +124,7 @@ function VarsGraph(commandsRegistry) {
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
         let specialTextVarName = varUtil.makeNameForSpecialVars(chapterId, paragraphId, "text");
-        self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
+        await self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
             {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes: ["text"]}, text);
 
         let embeddedVars = varUtil.parseTextVars(text);
@@ -539,6 +539,20 @@ function VarsGraph(commandsRegistry) {
             }
         resolveBuild();
     }
+
+    self.runCustomCommand = async function (docId, command, ...args) {
+        try{
+            if(commandsRegistry.commandExists(command)){
+                return await commandsRegistry.runJSDefCommand(command, ...args);
+            }
+            throw new Error(`Can't yet execute command macros ${command}. This feature will be enabled later`);
+            //return await self.runMacro(docId, command, ...args);
+        } catch(e){
+            $$.recordBuildError(`Error running custom command ${command}`, e);
+        }
+        return undefined;
+    }
+
 
     self.buildOnlyForDocument = async function (docID) {
         if(buildPromise){
