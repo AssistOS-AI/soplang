@@ -79,8 +79,6 @@ function SetContainer(docId){
     }
 
 
-
-
     self.add = async function(inputValues, parsedCommand, currentDocId, graph) {
         for(let i = 0; i < inputValues.length; i++){
             let varId = varUtil.getVarID(docId, inputValues[i]);
@@ -136,7 +134,7 @@ function SetContainer(docId){
             let currentItemId = newVars[i];
             macroResultVarId = getCorrespondence(whatToDO.outputVarId, currentItemId);
             if(macroResultVarId){
-                console.debug(`!!!!! ${macroResultVarId} already exists in output set of map, but making sure that we have in output`);
+                //console.debug(`!!!!! ${macroResultVarId} already exists in output set of map, but making sure that we have in output`);
                 whatToDO.outputVarValue.add([macroResultVarId]);
                 continue; // do not expand it again
             }
@@ -178,7 +176,7 @@ function SetContainer(docId){
 
         async function reusableGetAt(index, outputVarId, graph) {
             if(index < 0 || index >= self.vars.length){
-                $$.recordBuildError(`The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${outputVarId}`);
+                await varUtil.updateErrorInfo(outputVarId, `The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${outputVarId}`);
                 return undefined;
             }
             await varUtil.markAsMutableReferenceToVariable(outputVarId, self.vars[index], graph);
@@ -187,7 +185,7 @@ function SetContainer(docId){
     self.getAt = async function(inputValues, parsedCommand, currentDocId, graph) {
         let index = parseInt(inputValues[0]);
         if(isNaN(index)){
-            $$.recordBuildError(`The index must be a number! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
+            await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `The index must be a number! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
         }
 
         let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);

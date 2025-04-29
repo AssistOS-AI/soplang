@@ -10,10 +10,11 @@ const ROLES = {
 
 const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
+
 let errorFromLastBuild = [];
-let infoFromLastBuild = [];
+
 $$.recordBuildError = function (text, err) {
-    console.debug("WARNING: Recording build error", text);
+    console.debug("BUILD ERROR:" , text);
     if (!err) {
         err = new Error(text);
     }
@@ -21,11 +22,6 @@ $$.recordBuildError = function (text, err) {
         text: text,
         err: err
     });
-}
-
-$$.recordBuildInfo = function (text) {
-    console.debug("INFO:Recording build info:", text);
-    infoFromLastBuild.push(text);
 }
 
 $$.dumpObject = function (obj) {
@@ -58,12 +54,19 @@ async function Workspace() {
     self.getGraph = function () {
         return graph;
     }
-    self.getErrorFromLastBuild = function () {
-        return errorFromLastBuild;
-    }
+
     self.buildAll = async function () {
         errorFromLastBuild = [];
         return await graph.buildAll();
+    }
+
+    self.buildOnlyForDocument = async function (docId) {
+        errorFromLastBuild = [];
+        return await graph.buildOnlyForDocument(docId);
+    }
+
+    self.getBuildErrors = function () {
+        return errorFromLastBuild;
     }
 
     self.getVarValue = async function (documentId, variableName) {
@@ -94,9 +97,7 @@ async function Workspace() {
     self.runCode = async function (code, ...args) {
         return await graph.runCode(code, ...args);
     }
-    self.buildOnlyForDocument = async function (docId) {
-        return await graph.buildOnlyForDocument(docId);
-    }
+
 
     self.insertCode = async function (docId, code) {
         return await graph.insertCode(docId, code);

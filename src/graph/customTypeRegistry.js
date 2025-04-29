@@ -22,7 +22,6 @@ const restoreInstance = async (currentDocId, name, JSONSerialisation) => {
         await instance.restore(JSONSerialisation);
     }
     catch(e){
-        $$.recordBuildError(`Error restoring instance of type ${name}: ${e.message} with JSONSerialisation ${JSONSerialisation}. Setting restored object to undefined`);
         return undefined;
     }
     instance.__type = name;
@@ -49,7 +48,6 @@ const lookupInstance = async (currentDocId,  typeName, primaryKey, ...args) => {
     try{
         await instance.lookup(primaryKey, ...args);
     } catch(e){
-        $$.recordBuildError(`Error looking up instance of type ${typeName} with primary key ${primaryKey}: ${e.message}`);
         console.debug(`Error looking up instance of type ${typeName} with primary key ${primaryKey}: ${e.message}`);
         return undefined;
     }
