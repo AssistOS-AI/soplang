@@ -1,6 +1,14 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const persistoModule = require('../Persisto/index.cjs');
+
+process.on("SIGTERM", async ()=>{
+    console.debug("SIGTERM received");
+    let persistence = $$.loadPlugin("DefaultPersistence");
+    if(persistence){
+        await persistence.shutDown();
+    }
+})
 async function createStandardPersistencePlugin(){
     let persistence = await persistoModule.initialisePersisto();
 
