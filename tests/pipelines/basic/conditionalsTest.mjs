@@ -30,3 +30,4 @@ await workspace.shutDown();
 console.log("All tests passed:", allOk? "true" : "false");
 
 assert(allOk === true, "Some tests failed");
+$$.endTest();

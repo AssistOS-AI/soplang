@@ -6,6 +6,7 @@ const __dirname = dirname(__filename);
 
 // setăm variabilele de mediu
 process.env.LOGS_FOLDER = `${__dirname}/logs/`;
+process.env.AUDIT_FOLDER = `${__dirname}/audit/`;
 process.env.PERSISTENCE_FOLDER = `${__dirname}/temp_persistence/`;
 Error.stackTraceLimit = Infinity;
 console.log("Start initialisation...");

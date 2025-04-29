@@ -1,10 +1,8 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const persistoModule = require('../Persisto/index.cjs');
-import {getSystemLogger} from "../src/logging/WorkSpaceLogger.js";
-let systemLogger = getSystemLogger();
 async function createStandardPersistencePlugin(){
-    let persistence = await persistoModule.initialisePersisto( systemLogger);
+    let persistence = await persistoModule.initialisePersisto();
 
     await persistence.configureTypes({
         workspace: {
