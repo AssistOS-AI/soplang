@@ -69,6 +69,13 @@ async function Workspace() {
     self.getVarValue = async function (documentId, variableName) {
         return await graph.getVarValue(documentId, variableName);
     }
+    self.getVariablesForDoc = async function (docId) {
+        let variables = await persistence.getVariablesObjectsByDocId(docId);
+        for(let variable of variables){
+            variable.value = await graph.getVarValue(docId, variable.varName);
+        }
+        return variables;
+    }
     self.getEveryVariableObject = async function () {
         return await persistence.getEveryVariableObject();
     }
