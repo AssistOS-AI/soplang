@@ -20,6 +20,7 @@ const tests = [
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',
     './pipelines/macros/basic/importMacroTest.mjs',
+    './pipelines/macros/basic/bestCommandTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
     './pipelines/documents/workWithDocsTest.mjs',
     './pipelines/overwrite/customTypesTest.mjs',
