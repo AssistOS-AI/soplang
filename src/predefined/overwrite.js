@@ -1,5 +1,6 @@
 let varUtil = await import("../graph/varUtil.js");
 async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
+    //console.debug(">>>>> doRecOverwrite variable", fullVarName, "with value", withValue);
     let varDef = await varUtil.getVariable(fullVarName);
     if(varDef === undefined){
         await varUtil.updateWarningInfo(fullVarName,` Ignoring invalid overwrite command trying to overwrite unknown variable '${fullVarName}'`);
@@ -27,7 +28,7 @@ async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
                 await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. The variable it refers to is not defined`);
                 return;
             }
-            return await doRecOverwrite(referredVar.varId, withValue, graph, buildInstance);
+            return await doRecOverwrite(varDef.referencedVariable, withValue, graph, buildInstance);
         case "chainAlias":
             await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to directly overwrite a variable member of a custom type`);
             return;
@@ -40,12 +41,20 @@ async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
 
  export async function overwrite (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
     let varName = inputValues[0];
-    let outputVarId = parsedCommand.outputVars[0];
+    //let outputVarId = parsedCommand.outputVars[0];
 
     if(varName[0] === "~"){
         varName = varName.slice(1);
     }
 
     let fullVarName = varUtil.getVarID(currentDocId, varName);
-    return doRecOverwrite(fullVarName, inputValues[1], graph, buildInstance);
+    if(! await varUtil.isDefined(fullVarName)){
+        //maybe is a macro expanded variable
+        fullVarName = varUtil.getVarID(currentDocId, currentDocId+"_"+varName);
+        if(!await varUtil.isDefined(fullVarName)){
+            await varUtil.updateWarningInfo(fullVarName,` Ignoring invalid overwrite command trying to overwrite unknown variable '${fullVarName}'`);
+            return;
+        }
+    }
+    return await doRecOverwrite(fullVarName, inputValues[1], graph, buildInstance);
 }

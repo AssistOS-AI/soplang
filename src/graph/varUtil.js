@@ -59,7 +59,7 @@ async function isDefined(varId){
 async function getVariable(varId){
     try{
         let persistence = await getDefaultPersistence();
-        return persistence.getVariable(varId);
+        return await persistence.getVariable(varId);
     } catch(err){
         return undefined;
     }
@@ -236,7 +236,7 @@ async function updateWarningInfo(varId, warningMessage){
         let varContext = {  warningInfo : warningMessage};
         await defaultPersistence.updateVariable(varId, varContext);
     }catch(err){
-        $$.recordBuildError("Error updating warning info" + varId + errorMessage, err);
+        $$.recordBuildError("Error updating warning info " + varId + warningMessage, err);
     }
 }
 
@@ -302,6 +302,7 @@ async function markAsReferenceToVariable(varId, referencedVarId){
         }
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
+    //console.debug(">>>>>>>>> New alias made as ", varId, "to", referencedVarId);
     await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
 }
 

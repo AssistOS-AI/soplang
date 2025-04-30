@@ -215,11 +215,11 @@ const createRegistry = async function (workspace) {
     await import("../predefined/Agent.js");
 
     let {ifCommand} = await import("../predefined/ifCommand.js");
-    console.debug("Registering if command", ifCommand);
     registry.registerCommand("ifCommand", ifCommand);
 
-    let {bestCommand} = await import("../predefined/ifCommand.js");
-    registry.registerCommand("if", bestCommand);
+    let {bestCommand} = await import("../predefined/bestCommand.js");
+    registry.registerCommand("best", bestCommand);
+    console.debug("Registering 'best' command:", bestCommand);
 
     let {overwrite} = await import("../predefined/overwrite.js");
     registry.registerCommand("overwrite", overwrite);

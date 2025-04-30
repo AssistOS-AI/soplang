@@ -16,7 +16,6 @@ function VarsGraph(commandsRegistry) {
             let targetVarName = inputValues[1];
             let targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
             let myVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-            console.debug(">>>>>>>>> New alias", myVarId, "to", targetVarId);
             await varUtil.markAsReferenceToVariable(myVarId, targetVarId);
             await buildInstance.restartBuild(myVarId);
     });
@@ -242,26 +241,6 @@ function VarsGraph(commandsRegistry) {
         // console.debug("Graph after topological sort", graph);
     }
 
-    this.getLayers = function () {
-        let layersDict = {};
-        for (let varName in graph) {
-            let node = graph[varName];
-            if (!layersDict[node.layer]) {
-                layersDict[node.layer] = [];
-            }
-            layersDict[node.layer].push(varName);
-        }
-
-        let layers = [];
-        for (let key in layersDict) {
-            layers.push([]);
-        }
-        for (let key in layersDict) {
-            layers[key] = layersDict[key];
-        }
-        //  console.debug("Layers", layers);
-        return layers;
-    }
 
     async function resolveValue(varId) {
         let varContext = await varUtil.getVariable(varId);
@@ -468,7 +447,7 @@ function VarsGraph(commandsRegistry) {
 
 
     function BuildInstance(forDocId){
-        let buildRestartedDuringExecution = true;
+        let buildJustStartedOrRestartedDuringExecution = true;
         let restarts = 0;
         let currentLayer = 0;
         let currentPositionInLayer = 0;
@@ -485,17 +464,46 @@ function VarsGraph(commandsRegistry) {
                 }
                 await defaultPersistence.updateGraph("GRAPH", {state: graph});
             }
-            buildRestartedDuringExecution = true;
+            buildJustStartedOrRestartedDuringExecution = true;
             restarts++;
         }
 
+        function getLayers() {
+            let layersDict = {};
+            for (let varName in graph) {
+                let node = graph[varName];
+                if (!layersDict[node.layer]) {
+                    layersDict[node.layer] = [];
+                }
+                let varDocId = varUtil.getDocIdFromVarId(varName);
+                if(forDocId && varDocId !== forDocId){
+                    continue;
+                }
+                layersDict[node.layer].push(varName);
+            }
+
+            let layers = [];
+            for (let key in layersDict) {
+                layers.push([]);
+            }
+            for (let key in layersDict) {
+                layers[key] = layersDict[key];
+            }
+            //  console.debug("Layers", layers);
+            return layers;
+        }
+
+        this.getLayersForExternalUse = getLayers;
+
+         let layers;
          async function getNextVarIdToCompute() {
-            let layers = self.getLayers();
-            if(buildRestartedDuringExecution){
-                buildRestartedDuringExecution = false;
+
+            if(buildJustStartedOrRestartedDuringExecution){
+                buildJustStartedOrRestartedDuringExecution = false;
                 self.topologicalSort();
                 currentLayer = 0;
                 currentPositionInLayer = 0;
+                layers = getLayers();
             }
 
             if(currentPositionInLayer >= layers[currentLayer].length){
@@ -510,12 +518,13 @@ function VarsGraph(commandsRegistry) {
             currentPositionInLayer++;
             return varId;
         }
-        let nextVarId = undefined;
 
          this.gotRestarted = function () {
-             return buildRestartedDuringExecution;
+             return buildJustStartedOrRestartedDuringExecution;
          }
+
         this.run = async function () {
+            let nextVarId = undefined;
             while(nextVarId = await getNextVarIdToCompute()){
                 if(restarts > 100){
                     console.warn("Too many restarts of the build. Stopping the build");
@@ -645,8 +654,11 @@ function VarsGraph(commandsRegistry) {
         // return dump.replace(/},/g, '},\n\t');
     }
 
+
+
     self.printGraph = async function () {
-        let layers = self.getLayers();
+        let buildInstance = new BuildInstance();
+        let layers = buildInstance.getLayersForExternalUse();
         console.log("--------------------- --- GRAPH PRINT ---------------------");
         for (let i = 0; i < layers.length; i++) {
             console.log("\tLevel '" + i + "':", layers[i].join(", "));
