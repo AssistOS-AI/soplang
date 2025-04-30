@@ -305,7 +305,7 @@ async function markAsReferenceToVariable(varId, referencedVarId){
     await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
 }
 
-async function markAsMutableReferenceToVariable(varId, referencedVarId, graph){
+async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, buildInstance){
     let defaultPersistence = getDefaultPersistence();
     let varDef = await getVariable(varId);
     if(!varDef){
@@ -318,8 +318,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph){
         }
     }
     await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
-    graph.resetVarLevel(varId);
-    graph.restartBuild();
+    await buildInstance.restartBuild(varId);
 }
 
 
@@ -404,6 +403,10 @@ async function getVarClock(varId){
 export {
     decodePercentCustom,
     getVarID,
+    getDocIdFromVarId,
+    getLocalVarName,
+    isDefined,
+    sameValue,
     getVariable,
     getVarValue,
     getVarClock,
@@ -418,10 +421,8 @@ export {
     parseTextVars,
     markAsReferenceToVariable,         // does not allow changing the referenced variable. It is used during script expansion and the referenced variable should not change
     markAsMutableReferenceToVariable, // allow the referenced variable to be changed. It is used by commands from Set types and in any advanced cases where the value changes
-    getLocalVarName,
-    isDefined,
-    sameValue,
     updateErrorInfo,
     updateWarningInfo,
     updateDebugInfo,
+
 }

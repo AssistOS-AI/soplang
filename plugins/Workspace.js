@@ -14,7 +14,7 @@ const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 let errorFromLastBuild = [];
 
 $$.recordBuildError = function (text, err) {
-    console.debug("BUILD ERROR:" , text);
+    console.debug("BUILD ERROR:" , text, err);
     if (!err) {
         err = new Error(text);
     }

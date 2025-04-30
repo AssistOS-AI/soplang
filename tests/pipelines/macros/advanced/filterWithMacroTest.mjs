@@ -12,7 +12,7 @@ let script = `
     @worldSet new Set world0 world1 world2 world3 world4      
     
     @worldFilter macro item     
-        return [ assert item === "World 1" ||  item === "World 2" || item === "World 4" ]        
+        return [ assert $item === "World 1" ||  $item === "World 2" || $item === "World 4" ]       #debug         
     end                 
     @filter worldSet.filter worldFilter 
     @res0_1 filter.first

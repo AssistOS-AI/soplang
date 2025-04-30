@@ -79,6 +79,10 @@ function SetContainer(docId){
     }
 
 
+    self.empty = async function() {
+        self.vars = [];
+    }
+
     self.add = async function(inputValues, parsedCommand, currentDocId, graph) {
         for(let i = 0; i < inputValues.length; i++){
             let varId = inputValues[i];
@@ -119,7 +123,7 @@ function SetContainer(docId){
         return whatToDO;
     }
 
-    self.map = async function(inputValues, parsedCommand, currentDocId, graph) {
+    self.map = async function(inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let whatToDO = await decideWhatToDO(inputValues, parsedCommand, currentDocId, graph);
         let macroName = inputValues[0];
         //console.debug(`>>> Executing 'map' command for '@${whatToDO.outputVarId}' with new members to process: [${whatToDO.newVars}], Deleted vars [${whatToDO.deletedVars}] this set is [${self.vars}] and existing set being [${whatToDO.outputVarValue.vars}]`);
@@ -160,7 +164,7 @@ function SetContainer(docId){
                     preparedParsedCommand.inputVars.push(inputValues[j]);
                 }
             }
-            macroResultVarId = await graph.expandInlineMacro(currentDocId, undefined, macroName, preparedParsedCommand);
+            macroResultVarId = await graph.expandInlineMacro(currentDocId, undefined, macroName, preparedParsedCommand,buildInstance);
             whatToDO.outputVarValue.add([macroResultVarId]);
             setCorrespondingReturnVar(whatToDO.outputVarId, currentItemId, macroResultVarId);
         }
@@ -180,20 +184,22 @@ function SetContainer(docId){
         let jsDefCommandName = inputValues[0];
         try{
             //console.debug(`>>> Executing 'filter' command for '@${parsedCommand.outputVars[0]}' with new members to process: [${self.vars}]`);
+            outputVarValue.empty();
             for(let i=0; i < self.vars.length; i++){
                 let varValue = await graph.getVarValue(self.vars[i]);
                 let isOK = await graph.runCustomCommand(currentDocId, jsDefCommandName, varValue);
+                //console.debug(`>>> isOK [${isOK}]`, typeof isOK);
                 //console.debug(`>>> Executed 'filter' command for '@${parsedCommand.outputVars[0]}' with varValue [${varValue}] and isOK [${isOK}]`);
-                if(isOK){
+                if(isOK !== false && isOK !== "false"){
+                    //console.debug(`>>> Adding var [${self.vars[i]}] to the output set [${outputVarValue.vars}]`);
                     outputVarValue.add([self.vars[i]]);
-                } else {
-                    outputVarValue.remove([self.vars[i]]);
                 }
             }
         } catch(err){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `The reduce command failed with error: ${err.message}`);
         }
         await varUtil.setVarValue(outputVarId, outputVarValue);
+        //console.debug(`>>> Ending execution of 'filter' command for '@${parsedCommand.outputVars[0]}' with members to process: [${self.vars}] and resulted set becoming [${outputVarValue.vars}]`);
         return outputVarValue;
     }
 
@@ -211,28 +217,27 @@ function SetContainer(docId){
         return resultOfReduce;
     }
 
-
-        async function reusableGetAt(index, outputVarId, graph) {
+        async function reusableGetAt(index, outputVarId, graph, buildInstance) {
             if(index < 0 || index >= self.vars.length){
                 await varUtil.updateErrorInfo(outputVarId, `The index is out of bounds! The getAt command will return 'undefined' for  output variable  ${outputVarId}`);
                 return undefined;
             }
-            await varUtil.markAsMutableReferenceToVariable(outputVarId, self.vars[index], graph);
+            await varUtil.markAsMutableReferenceToVariable(outputVarId, self.vars[index], graph, buildInstance);
         }
 
-    self.getAt = async function(inputValues, parsedCommand, currentDocId, graph) {
+    self.getAt = async function(inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let index = parseInt(inputValues[0]);
         if(isNaN(index)){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `The index must be a number! The getAt command will return 'undefined' for  output variable  ${parsedCommand.outputVars[0]}`);
         }
 
         let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-        return reusableGetAt(index, outputVarId, graph); // undefined is fine as value fo variables keeping references to other variables
+        return reusableGetAt(index, outputVarId, graph, buildInstance); // undefined is fine as value fo variables keeping references to other variables
     }
 
-    self.first = async function(inputValues, parsedCommand, currentDocId, graph) {
+    self.first = async function(inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-        return reusableGetAt(0, outputVarId, graph);
+        return reusableGetAt(0, outputVarId, graph, buildInstance);
     }
 
     self.rest = async function(inputValues, parsedCommand, currentDocId, graph) {

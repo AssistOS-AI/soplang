@@ -76,6 +76,7 @@ function CommandsRegistry( workspace) {
             code += ` ${element} `;
         }
         try {
+            //console.debug("Executing assert code", code);
             return eval(code);
         } catch (e) {
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Error executing assert code: ${code}. Error: ${e.message}`);
@@ -144,7 +145,7 @@ function CommandsRegistry( workspace) {
         return commandFunc(args, virtualParsedCommand);
     }
 
-    async function doRecOverwrite(fullVarName, withValue, graph){
+    async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
         let varDef = await varUtil.getVariable(fullVarName);
         if(varDef === undefined){
             await varUtil.updateWarningInfo(fullVarName,` Ignoring invalid overwrite command trying to overwrite unknown variable '${fullVarName}'`);
@@ -161,7 +162,7 @@ function CommandsRegistry( workspace) {
 
                 let diffFound = await graph.setValue(fullVarName, withValue);
                 if(diffFound){
-                    graph.restartBuild();
+                    await buildInstance.restartBuild(undefined);
                 }
                 break;
             case "alias":
@@ -172,7 +173,7 @@ function CommandsRegistry( workspace) {
                     await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. The variable it refers to is not defined`);
                     return;
                 }
-                return await doRecOverwrite(referredVar.varId, withValue, graph);
+                return await doRecOverwrite(referredVar.varId, withValue, graph, buildInstance);
             case "chainAlias":
                 await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to directly overwrite a variable member of a custom type`);
                 return;
@@ -183,7 +184,7 @@ function CommandsRegistry( workspace) {
 
     }
 
-    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph) {
+    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let varName = inputValues[0];
         let outputVarId = parsedCommand.outputVars[0];
 
@@ -192,7 +193,7 @@ function CommandsRegistry( workspace) {
         }
 
         let fullVarName = varUtil.getVarID(currentDocId, varName);
-        return doRecOverwrite(fullVarName, inputValues[1], graph);
+        return doRecOverwrite(fullVarName, inputValues[1], graph, buildInstance);
     }
 
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
@@ -258,7 +259,7 @@ function CommandsRegistry( workspace) {
         }
     }
 
-    this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId) {
+    this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId , buildInstance) {
         let splitCommand = commandName.split(".");
         if(splitCommand.length > 2){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid command name. Expected at most one dot in command name`);
@@ -295,7 +296,7 @@ function CommandsRegistry( workspace) {
                 }
             }
 
-            let result = await commandFunction.call(value, inputValues, parsedCommand, currentDocId, workspace.getGraph());
+            let result = await commandFunction.call(value, inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
@@ -307,7 +308,7 @@ function CommandsRegistry( workspace) {
             return;
         }
        // console.debug(">>>>>>> Running command", commandName);
-        return await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph());
+        return await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
     }
 
     this.registerCommand = function (commandName, commandFunction) {
