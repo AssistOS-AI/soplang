@@ -71,3 +71,4 @@ assert(await workspace.getVarValue("doc1", "helloWorld") === "Hello World", "Fai
 assert(await workspace.getVarValue("doc2", "aliasHelloWorld") === "Hello World", "Failed to validate the value $aliasHelloWorld, expected 'Hello' but got " + await workspace.getVarValue("doc1", "helloWorld"));
 
 await workspace.shutDown();
+$$.endTest();

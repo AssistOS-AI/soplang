@@ -1,10 +1,16 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const persistoModule = require('../Persisto/index.cjs');
-import {getSystemLogger} from "../src/logging/WorkSpaceLogger.js";
-let systemLogger = getSystemLogger();
+
+process.on("SIGTERM", async ()=>{
+    console.debug("SIGTERM received");
+    let persistence = $$.loadPlugin("DefaultPersistence");
+    if(persistence){
+        await persistence.shutDown();
+    }
+})
 async function createStandardPersistencePlugin(){
-    let persistence = await persistoModule.initialisePersisto( systemLogger);
+    let persistence = await persistoModule.initialisePersisto();
 
     await persistence.configureTypes({
         workspace: {
@@ -76,7 +82,6 @@ async function createStandardPersistencePlugin(){
     await persistence.createIndex("workspace", "spaceGlobalId");
     await persistence.createIndex("user", "email");
 
-    await persistence.createIndex("agent", "name");
     await persistence.createIndex("variable", "varId");
     await persistence.createIndex("document", "docId");
 

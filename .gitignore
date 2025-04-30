@@ -11,4 +11,5 @@
 /tests/work_space_data/
 /tests/logs/
 /tests/deps/logs/
+/tests/deps/audit/
 /tests/deps/temp_persistence/

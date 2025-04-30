@@ -1,3 +1,5 @@
+import {updateErrorInfo} from "./varUtil.js";
+
 let varUtil = await import("./varUtil.js");
 let sopLangUtil = await import("../util/soplangUtil.js");
 let defaultPersistence;
@@ -122,7 +124,7 @@ function VarsGraph(commandsRegistry) {
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
         let specialTextVarName = varUtil.makeNameForSpecialVars(chapterId, paragraphId, "text");
-        self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
+        await self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
             {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes: ["text"]}, text);
 
         let embeddedVars = varUtil.parseTextVars(text);
@@ -218,11 +220,11 @@ function VarsGraph(commandsRegistry) {
                 let depName = node.deps[i];
                 let dep = graph[depName];
                 if (depName === varName) {
-                    $$.recordBuildError(`Circular dependency detected for variable ${depName}. Build stopped!`);
                     $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
                 }
                 if (!dep) {
-                    $$.recordBuildError(` Dependency ${depName} not found for variable ${varName}. Inserting a fake dependency!`);
+                    //call without await on purpose
+                    varUtil.updateErrorInfo(varName, ` Dependency ${depName} not found for variable ${varName}. Inserting a fake dependency!`);
                 }
                 else if (dep.layer === 0) {
                     determineLayer(depName, dep);
@@ -303,7 +305,7 @@ function VarsGraph(commandsRegistry) {
         let returnVarName = RETURN_VALUE_PREFIX + "_" + await defaultPersistence.getNextNumber(RETURN_VALUE_PREFIX);
 
         if(!scriptVar){
-            $$.recordBuildInfo(`#DEBUG Failed to find macro  '${intendedCommand}' The output variable ${returnVarName} and upstream dependencies will remain undefined`);
+            await varUtil.updateErrorInfo(returnVarName, `Failed to find macro  '${intendedCommand}'`);
             return undefined;
         }
 
@@ -423,8 +425,7 @@ function VarsGraph(commandsRegistry) {
         );
 
         if(debugActivatedForCommand){
-            $$.recordBuildInfo(`#DEBUG '${targetVar.varId}' is '${result}' #### Command ${parsedCommand.command}[${inputValues}]`);
-
+            await varUtil.updateDebugInfo(targetVar.varId, `#DEBUG '${targetVar.varId}' is '${result}' #### Command ${parsedCommand.command}[${inputValues}]`);
         }
         return result;
     }
@@ -456,12 +457,18 @@ function VarsGraph(commandsRegistry) {
                 //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph
                 return await resolveValue(variable.referencedVariable);
             }
+            const start = Date.now();
             let value = await runCommand(variable);
+            const end = Date.now();
+            let duration = end - start;
+            if(duration === 0){
+                duration = 1;
+            }
             if(buildRestartedDuringExecution){
                 // nothing to save, the build will be restarted anyway
                 return ;
             }
-            await varUtil.setVarValue(varId, value, true);
+            await varUtil.setVarValue(varId, value, {duration});
         }
     }
 
@@ -532,6 +539,20 @@ function VarsGraph(commandsRegistry) {
             }
         resolveBuild();
     }
+
+    self.runCustomCommand = async function (docId, command, ...args) {
+        try{
+            if(commandsRegistry.commandExists(command)){
+                return await commandsRegistry.runJSDefCommand(command, ...args);
+            }
+            throw new Error(`Can't yet execute command macros ${command}. This feature will be enabled later`);
+            //return await self.runMacro(docId, command, ...args);
+        } catch(e){
+            $$.recordBuildError(`Error running custom command ${command}`, e);
+        }
+        return undefined;
+    }
+
 
     self.buildOnlyForDocument = async function (docID) {
         if(buildPromise){

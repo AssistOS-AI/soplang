@@ -52,6 +52,7 @@ async function Agent() {
             }*/
         }
     )
+    await persistence.createIndex("agent", "name");
 
     self.getAgent = async function (id) {
         return await persistence.getAgent(id);
@@ -331,5 +332,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ["Chat", 'LLM', 'defaultPersistence'];
+    return ["Chat", 'LLM', 'DefaultPersistence'];
 }

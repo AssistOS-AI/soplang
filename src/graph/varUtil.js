@@ -72,18 +72,18 @@ async function getVarValue(varId){
     }
 
     if(varDef.referencedVariable) {
-        //the only dependency is now the variable it is referencing
+        //the current variable is just a proxy
         return await getVarValue(varDef.referencedVariable);
     }
 
     //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.__type);
     if(varDef.__type){
-        return customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varDef.value);
+        let instance = customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varDef.value);
+        if(!instance){
+            await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`);
+        }
+        return instance;
     }
-    /*
-    if(typeof varDef.value === "object" && typeof varDef.value.__type === "string"){
-        return customTypeRegistry.restoreInstance(varDef.value.__type, varDef.value);
-    }*/
     return varDef.value;
 }
 
@@ -126,7 +126,7 @@ function sameValue(oldValue, newValue){
 
 
 
-async function setVarValue(varId, newValue, force = false){
+async function setVarValue(varId, newValue, options){
     function serialiseValue(newValue){
         let typeOfValue = typeof newValue;
         switch(typeOfValue){
@@ -187,12 +187,66 @@ async function setVarValue(varId, newValue, force = false){
         return false;
     }
 
+
     let varContext = {value: serialisedNewValue, clock: defaultPersistence.getLogicalTimestamp()};
+    varContext.updateTime = Date.now();
+    if(options){
+        if(options.duration){
+            varContext.duration = options.duration;
+        } else {
+            varContext.duration = undefined;
+        }
+        if(options.errorInfo){
+            varContext.errorInfo = options.errorInfo;
+        } else {
+            varContext.errorInfo = undefined;
+        }
+
+        if(options.warningInfo){
+            varContext.warningInfo = options.warningInfo;
+        } else {
+            varContext.warningInfo = undefined;
+        }
+
+        if(options.debugInfo){
+            varContext.debugInfo = options.debugInfo;
+        } else {
+            varContext.debugInfo = undefined;
+        }
+    }
+
     if(newValue !== undefined && newValue.__type !== undefined){
         varContext.__type = newValue.__type;
     }
     await defaultPersistence.updateVariable(varId, varContext);
     return true;
+}
+
+async function updateErrorInfo(varId, errorMessage){
+    console.debug("ERROR: Updating error info for variable", varId, "with message", errorMessage);
+    try{
+        let varContext = { updateTime : Date.now(), errorInfo : errorMessage, value: undefined};
+        await defaultPersistence.updateVariable(varId, varContext);
+    }catch(err){
+       $$.recordBuildError("Error updating error info" + varId + errorMessage, err);
+    }
+}
+async function updateWarningInfo(varId, warningMessage){
+    try{
+        let varContext = {  warningInfo : warningMessage};
+        await defaultPersistence.updateVariable(varId, varContext);
+    }catch(err){
+        $$.recordBuildError("Error updating warning info" + varId + errorMessage, err);
+    }
+}
+
+async function updateDebugInfo(varId, debugMessage){
+    try{
+        let varContext = {  debugInfo : debugMessage};
+        await defaultPersistence.updateVariable(varId, varContext);
+    }catch(err){
+        $$.recordBuildError("Error updating debug info" + varId + errorMessage, err);
+    }
 }
 async function getDependencies(varId){
 
@@ -366,5 +420,8 @@ export {
     markAsMutableReferenceToVariable, // allow the referenced variable to be changed. It is used by commands from Set types and in any advanced cases where the value changes
     getLocalVarName,
     isDefined,
-    sameValue
+    sameValue,
+    updateErrorInfo,
+    updateWarningInfo,
+    updateDebugInfo,
 }

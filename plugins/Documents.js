@@ -294,9 +294,6 @@ async function Documents(){
     self.getAllDocumentObjects = async function () {
         return await persistence.getEveryDocumentObject();
     }
-    self.getVariables = async function (docId) {
-        return await persistence.getVariablesObjectsByDocId(docId);
-    }
 
     return self;
 }
