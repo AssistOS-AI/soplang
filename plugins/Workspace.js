@@ -89,6 +89,12 @@ async function Workspace() {
     self.registerCommand = function (commandName, commandFunction) {
         commandsRegistry.addCommand(commandName, commandFunction);
     }
+    self.getCustomTypes = async function () {
+        return customTypeRegistry.getTypes();
+    }
+    self.getCommands = async function () {
+        return commandsRegistry.getCommands();
+    }
 
     self.runMacro = async function (docId, scriptName, ...args) {
         return await graph.runMacro(docId, scriptName, ...args);

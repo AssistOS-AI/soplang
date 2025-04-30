@@ -55,7 +55,9 @@ const lookupInstance = async (currentDocId,  typeName, primaryKey, ...args) => {
     console.debug(`>>>>>>>>>>>> Found instance of type ${typeName} with primary key ${primaryKey}`);
     return instance;
 }
-
+const getTypes = () => {
+    return Object.keys(customTypes);
+}
 
 $$.registerCustomType = registerType;
 
@@ -63,5 +65,6 @@ export {
     registerType,
     restoreInstance,
     newInstance,
-    lookupInstance
+    lookupInstance,
+    getTypes
 }
