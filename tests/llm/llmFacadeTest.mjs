@@ -1,7 +1,7 @@
 import "../deps/clean.mjs";
 
 import FakeProviderClass from "../fakes/fakeProvider.js";
-import {getInstance} from "../../../globalServerlessAPI/workspacePlugins/LLM.js";
+import {getInstance} from "../../plugins/LLM.js";
 
 const llm = await getInstance(FakeProviderClass);
 
