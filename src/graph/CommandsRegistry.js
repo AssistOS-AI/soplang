@@ -318,7 +318,9 @@ function CommandsRegistry( workspace) {
         return commands[commandName] !== undefined;
     }
 
-
+    this.getCommands = function () {
+        return Object.keys(commands);
+    }
 
 }
 
