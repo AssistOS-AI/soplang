@@ -1,4 +1,5 @@
 import {markAsReferenceToVariable, sameValue, decodePercentCustom, updateErrorInfo} from "./varUtil.js";
+import {ifCommand} from "../predefined/ifCommand.js";
 
 const customTypeRegistry = await import("./customTypeRegistry.js");
 let varUtil = await import("./varUtil.js");
@@ -32,59 +33,8 @@ function CommandsRegistry( workspace) {
         commands[parsedCommand.outputVars[0]] = eval(code);
     };
 
-    commands.math = async function (inputValues, parsedCommand) {
-        let code = inputValues.join(" ");
-        //console.debug(">>> Defining math code", code);
-        try {
-            return eval(code);
-        } catch (e) {
-            await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Error executing math code: ${code}. Error: ${e.message}`);
-            return undefined;
-        }
-    }
 
-    let operators = ["+", "-", "*", "/", "%", "==", "!=", "===", "!==", "<", "<=", ">", ">=", "&&", "||", "&", "|", "^" , "(" , ")"];
-    function isOperator(st){
-        return operators.includes(st);
-    }
-
-    function normalize(value) {
-        const num = Number(value);
-        if (!isNaN(num) && value.trim() !== '') {
-            return value;
-        } else {
-            return `"${value}"`;
-        }
-    }
-
-
-    commands.assert = async function (inputValues, parsedCommand, currentDocId, graph) {
-        //console.debug(">>> Defining assert code", parsedCommand, inputValues);
-        let code = "";
-        let inputVars = parsedCommand.inputVars;
-        for(let i = 0; i < inputVars.length; i++){
-            let element;
-            if(parsedCommand.varTypes[i] === "text"){
-                element = inputVars[i];
-                if(!isOperator(element)){
-                    element = normalize(element);
-                }
-            }
-            else {
-                element = normalize(inputValues[i]);
-            }
-            code += ` ${element} `;
-        }
-        try {
-            //console.debug("Executing assert code", code);
-            return eval(code);
-        } catch (e) {
-            await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Error executing assert code: ${code}. Error: ${e.message}`);
-            return undefined;
-        }
-    }
-
-    commands.jsdef = commands.define = async function (inputValues, parsedCommand, originalCurrentDocId, graph) {
+    commands.jsdef = async function (inputValues, parsedCommand, originalCurrentDocId, graph) {
         let declaredParams = inputValues[0].split(",");
         let parameters = [];
         let functionCode = varUtil.decodePercentCustom(parsedCommand.inputVars[1]);
@@ -145,56 +95,7 @@ function CommandsRegistry( workspace) {
         return commandFunc(args, virtualParsedCommand);
     }
 
-    async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
-        let varDef = await varUtil.getVariable(fullVarName);
-        if(varDef === undefined){
-            await varUtil.updateWarningInfo(fullVarName,` Ignoring invalid overwrite command trying to overwrite unknown variable '${fullVarName}'`);
-            return;
-        }
-        //console.debug(">>>>> Overwriting variable", varDef);
-        let commandName = varDef.parsedCommand.command;
-        switch(commandName){
-            case "assign":
-                if(varDef.parsedCommand.varTypes.includes("var")){
-                    await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to overwrite a variable with dependencies`);
-                    return;
-                }
 
-                let diffFound = await graph.setValue(fullVarName, withValue);
-                if(diffFound){
-                    await buildInstance.restartBuild(undefined);
-                }
-                break;
-            case "alias":
-                //allow to overwrite the alias because it will actually go to overwrite the value of the actual variable
-                let referencedVariable = varDef.referencedVariable;
-                let referredVar = await varUtil.getVariable(referencedVariable);
-                if(referredVar === undefined){
-                    await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. The variable it refers to is not defined`);
-                    return;
-                }
-                return await doRecOverwrite(referredVar.varId, withValue, graph, buildInstance);
-            case "chainAlias":
-                await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. It is not allowed to directly overwrite a variable member of a custom type`);
-                return;
-            default:
-                await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. Only simple variables can be overwritten`);
-                return;
-        }
-
-    }
-
-    commands.overwrite = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-        let varName = inputValues[0];
-        let outputVarId = parsedCommand.outputVars[0];
-
-        if(varName[0] === "~"){
-            varName = varName.slice(1);
-        }
-
-        let fullVarName = varUtil.getVarID(currentDocId, varName);
-        return doRecOverwrite(fullVarName, inputValues[1], graph, buildInstance);
-    }
 
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
         const typeName = inputValues[0];
@@ -232,32 +133,7 @@ function CommandsRegistry( workspace) {
         return instance;
     }
 
-    commands.if = async function (inputValues, parsedCommand) {
-        // if var then x else y
-     let condition = inputValues[0];
-     let hashThen = inputValues[1] === "then";
-     if(!hashThen){
-         await varUtil.updateErrorInfo(parsedCommand.outputVars[0], "Invalid syntax. Expected 'then' after condition  in if statement");
-         return undefined;
-      }
-     let thenValue = undefined;
-     let elseValue = undefined;
-      if(inputValues.length >= 2){
-          thenValue = inputValues[2];
-      }
 
-     let hasElse = inputValues[3] === "else";
-      if(hasElse){
-          if(inputValues.length >= 4){
-                elseValue = inputValues[4];
-          }
-      }
-        if(condition){
-            return thenValue;
-        } else {
-            return elseValue;
-        }
-    }
 
     this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId , buildInstance) {
         let splitCommand = commandName.split(".");
@@ -302,9 +178,13 @@ function CommandsRegistry( workspace) {
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
             return result; // the result of the command will be immediately  assigned to the output variable
         }
+        if(commandName === "if"){ //I have no reason why putting directly "if" in commands it fails, there should be something special with "if" as member in objects
+            commandName = "ifCommand";
+        }
         let commandFunction = commands[commandName];
         if(!commandFunction){
-            await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Unknown command '${commandName}'`);
+            console.debug(`Command not found: '${commandName}' in commands registry containing the following commands: ${Object.keys(commands)}`);
+            await varUtil.updateErrorInfo(varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]), `Unknown command '${commandName}'`);
             return;
         }
        // console.debug(">>>>>>> Running command", commandName);
@@ -333,6 +213,20 @@ const createRegistry = async function (workspace) {
     await import("../predefined/DocumentCommands.js");
     await import("../predefined/Set.js");
     await import("../predefined/Agent.js");
+
+    let {ifCommand} = await import("../predefined/ifCommand.js");
+    console.debug("Registering if command", ifCommand);
+    registry.registerCommand("ifCommand", ifCommand);
+
+    let {bestCommand} = await import("../predefined/ifCommand.js");
+    registry.registerCommand("if", bestCommand);
+
+    let {overwrite} = await import("../predefined/overwrite.js");
+    registry.registerCommand("overwrite", overwrite);
+
+    let {math, assert} = await import("../predefined/evalCommands.js");
+    registry.registerCommand("math", math);
+    registry.registerCommand("assert", assert);
 
     return registry;
 }

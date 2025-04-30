@@ -223,12 +223,12 @@ async function setVarValue(varId, newValue, options){
 }
 
 async function updateErrorInfo(varId, errorMessage){
-    console.debug("ERROR: Updating error info for variable", varId, "with message", errorMessage);
+    console.debug("ERROR: Updating error info for variable ", varId, "with message", errorMessage);
     try{
         let varContext = { updateTime : Date.now(), errorInfo : errorMessage, value: undefined};
         await defaultPersistence.updateVariable(varId, varContext);
     }catch(err){
-       $$.recordBuildError("Error updating error info" + varId + errorMessage, err);
+       $$.recordBuildError("Error updating error info " + varId + errorMessage, err);
     }
 }
 async function updateWarningInfo(varId, warningMessage){
