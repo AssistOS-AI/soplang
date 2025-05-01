@@ -113,7 +113,7 @@ function CommandsRegistry( workspace) {
              }
         }
 
-        return customTypeRegistry.newInstance(currentDocId, typeName, ...args);
+        return customTypeRegistry.newInstance(currentDocId, typeName, outputVarId, ...args);
     }
 
 
@@ -122,10 +122,11 @@ function CommandsRegistry( workspace) {
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid lookup command. Expected at least 2 arguments. The output variable ${parsedCommand.outputVars[0]} will remain undefined`);
             return undefined;
         }
+        let outputVarId = parsedCommand.outputVars[0];
         const typeName = inputValues[0];
         const primaryKey = inputValues[1];
         const args = inputValues.slice(2);
-        let instance =  customTypeRegistry.lookupInstance(currentDocId, typeName, primaryKey, ...args);
+        let instance =  customTypeRegistry.lookupInstance(currentDocId, typeName, outputVarId, primaryKey, ...args);
         if(instance === undefined){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid lookup command. The instance of type ${typeName} with primary key ${primaryKey} was not found. The output variable ${parsedCommand.outputVars[0]} will remain undefined`);
             return undefined;
@@ -137,8 +138,9 @@ function CommandsRegistry( workspace) {
 
     this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId , buildInstance) {
         let splitCommand = commandName.split(".");
+        let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
         if(splitCommand.length > 2){
-            await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid command name. Expected at most one dot in command name`);
+            await varUtil.updateErrorInfo(outputVarId, `Invalid command name. Expected at most one dot in command name`);
             return;
         }
         if(splitCommand.length === 2){
@@ -153,14 +155,14 @@ function CommandsRegistry( workspace) {
             let value = await workspace.getVarValue(currentDocId, varName);
             if(value === undefined){
                 if(!isConditionalMemberCommand) {
-                    await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
+                    await varUtil.updateErrorInfo(outputVarId, `Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
                 }
                 return;
             }
 
             const commandFunction = value[methodCommand];
             if(!commandFunction){
-                await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Method command not found: '${methodCommand}' in Object "${$$.dumpObject(value)}" Defaulting to undefined`);
+                await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Method command not found: '${methodCommand}' in Object "${$$.SOPStringify(value)}" Defaulting to undefined`);
                 return;
             }
             if(isConditionalMemberCommand){

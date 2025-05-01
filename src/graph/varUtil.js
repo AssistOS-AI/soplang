@@ -78,7 +78,7 @@ async function getVarValue(varId){
 
     //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.__type);
     if(varDef.__type){
-        let instance = customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varDef.value);
+        let instance = customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varId, varDef.value);
         if(!instance){
             await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`);
         }
@@ -223,12 +223,12 @@ async function setVarValue(varId, newValue, options){
 }
 
 async function updateErrorInfo(varId, errorMessage){
-    console.debug("ERROR: Updating error info for variable ", varId, "with message", errorMessage);
+    console.debug("ERROR: Updating error info for variable: ", varId, "with message", errorMessage);
     try{
         let varContext = { updateTime : Date.now(), errorInfo : errorMessage, value: undefined};
         await defaultPersistence.updateVariable(varId, varContext);
     }catch(err){
-       $$.recordBuildError("Error updating error info " + varId + errorMessage, err);
+       $$.recordBuildError("Error updating error info: " + varId + errorMessage, err);
     }
 }
 async function updateWarningInfo(varId, warningMessage){
@@ -245,14 +245,14 @@ async function updateDebugInfo(varId, debugMessage){
         let varContext = {  debugInfo : debugMessage};
         await defaultPersistence.updateVariable(varId, varContext);
     }catch(err){
-        $$.recordBuildError("Error updating debug info" + varId + errorMessage, err);
+        $$.recordBuildError("Error updating debug info " + varId + errorMessage, err);
     }
 }
 async function getDependencies(varId){
 
     let varDef = await getVariable(varId);
     if(!varDef){
-        await $$.throwError("Variable not found", varId);
+        await $$.throwError("Variable not found: ", varId);
     }
     let deps = [];
 
@@ -281,16 +281,20 @@ async function getDependencies(varId){
             if(varType === "var"){
                 deps.push(inputVar);
             }
-            if(inputVar[0] === "~"){
+
+            /*if(inputVar[0] === "~"){
                 deps.push(getVarID(varDef.docId, inputVar.slice(1)));
-            }
+            }*/
         }
     }
     return deps;
 }
 
-async function markAsReferenceToVariable(varId, referencedVarId){
+async function markAsReferenceToVariable(varId, referencedVarId, docId){
     let defaultPersistence = getDefaultPersistence();
+    if(!await isDefined(varId)){
+        varId = getVarID(docId, varId);
+    }
     let varDef = await getVariable(varId);
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -366,7 +370,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
 
 
     if(_parsedCommand.outputVars.length > 1){
-        $$.throwErrorSync("Command", _parsedCommand.command, "has more than one output variable. This is not supported!");
+        $$.throwErrorSync("Command", _parsedCommand.command, "has more than one output variable. This is not supported!" + _parsedCommand.outputVars);
     }
 
     if(_parsedCommand.outputVars[0] !== _varName){

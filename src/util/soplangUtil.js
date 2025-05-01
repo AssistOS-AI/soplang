@@ -498,6 +498,16 @@ function processEmbeddedCodes(input) {
 
 
 function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
+    function smartStringify(obj) {
+        if (typeof obj === "string") {
+            return obj;
+        }
+        if (typeof obj === "object") {
+            return $$.SOPStringify(obj);
+        }
+        return obj.toString();
+    }
+
     let initialisation = "";
     let declaredArgs = parsedCommand.inputVars[0];
     let variables = {};
@@ -511,7 +521,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
             initialisation += `@${variables[argName]} alias ${macroDocId} ${argName}\n`;
         } else {
             variables[argName] = executionPrefix + "_" + argName;
-            initialisation += `@${variables[argName]} := ${args[i]}\n`;
+            initialisation += `@${variables[argName]} := ${smartStringify(args[i])}\n`;
         }
     }
 
@@ -528,18 +538,24 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
     }
 
     for(let varName in variables){
-        //replace each occurrence of var name prefixed by $ @ or ~  but keep the prefix
-        let regex = new RegExp("([@$~])" + varName, "g");
-        macroCode = macroCode.replace(regex, (match, prefix) => {
-            return prefix + variables[varName];
+        //replace each occurrence of var name prefixed by $ @ or ~  or post fixed by "."  but keep the prefix or postfix
+        let regex = new RegExp(`([@\$!~])?${varName}(\\.)?`, "g");
+
+        macroCode = macroCode.replace(regex, (match, prefix, postfix) => {
+            if (prefix || postfix) {
+                return (prefix || "") + variables[varName] + (postfix || "");
+            }
+            return match;
         });
     }
+
     // replace return with @executionPrefix :=
     regex = /return/g;
     macroCode = macroCode.replace(regex, (match) => {
         return `@${executionPrefix} assign`;
     });
 
+    console.debug(">>>>>Macro code:", initialisation + macroCode);
     return initialisation + macroCode;
 }
 

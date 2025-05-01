@@ -1,5 +1,6 @@
 import {createVarsGraph} from "../src/graph/VarsGraph.js";
 import {createRegistry} from "../src/graph/CommandsRegistry.js";
+import '../src/util/debugUtil.js';
 
 const ROLES = {
     OWNER: "owner",
@@ -11,36 +12,6 @@ const ROLES = {
 const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
 
-let errorFromLastBuild = [];
-
-$$.recordBuildError = function (text, err) {
-    console.debug("BUILD ERROR:" , text, err);
-    if (!err) {
-        err = new Error(text);
-    }
-    errorFromLastBuild.push({
-        text: text,
-        err: err
-    });
-}
-
-$$.dumpObject = function (obj) {
-    if(typeof obj !== "object"){
-        return obj;
-    }
-    let res = "{";
-    for (let key in obj) {
-        if (typeof obj[key] === "function") {
-            continue;
-        }
-        res += key + ": " + obj[key] + ", ";
-    }
-    if(!obj.__type){
-        res += `__type: ${obj?.constructor?.name || typeof obj}`;
-    }
-    res += "}";
-    return res;
-}
 
 async function Workspace() {
     let self = {};
@@ -56,17 +27,15 @@ async function Workspace() {
     }
 
     self.buildAll = async function () {
-        errorFromLastBuild = [];
         return await graph.buildAll();
     }
 
     self.buildOnlyForDocument = async function (docId) {
-        errorFromLastBuild = [];
         return await graph.buildOnlyForDocument(docId);
     }
 
     self.getBuildErrors = function () {
-        return errorFromLastBuild;
+        throw new Error("Not implemented");
     }
 
     self.getVarValue = async function (documentId, variableName) {

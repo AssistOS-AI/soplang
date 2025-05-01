@@ -29,14 +29,14 @@ $$.check = async function (docId, varName, expectedValue, prefixText) {
     let graph = workspace.getGraph();
     let value = await graph.getVarValue(docId, varName);
     $$.allOk &&= (value === expectedValue);
-    console.assert(value === expectedValue, `${prefixText} Expected '${expectedValue}' but got '${$$.dumpObject(value)}' for '${varName}'`);
+    console.assert(value === expectedValue, `${prefixText} Expected '${$$.SOPStringify(expectedValue)}' but got '${$$.SOPStringify(value)}' for '${varName}'`);
 }
 
 $$.checkDocVar = $$.check;
 
 $$.checkValue = function (value,  expectedValue) {
     $$.allOk &&= (value === expectedValue);
-    console.assert(value === expectedValue, `Expected '${expectedValue}' but got '${value}'`);
+    console.assert(value === expectedValue, `Expected '${$$.SOPStringify(expectedValue)}' but got '${$$.SOPStringify(value)}'`);
 }
 $$.deepEqual = function(obj1, obj2) {
     function deepEqual(a, b) {

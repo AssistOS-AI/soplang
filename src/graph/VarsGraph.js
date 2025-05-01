@@ -452,6 +452,11 @@ function VarsGraph(commandsRegistry) {
         let currentLayer = 0;
         let currentPositionInLayer = 0;
 
+        let messages = {};
+        this.setErrorInfo = async function (varId, errorMessage) {
+            messages[varId] = messages[varId] +  "\n" + errorMessage;
+        }
+
         this.restartBuild = async function (varId) {
             if(varId !== undefined){
                 graph[varId].layer = 0;
@@ -556,8 +561,6 @@ function VarsGraph(commandsRegistry) {
             if(commandsRegistry.commandExists(command)){
                 return await commandsRegistry.runJSDefCommand(command, ...args);
             }
-            //throw new Error(`Can't yet execute command macros ${command}. This feature will be enabled later`);
-            //console.debug(`Running custom command ${command} with args [${args}]`);
             return await self.runMacro(docId, command, ...args);
         } catch(e){
             console.error(`Error running custom command ${command}`, e);
