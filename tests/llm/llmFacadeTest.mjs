@@ -6,7 +6,7 @@ import {getInstance} from "../../plugins/LLM.js";
 const llm = await getInstance(FakeProviderClass);
 
 let Provider
-let Models = [];
+let registeredModels = [];
 
 async function testProviderRegistration (){
     const TestProvider = {
@@ -17,29 +17,29 @@ async function testProviderRegistration (){
     $$.deepEqual(Provider, provider1);
 }
 async function testProviderModelsRegistration (){
-    Models = [];
+    registeredModels = [];
     const models = [
         {name: "text_1", provider: "FakeProvider"},
         {name: "chat_1", provider: "FakeProvider"}
     ]
 
     for (const model of models) {
-        Models.push(await llm.registerModel(model));
+        registeredModels.push(await llm.registerModel(model));
     }
     const provider1ModelsIds = await llm.getProviderModels("FakeProvider");
 
     const provider1Models = await Promise.all(provider1ModelsIds.map(id => llm.getLlmById(id)))
 
-    $$.deepEqual(provider1Models, [Models[0], Models[1]]);
+    $$.deepEqual(provider1Models, [registeredModels[0], registeredModels[1]]);
 
     const text1TextLlm = await llm.getLlmByName("text_1");
     const chat1ChatLlm = await llm.getLlmByName("chat_1");
 
-    $$.deepEqual(text1TextLlm, Models[0]);
-    $$.deepEqual(chat1ChatLlm, Models[1]);
+    $$.deepEqual(text1TextLlm, registeredModels[0]);
+    $$.deepEqual(chat1ChatLlm, registeredModels[1]);
 
     const llmModels = await llm.getModels();
-    $$.deepEqual(llmModels, [...Models]);
+    $$.deepEqual(llmModels, [...registeredModels]);
 }
 async function testTextResponse(){
     const TEXT_INPUT_PROMPT = "What is the answer to life?"
