@@ -56,6 +56,30 @@ function VarsGraph(commandsRegistry) {
         }
     }
 
+    this.parseCommands = async function (chapterId, paragraphId, commandTextSeparatedByNewLine){
+        let parsedCommands = [];
+        let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
+        //console.debug(">>>>>Defining variables from code:", lines);
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
+            let parsedCommand = null;
+            try {
+                parsedCommand = varUtil.parseCommandLine(line);
+            } catch (e) {
+                console.error("Error parsing command!" + `Line ${line}  will be ignored`);
+                continue;
+            }
+
+            //console.debug("!!!!!!!! Parsed command", parsedCommand);
+            if (parsedCommand.outputVars.length === 0) {
+                parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
+            }
+            parsedCommands.push(parsedCommand);
+        }
+        return parsedCommands;
+    }
+
     this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine) {
         await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
     }
