@@ -22,6 +22,14 @@ async function Documents(){
     }
 
     self.updateDocument = async (documentId, title, category, infoText, commands, comments) => {
+        if(!title || !category || infoText === null || infoText === undefined || commands === null || commands === undefined){
+            throw new Error("All fields are required to be defined");
+        }
+        let doc = await persistence.getDocument(documentId);
+
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands);
+        await graph.analiseTextSection(doc.docId, undefined, undefined, infoText);
+
         return await persistence.updateDocument(documentId, {
             title: title,
             category: category,
@@ -192,23 +200,6 @@ async function Documents(){
         chapters.splice(index, 1);
         chapters.splice(newPosition, 0, chapterId);
         return await persistence.updateDocument(documentId, {chapters});
-    }
-
-    self.updateDocumentInfo = async function (documentId, title, category, infoText, commands) {
-        let doc = await persistence.getDocument(documentId);
-        if(!title || !category || !infoText || !commands){
-            throw new Error("All fields are required to be defined");
-        }
-
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands);
-        await graph.analiseTextSection(doc.docId, undefined, undefined, infoText);
-
-        return await persistence.updateDocument(documentId,{
-            title,
-            category,
-            infoText,
-            commands
-        });
     }
 
     self.getChapterAt = async function (documentId, position) {

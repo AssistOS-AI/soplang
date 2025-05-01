@@ -95,6 +95,9 @@ async function Workspace() {
     self.getCommands = async function () {
         return commandsRegistry.getCommands();
     }
+    self.parseCommands = async function (chapterId, paragraphId, commands) {
+        return await graph.parseCommands(chapterId, paragraphId, commands);
+    }
 
     self.runMacro = async function (docId, scriptName, ...args) {
         return await graph.runMacro(docId, scriptName, ...args);
