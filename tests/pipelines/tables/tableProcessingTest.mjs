@@ -15,10 +15,9 @@ let testCode = `
         return $t1   
     end
     
-    @testEntry macro item
-        @parsedItem parse item
-        @c1 := parsedItem.c1                
-        @res if [ assert $c1 == 'a' ] then true else false
+    @testEntry macro item        
+        @c1 := $item.c1                 
+        @res if [ assert $c1 == "a" ] then true else false
         return $res 
     end
     
@@ -31,11 +30,11 @@ let testCode = `
 
 await workspace.insertCode("doc1", testCode);
 await workspace.buildAll();
-await workspace.runMacro("doc1", "addRow", $$.SOPStringify({c1:'x', c2:2, c3:5}));
-await workspace.runMacro("doc1", "addRow", $$.SOPStringify({c1:'a', c2:3, c3:5}));
+await workspace.runMacro("doc1", "addRow", {c1:'x', c2:2, c3:5});
+await workspace.runMacro("doc1", "addRow", {c1:'a', c2:3, c3:5});
 
-await workspace.runMacro("doc1", "addRow", $$.SOPStringify({c1:'a', c2:3, c3:3}));
-await workspace.runMacro("doc1", "addRow", $$.SOPStringify({c1:'y', c2:1, c3:3}));
+await workspace.runMacro("doc1", "addRow", {c1:'a', c2:3, c3:3});
+await workspace.runMacro("doc1", "addRow", {c1:'y', c2:1, c3:3});
 
 let value = await workspace.runMacro("doc1", "filterT1" );
 //await graph.printGraph();

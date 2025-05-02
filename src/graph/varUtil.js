@@ -5,7 +5,8 @@ import {
     renameSpecialVars,
     makeNameForSpecialVars,
     parseComplexLine,
-    decodePercentCustom} from "../util/soplangUtil.js";
+    decodePercentCustom,
+    sameValue} from "../util/soplangUtil.js";
 
 import {getCache} from "./varsValuesCache.js";
 
@@ -28,6 +29,8 @@ function getVarID(docId, varName){
 }
 
 async function updateVariableWrapper(varId, varContext){
+
+
     customTypesValuesCache.delete(varId);
     varDefCache.delete(varId);
     let persistence = getDefaultPersistence();
@@ -128,44 +131,6 @@ async function getVarValue(varId){
     }
     return varDef.value;
 }
-
-function sameValue(oldValue, newValue){
-    if(oldValue === newValue){
-        return true;
-    }
-    if(typeof oldValue !== typeof newValue){
-        return false;
-    }
-    if(typeof oldValue === "object"){
-        if(Array.isArray(oldValue)){
-            if(oldValue.length !== newValue.length){
-                return false;
-            }
-            for(let i = 0; i < oldValue.length; i++){
-                if(!sameValue(oldValue[i], newValue[i])){
-                    return false;
-                }
-            }
-            return true;
-        } else {
-            //compare the number of keys
-            let oldKeys = Object.keys(oldValue);
-            let newKeys = Object.keys(newValue);
-            if(oldKeys.length !== newKeys.length){
-                return false;
-            }
-
-            for(let key in oldValue){
-                if(!sameValue(oldValue[key], newValue[key])){
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-    return false;
-}
-
 
 
 async function setVarValue(varId, newValue, options){
@@ -456,7 +421,6 @@ export {
     getDocIdFromVarId,
     getLocalVarName,
     isDefined,
-    sameValue,
     getVariable,
     getVarValue,
     getVarClock,
@@ -474,5 +438,5 @@ export {
     updateErrorInfo,
     updateWarningInfo,
     updateDebugInfo,
-
+    sameValue
 }

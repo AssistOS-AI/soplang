@@ -34,25 +34,27 @@ function VarsGraph(commandsRegistry) {
             return;
         }
         let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
+        $$.debug("variable", "============> Parsed code", lines.join("\n"));
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
+            //$$.debug("variable", "============> Defining variable from line", line);
+
             let parsedCommand = null;
             try {
                 parsedCommand = varUtil.parseCommandLine(line);
             } catch (e) {
-                console.error("Error parsing command!" + `Line ${line}  will be ignored`);
+                await $$.recordBuildError("Error parsing command!" + `Line ${line}  will be ignored`);
                 continue;
             }
 
-            //console.debug("!!!!!!!! Parsed command", parsedCommand);
             if (parsedCommand.outputVars.length === 0) {
                 parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
             }
 
             await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
-            //console.debug("<><><><>>>>>Defining variable", parsedCommand.outputVars[0], "with command", parsedCommand);
+            $$.debug("variable","============> Defining variable", parsedCommand.outputVars[0], "with command", JSON.stringify(parsedCommand));
         }
     }
 
@@ -235,7 +237,8 @@ function VarsGraph(commandsRegistry) {
                 }
                 if (!dep) {
                     //call without await on purpose
-                    varUtil.updateErrorInfo(varName, ` Dependency ${depName} not found for variable ${varName}. Inserting a fake dependency!`);
+                    varUtil.updateErrorInfo(varName, ` Dependency '${depName}' not found for variable '${varName}'. Stopping build...`);
+                    throw new Error(`Dependency '${depName}' not found for variable '${varName}'. Stopping build...`);
                 }
                 else if (dep.layer === 0) {
                     determineLayer(depName, dep);
@@ -252,6 +255,7 @@ function VarsGraph(commandsRegistry) {
             // console.debug("Layer of", varName, "is", node.layer);
         }
 
+        $$.debug("topologicalSort","Graph before topological sort", JSON.stringify(graph));
         for (let varName in graph) {
             let node = graph[varName];
             if (node.deps.length === 0) {
@@ -261,10 +265,10 @@ function VarsGraph(commandsRegistry) {
         }
 
         for (let varName in graph) {
-            // console.debug("Determining layer of", varName, "in node", graph[varName]);
+            $$.debug("topologicalSort",`Determining layer of ${varName} in node:`, JSON.stringify(graph[varName]));
             determineLayer(varName, graph[varName]);
         }
-        // console.debug("Graph after topological sort", graph);
+        $$.debug("topologicalSort","Graph after topological sort", graph);
     }
 
 

@@ -30,49 +30,37 @@ $$.dumpObject = function (obj) {
     return res;
 }
 
-const QUOTE_REPLACEMENT = "__SQUOTE__";
-$$.SOPStringify = function (obj) {
-    if (obj === undefined) {
-        return 'undefined';
-    }
-    if(typeof obj === "string") {
-        return `'${obj.replace(/'/g, QUOTE_REPLACEMENT)}'`;
-    }
-    let str = JSON.stringify(obj);
-    str = str.replace(/'/g, QUOTE_REPLACEMENT);
-    return `'${str}'`;
-}
-
-$$.SOPParse = function (str) {
-    if (str === 'undefined') {
-        return undefined;
-    }
-    if (str[0] === "'") {
-        str = str.slice(1, str.length - 1);
-        str = str.replace(new RegExp(QUOTE_REPLACEMENT, "g"), "'");
-        return JSON.parse(str);
-    }
-    str = str.replace(new RegExp(QUOTE_REPLACEMENT, "g"), "'");
-    return JSON.parse(str);
-}
 
 $$.debugEnabled = false;
 
 $$.debugFeatures = {
-    table:false,
-    math:false,
-    assert:true,
-    if:false,
+    special:true,
     macro:false,
+    variable:false,
+    topologicalSort:false,
+    assign:true,
+    table:true,
+    math:false,
+    assert:false,
+    if:false,
     overwrite:false,
     set:false,
     best:false,
     commandExecution:false,
-    special:true,
+    diff:false,
+    sopEncoding:false,
 }
 
 $$.debug = function (scope, ...args) {
     if($$.debugFeatures[scope] || $$.debugEnabled){
-        console.debug(`>>> DEBUG feature ${scope}: ${args.join(" ")}`);
+        let comment = args[0];
+        args = args.slice(1);
+        let argsAsString = args.map(arg => {
+            if (typeof arg === "object") {
+                return JSON.stringify(arg);
+            }
+            return arg;
+        });
+        console.debug(`>>> DEBUG feature ${scope}: ${comment} ${JSON.stringify(argsAsString)}`);
     }
 }

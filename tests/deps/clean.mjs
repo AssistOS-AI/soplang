@@ -19,6 +19,7 @@ await $$.registerPlugin("Agents", "../plugins/Agent.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
 await $$.registerPlugin("Documents", "../plugins/Documents.js");
 
+import {compareObjects} from "../../src/util/soplangUtil.js";
 
 $$.allOk = true;
 $$.check = async function (docId, varName, expectedValue, prefixText) {
@@ -28,15 +29,25 @@ $$.check = async function (docId, varName, expectedValue, prefixText) {
     let workspace = await $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
     let value = await graph.getVarValue(docId, varName);
-    $$.allOk &&= (value === expectedValue);
-    console.assert(value === expectedValue, `${prefixText} Expected '${$$.SOPStringify(expectedValue)}' but got '${$$.SOPStringify(value)}' for '${varName}'`);
+
+    let isOk = (compareObjects(value,  expectedValue))
+    $$.allOk &&= isOk;
+    if(!isOk) {
+        console.error(`${prefixText} Expected '${JSON.stringify(expectedValue)}' but got '${JSON.stringify(value)}' for '${varName}'`);
+    }
 }
 
 $$.checkDocVar = $$.check;
 
-$$.checkValue = function (value,  expectedValue) {
-    $$.allOk &&= (value === expectedValue);
-    console.assert(value === expectedValue, `Expected '${$$.SOPStringify(expectedValue)}' but got '${$$.SOPStringify(value)}'`);
+$$.checkValue = function (value,  expectedValue, prefixText) {
+    if(prefixText === undefined) {
+        prefixText = "";
+    }
+    let isOk = (compareObjects(value,  expectedValue))
+    $$.allOk &&= isOk;
+    if(!isOk) {
+        console.error(`${prefixText} Expected '${JSON.stringify(expectedValue)}' but got '${JSON.stringify(value)}'`);
+    }
 }
 $$.deepEqual = function(obj1, obj2) {
     function deepEqual(a, b) {

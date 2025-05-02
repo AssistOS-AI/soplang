@@ -190,29 +190,7 @@ function findFirstDifference(str1, str2) {
     return str1.length !== str2.length ? minLength : -1;
 }
 
-function compareObjects (obtained, expected) {
-    for(let key in obtained){
-        let obtainedStr;
-        let expectedStr;
-        if(typeof expected[key] === "string"){
-            obtainedStr = obtained[key];
-            expectedStr = expected[key];
-        } else {
-            let obtainedStr = obtained[key].join("");
-            let expectedStr = expected[key].join("");
-        }
 
-        if(obtainedStr !== expectedStr){
-            //let diff = findFirstDifference(obtainedStr, expectedStr);
-            //let str1 = obtainedStr.substring(0, diff+1);
-            //let str2 = expectedStr.substring(0, diff+1);
-            // console.log("Difference at", diff, "obtained", str1, "expected", str2);
-            console.error("Key", key, "is different for expected", expected[key], " but result was ", obtained[key]);
-            return false;
-        }
-    }
-    return true;
-}
 
 let internalClock = 0;
 
@@ -498,17 +476,7 @@ function processEmbeddedCodes(input) {
 
 
 function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
-    function smartStringify(obj) {
-        if (typeof obj === "string") {
-            return obj;
-        }
-        if (typeof obj === "object") {
-            return $$.SOPStringify(obj);
-        }
-        return obj.toString();
-    }
-
-    let initialisation = "";
+   let initialisation = "";
     let declaredArgs = parsedCommand.inputVars[0];
     let variables = {};
     let declaredArgsList = declaredArgs.split(",");
@@ -521,7 +489,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
             initialisation += `@${variables[argName]} alias ${macroDocId} ${argName}\n`;
         } else {
             variables[argName] = executionPrefix + "_" + argName;
-            initialisation += `@${variables[argName]} := ${smartStringify(args[i])}\n`;
+            initialisation += `@${variables[argName]} := ${$$.SOPStringify(args[i])}\n`;
         }
     }
 
@@ -555,9 +523,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
         return `@${executionPrefix} returnMacroValue`;
     });
 
-    if($$.debugEnabled){
-        console.debug(">>>>>Macro code:", initialisation + macroCode);
-    }
+    $$.debug("macro",">>>>>Macro code:", initialisation + macroCode);
     return initialisation + macroCode;
 }
 
@@ -599,10 +565,56 @@ function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine
     return newLines.concat(validLines);
 }
 
+function sameValue(oldValue, newValue){
+    if(oldValue === newValue){
+        return true;
+    }
+    if(typeof oldValue !== typeof newValue){
+        $$.debug("diff", "different types discovered", typeof oldValue, typeof newValue);
+        return false;
+    }
+    if(typeof oldValue === "string" || typeof oldValue === "number" || typeof oldValue === "boolean"){
+        if(oldValue.toString() !== newValue.toString()){
+            $$.debug("diff", "different basic values discovered", oldValue, newValue);
+            return false;
+        }
+    }
+
+    if(typeof oldValue === "object"){
+        if(Array.isArray(oldValue)){
+            if(oldValue.length !== newValue.length){
+                $$.debug("diff", "different lengths discovered", oldValue.length, newValue.length);
+                return false;
+            }
+            for(let i = 0; i < oldValue.length; i++){
+                if(!sameValue(oldValue[i], newValue[i])){
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            //compare the number of keys
+            let oldKeys = Object.keys(oldValue);
+            let newKeys = Object.keys(newValue);
+            if(oldKeys.length !== newKeys.length){
+                $$.debug("diff", "different number of keys discovered", oldKeys.length, newKeys.length);
+                return false;
+            }
+
+            for(let key in oldValue){
+                if(!sameValue(oldValue[key], newValue[key])){
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+let compareObjects = sameValue;
 
 export {
     parseCommandLine,
-    compareObjects,
     parseTextVars,
     parseCommandBlock,
     renameSpecialVars,
@@ -611,5 +623,7 @@ export {
     replaceDotVariables,
     processEmbeddedCodes,
     expandMacro,
-    decodePercentCustom
+    decodePercentCustom,
+    sameValue,
+    compareObjects,
 }

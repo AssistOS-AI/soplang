@@ -1,4 +1,3 @@
-import {markAsReferenceToVariable, sameValue, decodePercentCustom, updateErrorInfo} from "./varUtil.js";
 import {ifCommand} from "../predefined/ifCommand.js";
 
 const customTypeRegistry = await import("./customTypeRegistry.js");
@@ -7,10 +6,16 @@ let varUtil = await import("./varUtil.js");
 function CommandsRegistry( workspace) {
     let commands = {
         assign: async function (inputValues ) {
+            $$.debug("assign", "Assign command input values:", inputValues);
             if(inputValues.length === 0){
                 return "";
             }
-            return inputValues.join(" ");
+            let result =  inputValues.join(" ");
+            $$.debug("assign", "Assign command result:", result);
+            return result;
+        },
+        array: async function (inputValues, parsedCommand, currentDocId) {
+            return inputValues;
         },
         macro: async function (inputValues) {
             // do nothing, all information already exists
@@ -22,7 +27,7 @@ function CommandsRegistry( workspace) {
             //console.debug("Current doc id is", currentDocId);
             return currentDocId;
         },
-        returnMacroValue: async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
+        returnMacroValue: async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) { //meta-programmed during macro expansion
             let targetVar = parsedCommand.inputVars[0];
             let aliasVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
             //console.debug(">>>>>> Return macro value command is making an Alias " + aliasVarId + " to point to " + targetVar + " in document " + currentDocId);
@@ -30,8 +35,6 @@ function CommandsRegistry( workspace) {
             return undefined;
         }
     };
-
-    commands.as = commands.assign;
 
     commands.def = commands.define = async function (inputValues, parsedCommand) {
         let code = "(function(args){" + inputValues[0] + "})";
@@ -124,7 +127,7 @@ function CommandsRegistry( workspace) {
     }
 
 
-    commands.lookup = async function (inputValues, parsedCommand, currentDocId, graph) {
+    commands.lookup = async function (inputValues, parsedCommand, currentDocId) {
         if(inputValues.length < 2){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid lookup command. Expected at least 2 arguments. The output variable ${parsedCommand.outputVars[0]} will remain undefined`);
             return undefined;
@@ -150,6 +153,17 @@ function CommandsRegistry( workspace) {
             await varUtil.updateErrorInfo(outputVarId, `Invalid command name. Expected at most one dot in command name`);
             return;
         }
+        //decode the input values in cased that got SOPStringified
+        let decodedInputValues = [];
+        for(let i = 0; i < inputValues.length; i++){
+            let value = inputValues[i];
+            if(typeof value === "string"){
+                value = await $$.SOPParse(value);
+            }
+            decodedInputValues.push(value);
+        }
+        inputValues = decodedInputValues;
+
         if(splitCommand.length === 2){
             let methodCommand = splitCommand[1].trim();
             //remove ? in from of th method name if it exists
@@ -170,10 +184,11 @@ function CommandsRegistry( workspace) {
                 return;
             }
 
+
             const commandFunction = value[methodCommand];
             if(!commandFunction){
-                $$.debug("special",`Method command not found: '${methodCommand}' in Object of type ${typeof value} and Value "${$$.SOPStringify(value)}"`);
-                await varUtil.updateErrorInfo(outputVarId, `Method command not found: '${methodCommand}' in Object "${$$.SOPStringify(value)}" Defaulting to undefined`);
+                $$.debug("special",`Method command not found: '${methodCommand}' in Object of type ${typeof value} and Value "${JSON.stringify(value)}"`);
+                await varUtil.updateErrorInfo(outputVarId, `Method command not found: '${methodCommand}' in Object "${JSON.stringify(value)}" Defaulting to undefined`);
                 return;
             }
             if(isConditionalMemberCommand){
@@ -185,9 +200,12 @@ function CommandsRegistry( workspace) {
                 }
             }
 
-            let result = await commandFunction.call(value, inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
+            let result = await commandFunction.call(value, decodedInputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
+            if(result === "[object Object]"){
+                throw new Error(`Evil object value from command ${commandName}`);
+            }
             await workspace.setVarValue(currentDocId, splitCommand[0], value);
             return result; // the result of the command will be immediately  assigned to the output variable
         }
@@ -201,7 +219,11 @@ function CommandsRegistry( workspace) {
             return;
         }
        // console.debug(">>>>>>> Running command", commandName);
-        return await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
+        let res = await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
+        if(res === "[object Object]"){
+            throw new Error(`Evil object value from command ${commandName}`);
+        }
+        return res;
     }
 
     this.registerCommand = function (commandName, commandFunction) {

@@ -1,5 +1,6 @@
-//const varUtil = await import("./varUtil.js");
+
 const {} = import("./varUtil.js");
+const {} = import("./SOPEncoding.js")
 const customTypes = {};
 
 import {getCache} from "./varsValuesCache.js";
@@ -36,6 +37,19 @@ const restoreInstance = async (currentDocId, typeName, outputVarId, JSONSerialis
     return instance;
 }
 
+$$.restoreCustomTypeInstance = async function(typeName, JSONSerialisation){
+    if(!JSONSerialisation){
+        return undefined;
+    }
+    let instance = new customTypes[typeName]("unknown", "unknown");
+    try{
+        await instance.restore(JSONSerialisation);
+    }
+    catch(e){
+        $$.recordBuildError(`Exception restoring instance of type ${typeName} : ${e.message}`);
+    }
+};
+
 const newInstance = async (currentDocId,  typeName, outputVarID, ...args) => {
     if (typeof customTypes[typeName] === "undefined") {
         throw Error(`Type ${typeName} not registered`);
@@ -68,6 +82,9 @@ const getTypes = () => {
 }
 
 $$.registerCustomType = registerType;
+
+
+
 
 export {
     registerType,

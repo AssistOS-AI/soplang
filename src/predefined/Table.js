@@ -113,7 +113,7 @@ function Table(docId, tableVarId) {
         let testRowCommand = `${currentDocId}_${inputValues[0]}`;
         for(let i = 0; i < self.data.length; i++){
             let row = self.data[i];
-            $$.debug("special", "Type of row", typeof row, "row", $$.SOPStringify(row));
+            $$.debug("special", "Type of row", typeof row, "row", JSON.stringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
             console.debug("!!!!! Extract and delete command", testRowCommand, "result", result);
             if(result && result !== "false"){

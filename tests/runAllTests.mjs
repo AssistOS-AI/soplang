@@ -4,6 +4,7 @@ let failedTests = [];
 let missingPaths = [];
 
 const tests = [
+    './util/SOPStringifyTest.mjs',
     './pipelines/basic/jsdefTest.mjs',
     './pipelines/basic/varChangeTest.mjs',
     './pipelines/basic/depsGraphHWTest.mjs',
