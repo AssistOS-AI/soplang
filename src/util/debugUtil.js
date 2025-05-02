@@ -35,6 +35,9 @@ $$.SOPStringify = function (obj) {
     if (obj === undefined) {
         return 'undefined';
     }
+    if(typeof obj === "string") {
+        return `'${obj.replace(/'/g, QUOTE_REPLACEMENT)}'`;
+    }
     let str = JSON.stringify(obj);
     str = str.replace(/'/g, QUOTE_REPLACEMENT);
     return `'${str}'`;
@@ -50,5 +53,26 @@ $$.SOPParse = function (str) {
         return JSON.parse(str);
     }
     str = str.replace(new RegExp(QUOTE_REPLACEMENT, "g"), "'");
-    return str;
+    return JSON.parse(str);
+}
+
+$$.debugEnabled = false;
+
+$$.debugFeatures = {
+    table:false,
+    math:false,
+    assert:true,
+    if:false,
+    macro:false,
+    overwrite:false,
+    set:false,
+    best:false,
+    commandExecution:false,
+    special:true,
+}
+
+$$.debug = function (scope, ...args) {
+    if($$.debugFeatures[scope] || $$.debugEnabled){
+        console.debug(`>>> DEBUG feature ${scope}: ${args.join(" ")}`);
+    }
 }

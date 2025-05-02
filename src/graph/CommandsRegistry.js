@@ -21,6 +21,13 @@ function CommandsRegistry( workspace) {
         currentDocId: async function (inputValues, parsedCommand, currentDocId) {
             //console.debug("Current doc id is", currentDocId);
             return currentDocId;
+        },
+        returnMacroValue: async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
+            let targetVar = parsedCommand.inputVars[0];
+            let aliasVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
+            //console.debug(">>>>>> Return macro value command is making an Alias " + aliasVarId + " to point to " + targetVar + " in document " + currentDocId);
+            await varUtil.markAsReferenceToVariable(aliasVarId, targetVar, currentDocId);
+            return undefined;
         }
     };
 
@@ -109,8 +116,8 @@ function CommandsRegistry( workspace) {
                 if(instance.reinit !== undefined){
                     await instance.reinit(...args);
                 }
-                return instance;
              }
+            return instance;
         }
 
         return customTypeRegistry.newInstance(currentDocId, typeName, outputVarId, ...args);
@@ -154,15 +161,19 @@ function CommandsRegistry( workspace) {
             let varName = splitCommand[0].trim();
             let value = await workspace.getVarValue(currentDocId, varName);
             if(value === undefined){
+                let fullVarName = varUtil.getVarID(currentDocId, varName);
+                let varDef = await varUtil.getVariable(fullVarName);
+                $$.debug("commandExecution",">>>>>> Debug info for variable", varName, "is", varDef);
                 if(!isConditionalMemberCommand) {
-                    await varUtil.updateErrorInfo(outputVarId, `Command  '${methodCommand}'  not executed because object variable "${varName} " is undefined. Defaulting to undefined`);
+                    await varUtil.updateErrorInfo(outputVarId, `Command  '${methodCommand}'  not executed because object variable "${fullVarName} " is undefined. Defaulting to undefined`);
                 }
                 return;
             }
 
             const commandFunction = value[methodCommand];
             if(!commandFunction){
-                await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Method command not found: '${methodCommand}' in Object "${$$.SOPStringify(value)}" Defaulting to undefined`);
+                $$.debug("special",`Method command not found: '${methodCommand}' in Object of type ${typeof value} and Value "${$$.SOPStringify(value)}"`);
+                await varUtil.updateErrorInfo(outputVarId, `Method command not found: '${methodCommand}' in Object "${$$.SOPStringify(value)}" Defaulting to undefined`);
                 return;
             }
             if(isConditionalMemberCommand){

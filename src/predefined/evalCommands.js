@@ -44,7 +44,8 @@ export async function assert(inputValues, parsedCommand, currentDocId, graph) {
         code += ` ${element} `;
     }
     try {
-        //console.debug("Executing assert code", code);
+        let res = eval(code);
+        $$.debug("assert", "Evaluating Code", code, "result", res);
         return eval(code);
     } catch (e) {
         await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Error executing assert code: ${code}. Error: ${e.message}`);

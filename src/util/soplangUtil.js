@@ -552,10 +552,12 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
     // replace return with @executionPrefix :=
     regex = /return/g;
     macroCode = macroCode.replace(regex, (match) => {
-        return `@${executionPrefix} assign`;
+        return `@${executionPrefix} returnMacroValue`;
     });
 
-    console.debug(">>>>>Macro code:", initialisation + macroCode);
+    if($$.debugEnabled){
+        console.debug(">>>>>Macro code:", initialisation + macroCode);
+    }
     return initialisation + macroCode;
 }
 

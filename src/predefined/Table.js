@@ -19,20 +19,24 @@ function RowSchemaUtil(columnDescriptionArray) {
             }
             computedColumns[columnName] = parsedDescription[1].split(" ").map( item =>  item.trim());
         } else {
-            valueColumns[columnDescription] = i;
+            valueColumns[columnDescription] = i+1;
         }
     }
 
     this.computeValues = async function (jsonObject, docId, graph){
         let res = {};
+
         for(let key in jsonObject){
             if(valueColumns[key] !== undefined){
                 res[key] = jsonObject[key];
             }
         }
 
-        let persistence = await $$.loadPlugin("DefaultPersistence");
-        res.truid = TABLE_ROW_UID+ "_" + await persistence.getNextNumber(TABLE_ROW_UID)
+        if(!res.truid){
+            let persistence = await $$.loadPlugin("DefaultPersistence");
+            res.truid = TABLE_ROW_UID + "_" + await persistence.getNextNumber(TABLE_ROW_UID);
+        }
+
         for(let key in computedColumns){
             let expression = computedColumns[key];
             let command = expression[0];
@@ -46,9 +50,8 @@ function RowSchemaUtil(columnDescriptionArray) {
                 }
             }
             res[key] = await graph.runCustomCommand(docId, command.command, ...args);
-            console.debug(">>>>>> computed value for column", key, "is", res[key]);
         }
-
+        return res;
     }
 }
 function Table(docId, tableVarId) {
@@ -71,43 +74,60 @@ function Table(docId, tableVarId) {
         if (JSONSerialisation) {
             self.columnDescription = JSONSerialisation.columnDescription ;
             self.data = JSONSerialisation.data || [];
-            schemaUtil = new RowSchemaUtil( self.columnDescription);
+            schemaUtil = new RowSchemaUtil(self.columnDescription);
+        } else {
+            throw new Error("Invalid JSONSerialisation for Table");
         }
     }
 
     // Append rows to the table - similar to tableUtil.js
-    self.append = async function (inputValues, parsedCommand, currentDocId, workspace, graph, buildInstance) {
+    self.append = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let validJson;
         try {
             let pseudoJson = inputValues[0];
-            validJson = $$.SOPParse(pseudoJson);
+            if (typeof pseudoJson === "string") {
+                validJson = $$.SOPParse(pseudoJson);
+            } else {
+                validJson = pseudoJson;
+            }
         } catch (error) {
-            await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
             console.error("Error parsing JSON self.data:", error);
+            await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
             return;
         }
         self.data.push(await schemaUtil.computeValues(validJson));
         await varUtil.setVarValue(tableVarId, self);
-        await varUtil.markAsReferenceToVariable(parsedCommand.outputVars[0], tableVarId, currentDocId);
+        let resultedAliasTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
+        await varUtil.markAsReferenceToVariable(resultedAliasTableId, tableVarId, currentDocId);
+        return self;
     }
 
-    self.extractAndDelete = async function (inputValues, parsedCommand, currentDocId, workspace, graph, buildInstance) {
-        let newTable = new Table(currentDocId, parsedCommand.outputVars[0]);
-        let testRowCommand = inputValues[0];
+    self.internalAppend = async function (row) {
+        self.data.push(row);
+    }
+
+    self.exwipe = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
+        let newTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
+        let newTable = new Table(currentDocId, newTableId);
+        await newTable.init(...self.columnDescription);
+        let testRowCommand = `${currentDocId}_${inputValues[0]}`;
         for(let i = 0; i < self.data.length; i++){
             let row = self.data[i];
+            $$.debug("special", "Type of row", typeof row, "row", $$.SOPStringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
-            if(result){
-                await newTable.append(row);
+            console.debug("!!!!! Extract and delete command", testRowCommand, "result", result);
+            if(result && result !== "false"){
+                await newTable.internalAppend(row);
             }
         }
         self.data = [];
-        await varUtil.setVarValue(parsedCommand.outputVars[0], newTable);
+        console.debug(">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
+        await varUtil.setVarValue(newTableId, newTable);
         await varUtil.setVarValue(tableVarId, self);
         return newTable;
     }
 
-    self.upsert = async function (inputValues, parsedCommand, currentDocId, workspace, graph, buildInstance) {
+    self.upsert = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let inputTable = inputValues[0];
         let truidIndex = {};
         for(let i = 0; i < self.data.length; i++){
@@ -130,6 +150,7 @@ function Table(docId, tableVarId) {
         }
         await varUtil.setVarValue(tableVarId, self);
         await varUtil.markAsReferenceToVariable(parsedCommand.outputVars[0], tableVarId, currentDocId);
+        return self;
     }
 }
 

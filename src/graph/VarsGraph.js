@@ -117,6 +117,9 @@ function VarsGraph(commandsRegistry) {
 
     this.runMacro = async function (docId, macroName, ...args) {
         let scriptVar = await varUtil.getVariable(varUtil.getVarID(docId,macroName));
+        while(scriptVar && scriptVar.referencedVariable){
+            scriptVar = await varUtil.getVariable(scriptVar.referencedVariable);
+        }
         if(!scriptVar){
             await $$.throwError(`Variable '${macroName}' not found`);
         }
@@ -136,10 +139,9 @@ function VarsGraph(commandsRegistry) {
             commands: macroCode
         });
 
-
         await defineVarsFromCode(inDocId, "_", "_", macroCode);
         await self.buildOnlyForDocument(inDocId);
-        return await self.getVarValue(inDocId, inDocId);
+        return self.getVarValue(inDocId, inDocId);
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
@@ -161,7 +163,7 @@ function VarsGraph(commandsRegistry) {
 
     this.getVarValue = async function (docId, varName) {
         let varId;
-        if (varName === undefined || varName === null || varName === "") {
+        if (varName === undefined || varName === null || varName === "" || docId.includes(".")) {
             varId = docId;
         } else {
             varId = varUtil.getVarID(docId, varName);
@@ -268,6 +270,10 @@ function VarsGraph(commandsRegistry) {
 
     async function resolveValue(varId) {
         let varContext = await varUtil.getVariable(varId);
+        if(!varContext){
+            $$.debug("commandExecution", "Variable not found", varId);
+            return undefined;
+        }
 
         if(varContext.referencedVariable){
             return  await resolveValue(varContext.referencedVariable);
@@ -463,6 +469,11 @@ function VarsGraph(commandsRegistry) {
                 // nothing to save, the build will be restarted anyway
                 return ;
             }
+            variable = await varUtil.getVariable(varId);
+            if(variable.referencedVariable){
+                return value;
+            }
+
             await varUtil.setVarValue(varId, value, {duration});
             return value;
         }
@@ -477,8 +488,9 @@ function VarsGraph(commandsRegistry) {
         let currentPositionInLayer = 0;
 
         let messages = {};
+
         this.setErrorInfo = async function (varId, errorMessage) {
-            messages[varId] = messages[varId] +  "\n" + errorMessage;
+            messages[varId] =  errorMessage;
         }
 
         this.restartBuild = async function (varId) {
@@ -535,17 +547,21 @@ function VarsGraph(commandsRegistry) {
                 layers = getLayers();
             }
 
-            if(currentPositionInLayer >= layers[currentLayer].length){
-                currentLayer++;
-                currentPositionInLayer = 0;
-            }
-            if(currentLayer >= layers.length){
-                return undefined;
-            }
-            //console.debug("!!!!! Building variable in layer", currentLayer, "position", currentPositionInLayer, "with value", layers[currentLayer][currentPositionInLayer]);
-            let varId = layers[currentLayer][currentPositionInLayer];
-            currentPositionInLayer++;
-            return varId;
+            do {
+                if(currentPositionInLayer >= layers[currentLayer].length){
+                    currentLayer++;
+                    currentPositionInLayer = 0;
+                }
+                if(currentLayer >= layers.length){
+                    return undefined;
+                }
+                //console.debug("!!!!! Building variable in layer", currentLayer, "position", currentPositionInLayer, "with varId", layers[currentLayer][currentPositionInLayer]);
+                let varId = layers[currentLayer][currentPositionInLayer];
+                currentPositionInLayer++;
+                if(varId !== undefined){   //maybe the layer
+                    return varId;
+                }
+            } while(true)
         }
 
          this.gotRestarted = function () {
@@ -566,7 +582,6 @@ function VarsGraph(commandsRegistry) {
                 }
                 try{
                     let varValue = await computeValue(nextVarId, this);
-                    //console.debug(">>>>>>>>> Computed value for variable", nextVarId, "is", varValue);
                 } catch(error){
                     console.error("Error during build", error);
                     $$.recordBuildError("Error during build", error);
@@ -638,44 +653,28 @@ function VarsGraph(commandsRegistry) {
             let deps = await varUtil.getDependencies(varId);
             deps = !deps ? "" : deps.join(",");
 
-            let valueAsString = varInfo.value && varInfo.value.tableHeader ? generateCSV(varInfo.value.tableHeader, varInfo.value.tableData) : varInfo.value;
             let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Dependencies: [${deps}]`;
 
             if(varInfo.referencedVariable){
                 info += `, Referenced variable: ${varInfo.referencedVariable}`;
             }
-            async function dumpObjOrValue(value) {
-                function dumpObjectSingleLine(obj) {
-                    let res = "{";
-                    for (let key in obj) {
-                        if (typeof obj[key] === "function") {
-                        continue;
-                        }
-                        res += `'${key}' : '${obj[key]}', `;
-                    }
-                    return res + "}";
-                }
-
-                if (typeof value === "object") {
-                    let typeName = value.constructor.name;
-                    let valueString = typeof value === "object" ? dumpObjectSingleLine(value) : value.toString();
-                    return `Object Type: '${typeName}', Serialisation: '${valueString}'`;
-                }
-                if(value === undefined || value === null){
-                    return "NULL";
-                }
-                return value.toString();
+            let printValue = "undefined";
+            if(varInfo.referencedVariable){
+                printValue = "alias to " + varInfo.referencedVariable;
+            } else {
+                printValue = await varUtil.getVarValue(varId)
             }
+
             allVars.push({
                 varId : varInfo.varId,
-                value: await dumpObjOrValue(valueAsString),
+                value:  printValue,
                 info: info
             });
         }
 
         let dump = "\n";
         for(let v in allVars){
-            dump += `\tVariable '${allVars[v].varId}':\n \t\t${allVars[v].value}\n \t\tInfo: ${allVars[v].info}\n`;
+            dump += `\tVariable '${allVars[v].varId}':\n \t\t${$$.SOPStringify(allVars[v].value)}\n \t\tInfo: ${allVars[v].info}\n`;
         }
         return dump;
         // return dump.replace(/},/g, '},\n\t');

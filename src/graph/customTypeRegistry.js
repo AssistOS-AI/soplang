@@ -2,6 +2,9 @@
 const {} = import("./varUtil.js");
 const customTypes = {};
 
+import {getCache} from "./varsValuesCache.js";
+let customTypesValuesCache = getCache("customTypesValuesCache");
+
 const registerType = (name, typeDefinition) => {
     if (typeof customTypes[name] !== "undefined") {
         throw Error(`Type ${name} already registered`);
@@ -11,6 +14,10 @@ const registerType = (name, typeDefinition) => {
 }
 
 const restoreInstance = async (currentDocId, typeName, outputVarId, JSONSerialisation) => {
+    if(customTypesValuesCache.has(outputVarId)){
+        return customTypesValuesCache.get(outputVarId);
+    }
+
     if (typeof customTypes[typeName] === "undefined") {
         throw Error(`Type ${typeName} not registered`);
     }
@@ -18,11 +25,12 @@ const restoreInstance = async (currentDocId, typeName, outputVarId, JSONSerialis
         return undefined;
     }
     let instance = new customTypes[typeName](currentDocId, outputVarId);
+             customTypesValuesCache.set(outputVarId, instance);
     try{
         await instance.restore(JSONSerialisation);
     }
     catch(e){
-        return undefined;
+        throw Error(`Exception restoring instance of type ${typeName} with output variable ${outputVarId}: ${e.message}`);
     }
     instance.__type = typeName;
     return instance;

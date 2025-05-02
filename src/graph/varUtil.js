@@ -7,14 +7,19 @@ import {
     parseComplexLine,
     decodePercentCustom} from "../util/soplangUtil.js";
 
+import {getCache} from "./varsValuesCache.js";
+
+let varDefCache = getCache("varDefCache");
+let customTypesValuesCache = getCache("customTypesValuesCache");
+
 let customTypeRegistry = await import("./customTypeRegistry.js");
 
-let defaultPersistence;
+let defaultPersistenceSingleton;
 function getDefaultPersistence(){
-    if(!defaultPersistence){
-        defaultPersistence = $$.loadPlugin("DefaultPersistence");
+    if(!defaultPersistenceSingleton){
+        defaultPersistenceSingleton = $$.loadPlugin("DefaultPersistence");
     }
-    return defaultPersistence;
+    return defaultPersistenceSingleton;
 }
 
 
@@ -22,6 +27,42 @@ function getVarID(docId, varName){
     return docId + "." + varName;
 }
 
+async function updateVariableWrapper(varId, varContext){
+    customTypesValuesCache.delete(varId);
+    varDefCache.delete(varId);
+    let persistence = getDefaultPersistence();
+    return await persistence.updateVariable(varId, varContext);
+}
+
+async function getVariableWrapper(varId){
+    if(varDefCache.has(varId)){
+        return varDefCache.get(varId);
+    }
+    let persistence = getDefaultPersistence();
+    let res = await persistence.getVariable(varId);
+    varDefCache.set(varId, res);
+    return res;
+}
+
+async function hasVariableWrapper(varId){
+    if(varDefCache.has(varId)){
+        return true;
+    }
+    let persistence = getDefaultPersistence();
+    return await persistence.hasVariable(varId);
+}
+
+async function createVariableWrapper(obj){
+    let persistence = getDefaultPersistence();
+    return await persistence.createVariable(obj);
+}
+
+async function setVarIdForVariableWrapper(id, varId){
+    customTypesValuesCache.delete(varId);
+    varDefCache.delete(varId);
+    let persistence = getDefaultPersistence();
+    return await persistence.setVarIdForVariable(id, varId);
+}
 
 function getDocIdFromVarId(varId){
     let splitVarId = varId.split(".");
@@ -52,15 +93,14 @@ function getLocalVarName(docId, fullVarName){
 }
 
 async function isDefined(varId){
-    let persistence = await getDefaultPersistence();
-    return await persistence.hasVariable(varId);
+    return await hasVariableWrapper(varId);
 }
 
 async function getVariable(varId){
     try{
-        let persistence = await getDefaultPersistence();
-        return await persistence.getVariable(varId);
+        return  await getVariableWrapper(varId);
     } catch(err){
+        $$.recordBuildError("Error getting variable", varId, err);
         return undefined;
     }
 }
@@ -78,9 +118,11 @@ async function getVarValue(varId){
 
     //console.debug(">>>Getting value of variable", varId, "with command", varDef.parsedCommand.command, "and is custom type", varDef.__type);
     if(varDef.__type){
-        let instance = customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varId, varDef.value);
-        if(!instance){
-            await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`);
+        let instance;
+        try{
+            instance = await customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varId, varDef.value);
+        } catch(err){
+            await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
         }
         return instance;
     }
@@ -160,7 +202,6 @@ async function setVarValue(varId, newValue, options){
 
     let varDef = await getVariable(varId);
     let varValue = await getVarValue(varId);
-    let defaultPersistence = getDefaultPersistence();
 
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -172,13 +213,15 @@ async function setVarValue(varId, newValue, options){
     }
     if(varDef.parsedCommand.command === "chainAlias"){
         let targetVarId = varDef.parsedCommand.inputVars[2];
-        let obj = await defaultPersistence.getVariable(targetVarId);
+        console.debug(">>>Updating chainAlias:", targetVarId);
+        let obj = await getVariableWrapper(targetVarId);
+
         if(!obj){
             await $$.throwError(`Variable ${targetVarId} not found!`);
         }
         obj[varDef.parsedCommand.inputVars[1]] = newValue;
-        await defaultPersistence.updateVariable(targetVarId, {value: serialiseValue(obj), clock: defaultPersistence.getLogicalTimestamp()});
-        return await defaultPersistence.updateVariable(varDef.varId, {value: undefined, clock: defaultPersistence.getLogicalTimestamp()});
+        await updateVariableWrapper(targetVarId, {value: serialiseValue(obj), clock: defaultPersistenceSingleton.getLogicalTimestamp()});
+        return await updateVariableWrapper(varDef.varId, {value: undefined, clock: defaultPersistenceSingleton.getLogicalTimestamp()});
     }
 
     let serialisedNewValue = serialiseValue(newValue);
@@ -188,7 +231,7 @@ async function setVarValue(varId, newValue, options){
     }
 
 
-    let varContext = {value: serialisedNewValue, clock: defaultPersistence.getLogicalTimestamp()};
+    let varContext = {value: serialisedNewValue, clock: defaultPersistenceSingleton.getLogicalTimestamp()};
     varContext.updateTime = Date.now();
     if(options){
         if(options.duration){
@@ -218,7 +261,7 @@ async function setVarValue(varId, newValue, options){
     if(newValue !== undefined && newValue.__type !== undefined){
         varContext.__type = newValue.__type;
     }
-    await defaultPersistence.updateVariable(varId, varContext);
+    await updateVariableWrapper(varId, varContext);
     return true;
 }
 
@@ -226,15 +269,15 @@ async function updateErrorInfo(varId, errorMessage){
     console.debug("ERROR: Updating error info for variable: ", varId, "with message", errorMessage);
     try{
         let varContext = { updateTime : Date.now(), errorInfo : errorMessage, value: undefined};
-        await defaultPersistence.updateVariable(varId, varContext);
+        await updateVariableWrapper(varId, varContext);
     }catch(err){
        $$.recordBuildError("Error updating error info: " + varId + errorMessage, err);
     }
 }
 async function updateWarningInfo(varId, warningMessage){
     try{
-        let varContext = {  warningInfo : warningMessage};
-        await defaultPersistence.updateVariable(varId, varContext);
+        let varContext = {  warningInfo : warningMessage, updateTime : Date.now()};
+        await updateVariableWrapper(varId, varContext);
     }catch(err){
         $$.recordBuildError("Error updating warning info " + varId + warningMessage, err);
     }
@@ -242,8 +285,8 @@ async function updateWarningInfo(varId, warningMessage){
 
 async function updateDebugInfo(varId, debugMessage){
     try{
-        let varContext = {  debugInfo : debugMessage};
-        await defaultPersistence.updateVariable(varId, varContext);
+        let varContext = {  debugInfo : debugMessage, updateTime : Date.now()};
+        await updateVariableWrapper(varId, varContext);
     }catch(err){
         $$.recordBuildError("Error updating debug info " + varId + errorMessage, err);
     }
@@ -291,10 +334,13 @@ async function getDependencies(varId){
 }
 
 async function markAsReferenceToVariable(varId, referencedVarId, docId){
-    let defaultPersistence = getDefaultPersistence();
-    if(!await isDefined(varId)){
+    if(!varId.includes(".") && !await isDefined(varId)){
         varId = getVarID(docId, varId);
     }
+    if(!referencedVarId.includes(".")){
+        referencedVarId = getVarID(docId, referencedVarId);
+    }
+
     let varDef = await getVariable(varId);
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -307,11 +353,10 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId){
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
     //console.debug(">>>>>>>>> New alias made as ", varId, "to", referencedVarId);
-    await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
+    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
 }
 
 async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, buildInstance){
-    let defaultPersistence = getDefaultPersistence();
     let varDef = await getVariable(varId);
     if(!varDef){
         await $$.throwError("Variable not found", varId);
@@ -322,7 +367,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, b
             return;
         }
     }
-    await defaultPersistence.updateVariable(varId, {referencedVariable: referencedVarId});
+    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
     await buildInstance.restartBuild(varId);
 }
 
@@ -334,11 +379,10 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     }
     let existingVarContext = {};
     let varId = getVarID(_docId, _varName);
-    let defaultPersistence = getDefaultPersistence();
 
-    if(!await defaultPersistence.hasVariable(varId)){
-        let obj = await defaultPersistence.createVariable({varId: varId});
-        await defaultPersistence.setVarIdForVariable(obj.id, varId);
+    if(!await hasVariableWrapper(varId)){
+        let obj = await createVariableWrapper({varId: varId});
+        await setVarIdForVariableWrapper(obj.id, varId);
     }
 
     function diffObjects(existing, updated){
@@ -364,6 +408,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     if(diffObjects(existingVarContext, varContext)){
         //console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
         varContext.clock = undefined;
+        varContext.updateTime = Date.now();
     } else {
         return false; //nothing changed
     }
@@ -388,7 +433,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
         }
     }
 
-    await defaultPersistence.updateVariable(varContext.varId, varContext);
+    await updateVariableWrapper(varContext.varId, varContext);
     return true; //changed
 }
 

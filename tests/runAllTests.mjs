@@ -7,7 +7,6 @@ const tests = [
     './pipelines/basic/jsdefTest.mjs',
     './pipelines/basic/varChangeTest.mjs',
     './pipelines/basic/depsGraphHWTest.mjs',
-    './pipelines/tables/tablesTest.mjs',
     './util/commandLineParserTest.js',
     './pipelines/basic/aliasTest.mjs',
     './pipelines/documents/mainSmokeTest.mjs',
@@ -32,6 +31,8 @@ const tests = [
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
     './llm/llmFacadeTest.mjs',
+    './pipelines/tables/tablesTest.mjs',
+    './pipelines/tables/tableProcessingTest.mjs',
 ];
 
 import fs from 'node:fs/promises';
