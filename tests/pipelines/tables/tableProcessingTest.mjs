@@ -16,7 +16,8 @@ let testCode = `
     end
     
     @testEntry macro item
-        @c1 item.c1                
+        @parsedItem parse item
+        @c1 := parsedItem.c1                
         @res if [ assert $c1 == 'a' ] then true else false
         return $res 
     end
