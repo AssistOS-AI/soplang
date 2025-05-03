@@ -6,16 +6,29 @@ let varUtil = await import("./varUtil.js");
 function CommandsRegistry( workspace) {
     let commands = {
         assign: async function (inputValues ) {
+            let result;
             $$.debug("assign", "Assign command input values:", inputValues);
             if(inputValues.length === 0){
                 return "";
             }
-            let result =  inputValues.join(" ");
+            let hasInputsObjects = false;
+            for(let i = 0; i < inputValues.length; i++){
+                if(typeof inputValues[i] === "object"){
+                    hasInputsObjects = true;
+                    break;
+                }
+            }
+            if(hasInputsObjects){
+                if(inputValues.length === 1){
+                    result = inputValues[0];
+                } else {
+                    result =  inputValues.map( item => JSON.stringify(item)) .join(" ");
+                }
+            } else {
+                result = inputValues.join(" ");
+            }
             $$.debug("assign", "Assign command result:", result);
             return result;
-        },
-        array: async function (inputValues, parsedCommand, currentDocId) {
-            return inputValues;
         },
         macro: async function (inputValues) {
             // do nothing, all information already exists
@@ -47,7 +60,7 @@ function CommandsRegistry( workspace) {
     commands.jsdef = async function (inputValues, parsedCommand, originalCurrentDocId, graph) {
         let declaredParams = inputValues[0].split(",");
         let parameters = [];
-        let functionCode = varUtil.decodePercentCustom(parsedCommand.inputVars[1]);
+        let functionCode = varUtil.decodeSOPCode(parsedCommand.inputVars[1]);
         let importedVariables = [];
         //in parsedCommand.inputVars[0] if a variable starts with a ~ it means that it is a variable that will be imported otherwise is a parameter
         for(let i = 0; i < declaredParams.length; i++){
@@ -60,7 +73,7 @@ function CommandsRegistry( workspace) {
         }
 
         let code = `(async function(${parameters.join(",")}){${functionCode}})`;
-        //console.debug(`>>> Defining function:${parsedCommand.outputVars[0]}`, code);
+        $$.debug("jsdef", `>>> Defining function:${parsedCommand.outputVars[0]}`, code);
         let func = eval(code);
         commands[parsedCommand.outputVars[0]] = async function(inputValues, parsedCommand) {
             let context = {
@@ -221,7 +234,7 @@ function CommandsRegistry( workspace) {
        // console.debug(">>>>>>> Running command", commandName);
         let res = await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
         if(res === "[object Object]"){
-            throw new Error(`Evil object value from command ${commandName}`);
+            $$.recordBuildError(`Evil value [object Object] obtained from command ${commandName}. Most probably it is a bug in the code`);
         }
         return res;
     }

@@ -4,7 +4,7 @@ import {
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine,
+    breakComplexLineInSimpleLines,
     decodeSOPCode,
     sameValue} from "../util/soplangUtil.js";
 
@@ -178,7 +178,7 @@ async function setVarValue(varId, newValue, options){
     }
     if(varDef.parsedCommand.command === "chainAlias"){
         let targetVarId = varDef.parsedCommand.inputVars[2];
-        console.debug(">>>Updating chainAlias:", targetVarId);
+        $$.debug("chainAlias",">>>Updating chainAlias:", targetVarId);
         let obj = await getVariableWrapper(targetVarId);
 
         if(!obj){
@@ -430,7 +430,7 @@ export {
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine,
+    breakComplexLineInSimpleLines,
     parseCommandLine,
     parseTextVars,
     markAsReferenceToVariable,         // does not allow changing the referenced variable. It is used during script expansion and the referenced variable should not change

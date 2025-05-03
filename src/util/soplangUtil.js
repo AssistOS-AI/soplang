@@ -282,14 +282,15 @@ function replaceDotVariables(inputString, detectedVars = {}) {
     };
 }
 
-function parseComplexLine(input, makeVarName) {
+function breakComplexLineInSimpleLines(input, makeVarName) {
     let transformedText = input;
     const result = {};
-    const regex = /\[(.*?)\]/g;
+    const regex = /\[(.*?)]/g;
     let match;
     let matches = [];
 
     while ((match = regex.exec(input)) !== null) {
+        //console.debug("Found match:", match);
         matches.push({
             fullMatch: match[0],
             innerContent: match[1].trim(),
@@ -318,14 +319,14 @@ function parseComplexLine(input, makeVarName) {
  * @param {string} str The input string.
  * @returns {string} The percent-encoded string.
  */
-function encodePercentCustom(str) {
+function encodeSOPCode(str) {
     // Return empty string if input is not a string
     if (typeof str !== 'string') return '';
 
     // Replace characters that need encoding with their %xx equivalent.
     // We must include '%' itself in the list of characters to encode,
     // otherwise sequences like %20 (space) could be misinterpreted later.
-    return str.replace(/%|\n|'|"|\[|\]/g, (char) => {
+    return str.replace(/[%'\n"\[\]$@~]/g, (char) => {
         // Get the Unicode character code for the character
         const charCode = char.charCodeAt(0);
         // Convert the character code to its hexadecimal representation (uppercase)
@@ -338,14 +339,14 @@ function encodePercentCustom(str) {
 }
 
 /**
- * Decodes a string that was percent-encoded using encodePercentCustom.
+ * Decodes a string that was percent-encoded using encodeSOPCode.
  * Replaces %xx sequences with their original characters.
  * It assumes any valid %xx sequence found should be decoded.
  *
  * @param {string} encodedStr The percent-encoded string.
  * @returns {string} The decoded string.
  */
-function decodePercentCustom(encodedStr) {
+function decodeSOPCode(encodedStr) {
     // Return empty string if input is not a string
     if (typeof encodedStr !== 'string') return '';
 
@@ -360,7 +361,7 @@ function decodePercentCustom(encodedStr) {
     });
 }
 
-function processEmbeddedCodes(input) {
+function extractMacroOrJSDefOnASingleLine(input) {
     // Input validation
     if (typeof input !== 'string') {
         console.error("Input must be a string.");
@@ -421,12 +422,12 @@ function processEmbeddedCodes(input) {
                 const linesString = scriptBodyLines.join('\n');
 
                 // Encode the joined strings using URL encoding (percent-encoding)
-                const encodedArgs = encodePercentCustom(argsString);
-                const encodedLines = encodePercentCustom(linesString);
+                const encodedArgs = argsString;
+                const encodedLines = encodeSOPCode(linesString);
 
                 // Create the summarized output line: @scriptName script <args_urlencoded> <lines_urlencoded>
                 // A space separates the two URL encoded parts.
-                const outputLine = `@${scriptName} ${blockName} "${encodedArgs}" "${encodedLines}"`;
+                const outputLine = `@${scriptName} ${blockName} '${encodedArgs}' '${encodedLines}'`;
 
                 // To Decode later:
                 // 1. Find the part after "@scriptName script ".
@@ -494,7 +495,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
     }
 
     let macroCode = parsedCommand.inputVars[1];
-    macroCode = decodePercentCustom(macroCode);
+    macroCode = decodeSOPCode(macroCode);
     //detect all occurrences of @varName or ~varName and add in variables with the executionPrefix
     let regex = /([@$~])([a-zA-Z0-9_]+)/g;
     let match;
@@ -523,13 +524,13 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
         return `@${executionPrefix} returnMacroValue`;
     });
 
-    $$.debug("macro",">>>>>Macro code:", initialisation + macroCode);
+    $$.debug("macro",">>>>>Macro code:", (initialisation + macroCode).split("\n").map(line => "\t" + line).join("\n"));
     return initialisation + macroCode;
 }
 
 function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine) {
     let varCounter = 0;
-    commandTextSeparatedByNewLine = processEmbeddedCodes(commandTextSeparatedByNewLine);
+    commandTextSeparatedByNewLine = extractMacroOrJSDefOnASingleLine(commandTextSeparatedByNewLine);
     //console.debug("Command text:", commandTextSeparatedByNewLine);
 
     function makeVarNames() {
@@ -551,7 +552,7 @@ function parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine
             continue;
         }
         let lineRes = replaceDotVariables(line, detectedVars);
-        let res = parseComplexLine(lineRes.transformedString, makeVarNames);
+        let res = breakComplexLineInSimpleLines(lineRes.transformedString, makeVarNames);
         validLines.push(res.transformedText);
         for (let key in res.variables) {
             newLines.push("@" + key + " " + res.variables[key]);
@@ -619,11 +620,11 @@ export {
     parseCommandBlock,
     renameSpecialVars,
     makeNameForSpecialVars,
-    parseComplexLine,
+    breakComplexLineInSimpleLines,
     replaceDotVariables,
-    processEmbeddedCodes,
+    extractMacroOrJSDefOnASingleLine,
     expandMacro,
-    decodePercentCustom,
+    decodeSOPCode,
     sameValue,
     compareObjects,
 }

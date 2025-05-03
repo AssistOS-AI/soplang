@@ -38,6 +38,7 @@ function RowSchemaUtil(columnDescriptionArray) {
         }
 
         for(let key in computedColumns){
+            $$.debug("table", "Key", key, "computedColumns", computedColumns[key]);
             let expression = computedColumns[key];
             let command = expression[0];
             let args = [];
@@ -113,15 +114,14 @@ function Table(docId, tableVarId) {
         let testRowCommand = `${currentDocId}_${inputValues[0]}`;
         for(let i = 0; i < self.data.length; i++){
             let row = self.data[i];
-            $$.debug("special", "Type of row", typeof row, "row", JSON.stringify(row));
+            $$.debug("table", "Type of row", typeof row, "row", JSON.stringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
-            console.debug("!!!!! Extract and delete command", testRowCommand, "result", result);
             if(result && result !== "false"){
                 await newTable.internalAppend(row);
             }
         }
         self.data = [];
-        console.debug(">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
+        $$.debug("table",">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
         await varUtil.setVarValue(newTableId, newTable);
         await varUtil.setVarValue(tableVarId, self);
         return newTable;

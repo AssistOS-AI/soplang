@@ -36,13 +36,21 @@ await workspace.runMacro("doc1", "addRow", {c1:'a', c2:3, c3:5});
 await workspace.runMacro("doc1", "addRow", {c1:'a', c2:3, c3:3});
 await workspace.runMacro("doc1", "addRow", {c1:'y', c2:1, c3:3});
 
-let value = await workspace.runMacro("doc1", "filterT1" );
-//await graph.printGraph();
-//console.log("t1 var is ", await workspace.getVarValue("doc1", "t1"));
-//console.log("t1_newData var is ", await workspace.getVarValue("doc1", "t1_newData"));
-//console.log("t1_insights var is ", await workspace.getVarValue("doc1", "t1_insights"));
-console.debug("t1 var is ", $$.dumpObject(value));
-await $$.checkValue(value.data.length, 2);
-//await $$.checkValue(value.data, [{c1:'a', c2:3, c3:5, c4:15}, {c1:'a', c2:3, c3:3, c4:9}]);
+let valueT1 = await workspace.getVarValue("doc1", "t1")
+let valueT1_newData = await workspace.getVarValue("doc1", "t1_newData")
+let valueT1_insights = await workspace.getVarValue("doc1", "t1_insights")
+let valueFilterT1 = await workspace.runMacro("doc1", "filterT1" );
+
+await $$.checkValue(valueT1.data.length, 4);
+await $$.checkValue(valueT1_newData.data.length, 0);
+await $$.checkValue(valueT1_insights.data.length, 2);
+
+for(let i = 0; i < valueFilterT1.data.length; i++){
+    console.debug("Row", i, "in valueFilterT1 is:", JSON.stringify(valueFilterT1.data[i]));
+}
+
+await $$.checkValue((valueT1_insights.data[0]).c3, 5);
+await $$.checkValue((valueT1_insights.data[0]).c4, 15);
+
 
 await $$.exit();

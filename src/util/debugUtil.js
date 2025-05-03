@@ -2,6 +2,9 @@
 let errorFromLastBuild = [];
 
 $$.recordBuildError = function (text, err) {
+    if(!err){
+        err = "";
+    }
     console.debug("BUILD ERROR:" , text, err);
     if (!err) {
         err = new Error(text);
@@ -35,11 +38,12 @@ $$.debugEnabled = false;
 
 $$.debugFeatures = {
     special:true,
-    macro:true,
-    parser:true,
-    variable:true,
-    topologicalSort:true,
-    assign:true,
+    macro:false,
+    jsdef:false,
+    parser:false,
+    variable:false,
+    topologicalSort:false,
+    assign:false,
     table:false,
     math:false,
     assert:false,
