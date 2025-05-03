@@ -5,7 +5,7 @@ import {
     renameSpecialVars,
     makeNameForSpecialVars,
     parseComplexLine,
-    decodePercentCustom,
+    decodeSOPCode,
     sameValue} from "../util/soplangUtil.js";
 
 import {getCache} from "./varsValuesCache.js";
@@ -416,7 +416,7 @@ async function getVarClock(varId){
 }
 
 export {
-    decodePercentCustom,
+    decodeSOPCode,
     getVarID,
     getDocIdFromVarId,
     getLocalVarName,

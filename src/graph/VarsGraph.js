@@ -34,7 +34,7 @@ function VarsGraph(commandsRegistry) {
             return;
         }
         let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
-        $$.debug("variable", "============> Parsed code", lines.join("\n"));
+        $$.debug("variable", "============> Parsed code", ...lines);
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
@@ -54,7 +54,7 @@ function VarsGraph(commandsRegistry) {
             }
 
             await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
-            $$.debug("variable","============> Defining variable", parsedCommand.outputVars[0], "with command", JSON.stringify(parsedCommand));
+            $$.debug("variable",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
         }
     }
 

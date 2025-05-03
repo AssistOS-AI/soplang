@@ -5,10 +5,12 @@ let missingPaths = [];
 
 const tests = [
     './util/SOPStringifyTest.mjs',
+    './util/commandLineParserTest.js',
+    './util/blockParseTest.js',
+    './util/macroParseTest.js',
     './pipelines/basic/jsdefTest.mjs',
     './pipelines/basic/varChangeTest.mjs',
     './pipelines/basic/depsGraphHWTest.mjs',
-    './util/commandLineParserTest.js',
     './pipelines/basic/aliasTest.mjs',
     './pipelines/documents/mainSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
@@ -16,6 +18,7 @@ const tests = [
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/macros/basic/runMacroTest.mjs',
+    './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',

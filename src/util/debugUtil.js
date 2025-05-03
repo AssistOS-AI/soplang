@@ -35,11 +35,12 @@ $$.debugEnabled = false;
 
 $$.debugFeatures = {
     special:true,
-    macro:false,
-    variable:false,
-    topologicalSort:false,
+    macro:true,
+    parser:true,
+    variable:true,
+    topologicalSort:true,
     assign:true,
-    table:true,
+    table:false,
     math:false,
     assert:false,
     if:false,
@@ -55,12 +56,16 @@ $$.debug = function (scope, ...args) {
     if($$.debugFeatures[scope] || $$.debugEnabled){
         let comment = args[0];
         args = args.slice(1);
-        let argsAsString = args.map(arg => {
+        let argsAsStringArray = args.map(arg => {
             if (typeof arg === "object") {
                 return JSON.stringify(arg);
             }
             return arg;
         });
-        console.debug(`>>> DEBUG feature ${scope}: ${comment} ${JSON.stringify(argsAsString)}`);
+        let detailsString = "";
+        if (argsAsStringArray.length !== 0) {
+            detailsString = `:\n\t[\n\t${argsAsStringArray.join(",\n\t")}\n\t]`;
+        }
+        console.debug(`>>> DEBUG '${scope}': ${comment} ${detailsString}`);
     }
 }

@@ -1,3 +1,4 @@
+
 let util = await import("../../src/util/soplangUtil.js")
 let parseCommandLine = util.parseCommandLine;
 let compareObjects = util.compareObjects;
