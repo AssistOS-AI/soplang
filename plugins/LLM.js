@@ -67,7 +67,7 @@ async function LLM(Provider) {
         return await persistence.getLlmByName(name);
     }
     self.getLlmById = async function (id) {
-        const models= await persistence.getEveryLlmObject();
+        const models = await persistence.getEveryLlmObject();
         for (const model of models) {
             if (model.id === id) {
                 return model;
@@ -109,25 +109,24 @@ async function LLM(Provider) {
 
     return self;
 }
-
 let singletonInstance;
-const getInstance = async function (Provider) {
-        if (!Provider) {
-            Provider = require('../../apihub-component-utils/provider.js')
-        }
-        if (!singletonInstance) {
-            singletonInstance = await LLM(Provider);
-        }
-        return singletonInstance;
+
+const getInstance = async function (ProviderArg) {
+    const Provider = ProviderArg || (await import('../../apihub-component-utils/provider.js')).default
+
+    if (!singletonInstance) {
+        singletonInstance = await LLM(Provider);
     }
-const getAllow =  function () {
-        return async function (globalUserId, email, command, ...args) {
-            return true;
-        }
+    return singletonInstance;
+}
+const getAllow = function () {
+    return async function (globalUserId, email, command, ...args) {
+        return true;
     }
-const getDependencies =  function () {
-        return ["DefaultPersistence"];
-    }
+}
+const getDependencies = function () {
+    return ["DefaultPersistence"];
+}
 export {
     getInstance,
     getAllow,
