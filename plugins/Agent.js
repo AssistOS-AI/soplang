@@ -21,6 +21,7 @@ async function Agent() {
                 selectedTextLlm: "llm",
                 selectedChatLlm: "llm",
                 telegramBot: "any",
+                info: "object",
             },
         /*
             //Most probable these will be just custom types that will be stored in normal variables
@@ -99,7 +100,7 @@ async function Agent() {
         agent.selectedChat = agent.chats[0]
         await self.updateAgent(agent.id, {...agent});
     }
-    self.createAgent = async function (name, description, chatPrompt) {
+    self.createAgent = async function (name, description, chatPrompt, info) {
         const chatId = await Chat.createChat(name);
         return await persistence.createAgent({
             name: name,
@@ -111,6 +112,7 @@ async function Agent() {
             contextSize: 3,
             chatPrompt: chatPrompt || "You will be given instructions in the form of a string from a user and you need to execute them",
             telegramBot: null,
+            info: info
         });
 
     }
