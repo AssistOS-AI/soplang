@@ -100,19 +100,19 @@ async function Agent() {
         agent.selectedChat = agent.chats[0]
         await self.updateAgent(agent.id, {...agent});
     }
-    self.createAgent = async function (name, description, chatPrompt, info) {
+    self.createAgent = async function (name, description, chatPrompt, imageId) {
         const chatId = await Chat.createChat(name);
         return await persistence.createAgent({
             name: name,
             description: description,
+            imageId: imageId,
             chats: [chatId],
             selectedChat: chatId,
             selectedChatLlm: null,
             selectedTextLlm: null,
             contextSize: 3,
             chatPrompt: chatPrompt || "You will be given instructions in the form of a string from a user and you need to execute them",
-            telegramBot: null,
-            info: info
+            telegramBot: null
         });
 
     }
