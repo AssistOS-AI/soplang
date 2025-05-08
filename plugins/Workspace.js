@@ -16,7 +16,7 @@ const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 async function Workspace() {
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
-    let Email = await $$.loadPlugin("Email");
+    let Email = await $$.loadPlugin("EmailPlugin");
     let WorkspaceUser = await $$.loadPlugin("WorkspaceUser");
 
     let commandsRegistry = await createRegistry(self);
@@ -188,5 +188,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ["DefaultPersistence", "Email", "WorkspaceUser"];
+    return ["DefaultPersistence", "EmailPlugin", "WorkspaceUser"];
 }
