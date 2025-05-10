@@ -45,8 +45,8 @@ await $$.checkValue(valueT1.data.length, 4);
 await $$.checkValue(valueT1_newData.data.length, 0);
 await $$.checkValue(valueT1_insights.data.length, 2);
 
-for(let i = 0; i < valueFilterT1.data.length; i++){
-    console.debug("Row", i, "in valueFilterT1 is:", JSON.stringify(valueFilterT1.data[i]));
+for(let i = 0; i < valueT1_insights.data.length; i++){
+    console.debug("Row", i, "in valueT1_insights is:", JSON.stringify(valueT1_insights.data[i]));
 }
 
 await $$.checkValue((valueT1_insights.data[0]).c3, 5);

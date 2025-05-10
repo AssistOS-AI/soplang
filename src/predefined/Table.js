@@ -6,8 +6,8 @@ const TABLE_ROW_UID = "TRUID"
 function RowSchemaUtil(columnDescriptionArray) {
     let valueColumns = {};
     let computedColumns = {
-
     };
+    $$.debug("table", `RowSchemaUtil config: ${JSON.stringify(columnDescriptionArray)}`);
     for(let i = 0; i < columnDescriptionArray.length; i++){
         let columnDescription = columnDescriptionArray[i];
         if(columnDescription.includes(":") ){
@@ -17,14 +17,18 @@ function RowSchemaUtil(columnDescriptionArray) {
                 $$.recordBuildError(`Ignoring invalid column description ${columnDescription}`);
                 continue;
             }
-            computedColumns[columnName] = parsedDescription[1].split(" ").map( item =>  item.trim());
+            computedColumns[columnName] = parsedDescription[1].split(" ").map( item =>  item.trim()).filter( item => item.length > 0);
         } else {
             valueColumns[columnDescription] = i+1;
         }
     }
 
+    //$$.debug("table", `RowSchemaUtil settings ${columnDescriptionArray.length} columns: ${JSON.stringify(valueColumns)} Self computed columns: ${JSON.stringify(computedColumns)}`);
+
     this.computeValues = async function (jsonObject, docId, graph){
         let res = {};
+
+        $$.debug("table", "RowSchemaUtil computeValues:", `'${JSON.stringify(jsonObject)}' in docId '${docId}' for table with schema '${JSON.stringify(columnDescriptionArray)}'`);
 
         for(let key in jsonObject){
             if(valueColumns[key] !== undefined){
@@ -38,7 +42,7 @@ function RowSchemaUtil(columnDescriptionArray) {
         }
 
         for(let key in computedColumns){
-            $$.debug("table", "Key", key, "computedColumns", computedColumns[key]);
+            $$.debug("table", "Key in selfComputed Columns", key, "computedColumns", computedColumns[key]);
             let expression = computedColumns[key];
             let command = expression[0];
             let args = [];
@@ -50,7 +54,7 @@ function RowSchemaUtil(columnDescriptionArray) {
                     args.push(arg);
                 }
             }
-            res[key] = await graph.runCustomCommand(docId, command.command, ...args);
+            res[key] = await graph.runCustomCommand(docId, command, ...args);
         }
         return res;
     }
@@ -66,13 +70,15 @@ function Table(docId, tableVarId) {
     let schemaUtil;
 
     self.init = async function (...columnDescription) {
-        self.columnDescription = columnDescription;
-        self.data = [];
-        schemaUtil = new RowSchemaUtil(columnDescription);
+        if(self.columnDescription !== columnDescription){
+            self.columnDescription = columnDescription;
+            self.data = [];
+            schemaUtil = new RowSchemaUtil(columnDescription);
+        }
     }
 
     self.restore = async function (JSONSerialisation) {
-        if (JSONSerialisation) {
+        if (JSONSerialisation && self.columnDescription !== JSONSerialisation.columnDescription) {
             self.columnDescription = JSONSerialisation.columnDescription ;
             self.data = JSONSerialisation.data || [];
             schemaUtil = new RowSchemaUtil(self.columnDescription);
@@ -96,7 +102,7 @@ function Table(docId, tableVarId) {
             await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
             return;
         }
-        self.data.push(await schemaUtil.computeValues(validJson));
+        self.data.push(await schemaUtil.computeValues(validJson, currentDocId, graph));
         await varUtil.setVarValue(tableVarId, self);
         let resultedAliasTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
         await varUtil.markAsReferenceToVariable(resultedAliasTableId, tableVarId, currentDocId);
@@ -114,14 +120,14 @@ function Table(docId, tableVarId) {
         let testRowCommand = `${currentDocId}_${inputValues[0]}`;
         for(let i = 0; i < self.data.length; i++){
             let row = self.data[i];
-            $$.debug("table", "Type of row", typeof row, "row", JSON.stringify(row));
+            //$$.debug("table", "Type of row", typeof row, "row", JSON.stringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
             if(result && result !== "false"){
                 await newTable.internalAppend(row);
             }
         }
         self.data = [];
-        $$.debug("table",">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
+        //$$.debug("table",">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
         await varUtil.setVarValue(newTableId, newTable);
         await varUtil.setVarValue(tableVarId, self);
         return newTable;
@@ -142,10 +148,10 @@ function Table(docId, tableVarId) {
                     if(key === "truid"){
                         continue;
                     }
-                    row[key] = inputTable.data[i][key];
+                    row[key] = await schemaUtil.computeValues(inputTable.data[i][key], currentDocId, graph);
                 }
             } else {
-                self.data.push(inputTable.data[i]);
+                self.data.push(await schemaUtil.computeValues(inputTable.data[i], currentDocId, graph));
             }
         }
         await varUtil.setVarValue(tableVarId, self);

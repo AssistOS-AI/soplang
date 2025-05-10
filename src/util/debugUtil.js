@@ -54,22 +54,33 @@ $$.debugFeatures = {
     commandExecution:false,
     diff:false,
     sopEncoding:false,
+    objectLifeCycle:true,
+    varsValuesCache:false,
 }
 
 $$.debug = function (scope, ...args) {
     if($$.debugFeatures[scope] || $$.debugEnabled){
         let comment = args[0];
         args = args.slice(1);
-        let argsAsStringArray = args.map(arg => {
-            if (typeof arg === "object") {
-                return JSON.stringify(arg);
-            }
-            return arg;
-        });
         let detailsString = "";
-        if (argsAsStringArray.length !== 0) {
-            detailsString = `:\n\t[\n\t${argsAsStringArray.join(",\n\t")}\n\t]`;
-        }
+        if(args.length === 0){
+            console.debug(`>>> DEBUG '${scope}': ${comment}`);
+            return;
+        } else {
+            if(args.length === 1){
+                detailsString = args[0];
+            } else {
+                let argsAsStringArray = args.map(arg => {
+                    if (typeof arg === "object") {
+                        return JSON.stringify(arg);
+                    }
+                    return arg;
+                });
+                if (argsAsStringArray.length !== 0) {
+                    detailsString = `:\n\t[\n\t${argsAsStringArray.join(",\n\t")}\n\t]`;
+
+                }}
+            }
         console.debug(`>>> DEBUG '${scope}': ${comment} ${detailsString}`);
     }
 }

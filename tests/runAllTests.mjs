@@ -51,7 +51,6 @@ async function fileExists(filePath) {
     }
 }
 
-
 function identAndCleanStdErr(output){
     let lines = output.split("\n");
     let cleanedLines = lines.map(line => "\t\t"+line.trim());
