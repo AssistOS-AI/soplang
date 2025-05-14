@@ -13,3 +13,4 @@
 /tests/deps/logs/
 /tests/deps/audit/
 /tests/deps/temp_persistence/
+**/node_modules/**
