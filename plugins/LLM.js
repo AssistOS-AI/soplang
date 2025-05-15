@@ -112,10 +112,14 @@ async function LLM(Provider) {
 let singletonInstance;
 
 const getInstance = async function (ProviderArg) {
-    //const Provider = ProviderArg || (await import('../../apihub-component-utils/provider.js')).default
+
+    if (ProviderArg) {
+        return await LLM(ProviderArg);
+    }
+    const { default: Provider } = await import('../../apihub-component-utils/provider.cjs')
 
     if (!singletonInstance) {
-        singletonInstance = await LLM();
+        singletonInstance = await LLM(Provider);
     }
     return singletonInstance;
 }
