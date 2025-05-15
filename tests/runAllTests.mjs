@@ -38,6 +38,8 @@ const tests = [
     './pipelines/tables/tablesTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
     './plugins/documentsTest.mjs',
+    '../Persisto/tests/typesPersistence.mjs',
+    '../Persisto/tests/getObjectsRange.mjs'
 ];
 
 import fs from 'node:fs/promises';
@@ -52,9 +54,9 @@ async function fileExists(filePath) {
     }
 }
 
-function identAndCleanStdErr(output){
+function identAndCleanStdErr(output) {
     let lines = output.split("\n");
-    let cleanedLines = lines.map(line => "\t\t"+line.trim());
+    let cleanedLines = lines.map(line => "\t\t" + line.trim());
     cleanedLines = cleanedLines.filter(line => line !== "");
     return cleanedLines.join("\n");
 }
@@ -66,7 +68,7 @@ async function runTestsSequentially(tests) {
         console.log(`\n▶️ Running test: ${absolutePath}`);
         try {
             //use fs to check if the file exists
-            if(!await fileExists(absolutePath)) {
+            if (!await fileExists(absolutePath)) {
                 missingPaths.push(testPath);
             }
         } catch (error) {
@@ -93,17 +95,17 @@ async function runTestsSequentially(tests) {
             passed++;
         } else {
             console.log(`❌ FAILED: ${testPath} (exit code: ${exitCode.code}${exitCode.stderr ? `, stderr: ${exitCode.stderr.trim()}` : ''})`);
-            failedTests.push({testPath, stdErrResult:exitCode.stderr});
+            failedTests.push({ testPath, stdErrResult: exitCode.stderr });
             failed++;
         }
     }
 
     console.log(`\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Summary:`);
-    if(failed > 0) {
+    if (failed > 0) {
         console.log(`\tFailed tests:`);
         failedTests.forEach(test => console.log(`\t- ${test.testPath} \n${identAndCleanStdErr(test.stdErrResult)}`));
     }
-    if(missingPaths.length){
+    if (missingPaths.length) {
         console.log("\tFollowing paths does not exist:", missingPaths);
     }
     console.log(`\t🏁 Finished: ${passed} passed, ${failed} failed.`);
