@@ -37,6 +37,7 @@ const tests = [
     './llm/llmFacadeTest.mjs',
     './pipelines/tables/tablesTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
+    './plugins/documentsTest.mjs',
 ];
 
 import fs from 'node:fs/promises';
