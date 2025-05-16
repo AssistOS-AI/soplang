@@ -50,28 +50,24 @@ await workspace.defineCustomType("ReinitTestType", ReinitTestType);
 console.log("Testing custom type reinitialization behavior...");
 
 const testCode1 = `
-    @obj new ReinitTestType "arg1" "initial"
-    @stats1 obj.getStats
+    @inputVar := "initial"
+    @obj new ReinitTestType $inputVar
+    @stats obj.getStats
     `;
 
 let docId = await workspace.runCode(testCode1);
 
-const stats1 = await graph.getVarValue(docId, "stats1");
+const stats1 = await graph.getVarValue(docId, "stats");
 assert.strictEqual(stats1.initCount, 1, "Test 1: initCount should be 1 after initial creation.");
 assert.strictEqual(stats1.reinitCount, 0, "Test 1: reinitCount should be 0 after initial creation.");
-assert.deepStrictEqual(stats1.currentArgs, ["arg1", "initial"], "Test 1: currentArgs not set as expected.");
+assert.deepStrictEqual(stats1.currentArgs, ["initial"], "Test 1: currentArgs not set as expected.");
+await workspace.setVarValue(docId, "inputVar", "updated");
 
-const testCode2 = `
-    @obj new ReinitTestType "arg1" "updated"
-    @stats2 obj.getStats
-`;
-
-let docId2 = await workspace.runCode(testCode2);
-
-const stats2 = await graph.getVarValue(docId2, "stats2");
-assert.strictEqual(stats2.initCount, 1, "Test 2: initCount should remain 1 after reinit.");
+await workspace.buildAll()
+const stats2 = await graph.getVarValue(docId, "stats");
+assert.strictEqual(stats2.initCount, 1, "Test 2: initCount should be 1 after initial creation.");
 assert.strictEqual(stats2.reinitCount, 1, "Test 2: reinitCount should be 1 after args change.");
-assert.deepStrictEqual(stats2.currentArgs, ["arg1", "updated"], "Test 2: currentArgs not updated as expected.");
+assert.deepStrictEqual(stats2.currentArgs, ["updated"], "Test 2: currentArgs not updated as expected.");
 assert.strictEqual(stats1.instanceId, stats2.instanceId, "Test 2: InstanceId should be the same after reinit.");
 
 console.log("All reinitialization tests completed successfully!");
