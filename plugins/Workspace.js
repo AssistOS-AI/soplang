@@ -20,7 +20,7 @@ async function Workspace() {
     let WorkspaceUser = await $$.loadPlugin("WorkspaceUser");
 
     let commandsRegistry = await createRegistry(self);
-    let graph = await createVarsGraph(commandsRegistry, persistence);
+    let graph = await createVarsGraph(commandsRegistry);
 
     self.getGraph = function () {
         return graph;
@@ -168,7 +168,7 @@ async function Workspace() {
     self.shutDown = async function () {
         return await persistence.shutDown();
     }
-
+    await graph.buildAll();
     return self;
 }
 

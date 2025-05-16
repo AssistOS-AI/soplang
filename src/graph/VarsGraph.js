@@ -10,7 +10,10 @@ function VarsGraph(commandsRegistry) {
     if (!commandsRegistry) {
         $$.throwErrorSync("Commands Registry is mandatory");
     }
-
+    this.init = async function(){
+        let graphObj = await defaultPersistence.getGraph("GRAPH");
+        graph = graphObj.state;
+    }
     commandsRegistry.registerCommand("alias", async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
             let targetDocumentId = inputValues[0];
             let targetVarName = inputValues[1];
@@ -549,6 +552,9 @@ function VarsGraph(commandsRegistry) {
                 currentLayer = 0;
                 currentPositionInLayer = 0;
                 layers = getLayers();
+                if(layers.length === 0){
+                    return undefined;
+                }
             }
 
             do {
@@ -701,7 +707,9 @@ function VarsGraph(commandsRegistry) {
 }
 
 const createVarsGraph = async function (commandsRegistry) {
-    return new VarsGraph(commandsRegistry);
+    let graph = new VarsGraph(commandsRegistry);
+    await graph.init();
+    return graph;
 }
 export {
     createVarsGraph
