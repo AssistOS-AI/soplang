@@ -62,7 +62,7 @@ async function Workspace() {
         return customTypeRegistry.getTypes();
     }
     self.getCommands = async function () {
-        return commandsRegistry.getCommands();
+        return graph.getCommands();
     }
     self.parseCommands = async function (chapterId, paragraphId, commands) {
         return await graph.parseCommands(chapterId, paragraphId, commands);

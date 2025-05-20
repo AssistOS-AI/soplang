@@ -690,6 +690,20 @@ function VarsGraph(commandsRegistry) {
         // return dump.replace(/},/g, '},\n\t');
     }
 
+    self.getCommands = async function () {
+        let variables = await defaultPersistence.getEveryVariableObject();
+        let commands = commandsRegistry.getCommands();
+        for(let variable of variables){
+            let command = variable.parsedCommand.command;
+            if(command === "jsdef" || command === "macro"){
+                let newCommand = variable.parsedCommand.outputVars[0];
+                if(!commands.includes(newCommand)){
+                    commands.push(newCommand);
+                }
+            }
+        }
+        return commands;
+    }
 
 
     self.printGraph = async function () {
