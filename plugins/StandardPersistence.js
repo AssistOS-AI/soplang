@@ -47,6 +47,7 @@ async function createStandardPersistencePlugin(){
         document: {
             id: "random",
             title: "string",
+            docId: "string",
             category: "string",
             infoText: "string",
             commands: "string",

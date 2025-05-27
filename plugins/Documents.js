@@ -8,9 +8,9 @@ async function Documents(){
     let workspace = await $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
 
-    self.createDocument = async function (docId, documentCategory) {
+    self.createDocument = async function (docId, documentCategory, title) {
         return await persistence.createDocument({
-            title: docId,
+            title: title,
             docId: docId,
             category: documentCategory,
             chapters: []
@@ -21,7 +21,7 @@ async function Documents(){
         return await persistence.deleteDocument(documentId);
     }
 
-    self.updateDocument = async (documentId, title, category, infoText, commands, comments) => {
+    self.updateDocument = async (documentId, title, docId, category, infoText, commands, comments) => {
         if(!title || !category || infoText === null || infoText === undefined || commands === null || commands === undefined){
             throw new Error("All fields are required to be defined");
         }
@@ -32,6 +32,7 @@ async function Documents(){
 
         return await persistence.updateDocument(documentId, {
             title: title,
+            docId: docId,
             category: category,
             infoText: infoText,
             commands: commands,
