@@ -68,6 +68,7 @@ async function Documents(){
                         title: chapter.title,
                         text: chapter.text,
                         commands: chapter.commands,
+                        comments: chapter.comments,
                         paragraphs: []
                     }
                     for(let paragraphId of chapter.paragraphs){
