@@ -236,6 +236,7 @@ function VarsGraph(commandsRegistry) {
                 let depName = node.deps[i];
                 let dep = graph[depName];
                 if (depName === varName) {
+                    varUtil.updateErrorInfo(varName, `Circular dependency detected for variable ${depName}. Build stopped!`);
                     $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
                 }
                 if (!dep) {

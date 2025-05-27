@@ -22,7 +22,7 @@ async function Documents(){
     }
 
     self.updateDocument = async (documentId, title, docId, category, infoText, commands, comments) => {
-        if(!title || !category || infoText === null || infoText === undefined || commands === null || commands === undefined){
+        if(!title || !docId || !category || infoText === null || infoText === undefined || commands === null || commands === undefined){
             throw new Error("All fields are required to be defined");
         }
         let doc = await persistence.getDocument(documentId);

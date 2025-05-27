@@ -168,7 +168,6 @@ async function Workspace() {
     self.shutDown = async function () {
         return await persistence.shutDown();
     }
-    await graph.buildAll();
     return self;
 }
 
