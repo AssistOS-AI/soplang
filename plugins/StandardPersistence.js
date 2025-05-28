@@ -75,7 +75,7 @@ async function createStandardPersistencePlugin(){
         },
         graph:{
             id: "singleton GRAPH",
-            alis: "string",
+            alias: "string",
             state: "any"
         }
     });
