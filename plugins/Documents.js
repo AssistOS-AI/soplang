@@ -13,6 +13,11 @@ async function Documents(){
             title: title,
             docId: docId,
             category: documentCategory,
+            comments: {
+                messages: [],
+                status: ""
+            },
+            commands: "",
             chapters: []
         });
     }
@@ -56,6 +61,7 @@ async function Documents(){
         res.title = doc.title;
         res.category = doc.category;
         res.infoText = doc.infoText;
+        res.comments = doc.comments;
         res.commands = doc.commands;
 
         for(let key in doc){
@@ -126,7 +132,10 @@ async function Documents(){
             title: chapterTitle,
             docId: document.docId,
             commands,
-            comments,
+            comments: comments || {
+                messages: [],
+                status: ""
+            },
             paragraphs: []
         });
 
@@ -154,7 +163,10 @@ async function Documents(){
         let par = await persistence.createParagraph({
             text: paragraphText,
             commands,
-            comments
+            comments: comments || {
+                messages: [],
+                status: ""
+            },
         });
 
         await graph.analiseCommandSection(chapter.docId, chapter.id, par.id, commands);
