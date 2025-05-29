@@ -29,8 +29,6 @@ function getVarID(docId, varName){
 }
 
 async function updateVariableWrapper(varId, varContext){
-
-
     customTypesValuesCache.delete(varId);
     varDefCache.delete(varId);
     let persistence = getDefaultPersistence();

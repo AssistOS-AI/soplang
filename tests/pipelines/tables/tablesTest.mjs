@@ -27,24 +27,4 @@ let testCode = `
     @s_col_c2 t1.sum $col_c2
 `;
 
-// # Testing append method
-// @new_row t1.append "c1:'z', c2:5000, c3:50000, c4:0, c5:1"
-// @after_append t1.getData
-//
-// @min_c2 t1.min "" "c2"
-// @max_c3 t1.max "" "c3"
-// @avg_c2 t1.avg "" "c2"
-//
-// @set_val t1.setAt "0" "c2" "999"
-// @c2_after_set t1.column "c2"
-
-/*
-let docId = await workspace.runCode(testCode);
-
-await $$.checkDocVar(docId, "s1", 10100000);
-await $$.checkDocVar(docId, "s2", 10000001);
-await $$.checkDocVar(docId, "s3", 2);
-await $$.checkDocVar(docId, "sarea1_cn", 11110000);
-await $$.checkDocVar(docId, "sarea1", 11110000);
-*/
 await $$.exit();

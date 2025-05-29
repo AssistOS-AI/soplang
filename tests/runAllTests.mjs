@@ -4,6 +4,9 @@ let failedTests = [];
 let missingPaths = [];
 
 const tests = [
+    '../Persisto/tests/typesPersistence.mjs',
+    '../Persisto/tests/getObjectsRange.mjs',
+    './persisto/multipleGroupingTest.mjs',
     './util/SOPStringifyTest.mjs',
     './util/commandLineParserTest.js',
     './util/blockParseTest.js',
@@ -38,8 +41,6 @@ const tests = [
     './pipelines/tables/tablesTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
     './plugins/documentsTest.mjs',
-    '../Persisto/tests/typesPersistence.mjs',
-    '../Persisto/tests/getObjectsRange.mjs'
 ];
 
 import fs from 'node:fs/promises';
