@@ -131,7 +131,7 @@ async function Documents(){
         let chapter =  await persistence.createChapter({
             title: chapterTitle,
             docId: document.docId,
-            commands,
+            commands: commands || "",
             comments: comments || {
                 messages: [],
                 status: ""
@@ -162,7 +162,7 @@ async function Documents(){
         let chapter = await persistence.getChapter(chapterId);
         let par = await persistence.createParagraph({
             text: paragraphText,
-            commands,
+            commands: commands || "",
             comments: comments || {
                 messages: [],
                 status: ""
