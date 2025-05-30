@@ -13,6 +13,7 @@ async function Documents(){
             title: title,
             docId: docId,
             category: documentCategory,
+            infoText: "",
             comments: {
                 messages: [],
                 status: ""
