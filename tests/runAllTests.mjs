@@ -15,7 +15,7 @@ const tests = [
     './pipelines/basic/varChangeTest.mjs',
     './pipelines/basic/depsGraphHWTest.mjs',
     './pipelines/basic/aliasTest.mjs',
-    './pipelines/documents/mainSmokeTest.mjs',
+    './plugins/documentSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
