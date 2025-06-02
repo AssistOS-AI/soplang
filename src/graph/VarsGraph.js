@@ -111,6 +111,7 @@ function VarsGraph(commandsRegistry) {
         await defaultPersistence.createDocument({
             docId: inDocId,
             title: inDocId,
+            chapters: [],
             category: CODE_EXECUTION,
             commands: code
         });
