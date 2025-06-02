@@ -33,7 +33,7 @@ async function Documents(){
         }
         let doc = await persistence.getDocument(documentId);
 
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands);
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands, doc.commands);
         await graph.analiseTextSection(doc.docId, undefined, undefined, infoText);
 
         return await persistence.updateDocument(documentId, {
@@ -102,7 +102,7 @@ async function Documents(){
             throw new Error("Document already has content");
         }
 
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, template.commands);
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, template.commands, doc.commands);
         await graph.analiseDocumentTile(doc.docId, template.title);
         await graph.analiseTextSection(doc.docId, undefined, undefined, template.infoText);
 
@@ -126,13 +126,13 @@ async function Documents(){
         return doc;
     }
 
-    self.createChapter = async function (documentId, chapterTitle, commands, comments, position) {
+    self.createChapter = async function (documentId, chapterTitle, commands = "", comments, position) {
         //console.debug(">>>> Creating chapter", chapterTitle, "for document", documentId);
         let document = await persistence.getDocument(documentId);
         let chapter =  await persistence.createChapter({
             title: chapterTitle,
             docId: document.docId,
-            commands: commands || "",
+            commands: commands,
             comments: comments || {
                 messages: [],
                 status: ""
@@ -158,12 +158,12 @@ async function Documents(){
         return await persistence.getChapter(chapter.id);
     }
 
-    self.createParagraph = async function (chapterId, paragraphText, commands, comments, position) {
+    self.createParagraph = async function (chapterId, paragraphText, commands = "", comments, position) {
         console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId, "commands", commands);
         let chapter = await persistence.getChapter(chapterId);
         let par = await persistence.createParagraph({
             text: paragraphText,
-            commands: commands || "",
+            commands: commands,
             comments: comments || {
                 messages: [],
                 status: ""
@@ -245,7 +245,7 @@ async function Documents(){
 
     self.updateChapter = async function (chapterId, chapterTitle, comments, commands) {
         let chapter = await persistence.getChapter(chapterId);
-        await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands);
+        await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands, chapter.commands);
         await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
 
         return await persistence.updateChapter(chapterId,{
@@ -266,7 +266,8 @@ async function Documents(){
 
     self.updateParagraph = async function (chapterId, paragraphId, paragraphText, commands, comments) {
         let chapter = await persistence.getChapter(chapterId);
-        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands);
+        let paragraph = await persistence.getParagraph(paragraphId);
+        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands, paragraph.commands);
         await graph.analiseTextSection(chapter.docId, chapterId, paragraphId, paragraphText);
         return await persistence.updateParagraph(paragraphId,{
             text: paragraphText,

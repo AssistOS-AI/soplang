@@ -40,7 +40,9 @@ const tests = [
     './llm/llmFacadeTest.mjs',
     './pipelines/tables/tablesTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
-    './plugins/documentsTest.mjs',
+    './plugins/parallelParagraphCreation.mjs',
+    './plugins/overwriteDocCommands.mjs',
+    './plugins/deleteDocumentCommandsFromBlock.mjs'
 ];
 
 import fs from 'node:fs/promises';

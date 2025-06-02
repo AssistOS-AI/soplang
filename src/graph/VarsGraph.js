@@ -85,7 +85,15 @@ function VarsGraph(commandsRegistry) {
         return parsedCommands;
     }
 
-    this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine) {
+    this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "") {
+        let newCommandsParsed = await self.parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
+        const newNames = new Set(newCommandsParsed.map(cmd => cmd.outputVars[0]));
+        let oldCommandsParsed = await self.parseCommands(chapterId, paragraphId, oldCommands);
+        const removedVars = oldCommandsParsed.filter(cmd => !newNames.has(cmd.outputVars[0]));
+        for( let removedVar of removedVars){
+            await deleteVariable(removedVar.outputVars[0], docId);
+            $$.debug("variable", `============> Removed variable ${removedVar.outputVars[0]} from document ${docId}`);
+        }
         await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
     }
 
@@ -218,7 +226,21 @@ function VarsGraph(commandsRegistry) {
             await defaultPersistence.updateGraph("GRAPH", {state: graph});
         }
     }
+    async function deleteVariable(varName, docId) {
+        if (!docId) {
+            await $$.throwError("Document ID is mandatory");
+        }
+        if (!varName) {
+            await $$.throwError("Variable name is mandatory");
+        }
 
+        let varId = varUtil.getVarID(docId, varName);
+        if (graph[varId]) {
+            delete graph[varId];
+            await defaultPersistence.updateGraph("GRAPH", {state: graph});
+        }
+        await defaultPersistence.deleteVariable(varId);
+    }
 
     this.topologicalSort = function () {
         let visited = {};
