@@ -3,7 +3,7 @@ let documents = await $$.loadPlugin("Documents");
 async function createParagraphs(chapterId) {
     let paragraphs = [];
     for (let i = 0; i < 10; i++) {
-        let paragraph = await documents.createParagraph(chapterId, `Paragraph ${i}`);
+        let paragraph = await documents.createParagraph(chapterId, `Paragraph ${i}`, "");
         paragraphs.push(paragraph);
     }
     return paragraphs;
