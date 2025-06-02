@@ -383,11 +383,13 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
 
 
     if(_parsedCommand.outputVars.length > 1){
+        await deleteVariableWrapper(varId);
         $$.throwErrorSync("Command", _parsedCommand.command, "has more than one output variable. This is not supported!" + _parsedCommand.outputVars);
     }
 
     if(_parsedCommand.outputVars[0] !== _varName){
         console.debug("Dump varContext", varContext);
+        await deleteVariableWrapper(varId);
         $$.throwErrorSync("Output variable '"+ _parsedCommand.outputVars[0]+ "' which is different from expected name '"+ _varName + "'");
     }
 
