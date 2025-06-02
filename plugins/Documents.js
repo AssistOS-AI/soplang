@@ -126,9 +126,12 @@ async function Documents(){
         return doc;
     }
 
-    self.createChapter = async function (documentId, chapterTitle, commands = "", comments, position) {
+    self.createChapter = async function (documentId, chapterTitle, commands , comments, position) {
         //console.debug(">>>> Creating chapter", chapterTitle, "for document", documentId);
         let document = await persistence.getDocument(documentId);
+        if(!commands){
+            commands = "";
+        }
         let chapter =  await persistence.createChapter({
             title: chapterTitle,
             docId: document.docId,
@@ -158,9 +161,12 @@ async function Documents(){
         return await persistence.getChapter(chapter.id);
     }
 
-    self.createParagraph = async function (chapterId, paragraphText, commands = "", comments, position) {
+    self.createParagraph = async function (chapterId, paragraphText, commands, comments, position) {
         console.debug(">>>> Creating paragraph", paragraphText, "for chapter", chapterId, "commands", commands);
         let chapter = await persistence.getChapter(chapterId);
+        if(!commands){
+            commands = "";
+        }
         let par = await persistence.createParagraph({
             text: paragraphText,
             commands: commands,
@@ -244,6 +250,9 @@ async function Documents(){
     }
 
     self.updateChapter = async function (chapterId, chapterTitle, comments, commands) {
+        if(!chapterId || chapterTitle === undefined || chapterTitle === null || commands === undefined || commands === null){
+            throw new Error("All fields are required to be defined");
+        }
         let chapter = await persistence.getChapter(chapterId);
         await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands, chapter.commands);
         await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
@@ -265,6 +274,9 @@ async function Documents(){
     }
 
     self.updateParagraph = async function (chapterId, paragraphId, paragraphText, commands, comments) {
+        if(!chapterId || !paragraphId|| paragraphText === undefined || paragraphText === null || commands === undefined || commands === null){
+            throw new Error("All fields are required to be defined");
+        }
         let chapter = await persistence.getChapter(chapterId);
         let paragraph = await persistence.getParagraph(paragraphId);
         await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands, paragraph.commands);
