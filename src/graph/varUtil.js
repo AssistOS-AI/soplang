@@ -27,7 +27,12 @@ function getDefaultPersistence(){
 function getVarID(docId, varName){
     return docId + "." + varName;
 }
-
+async function deleteVariableWrapper(varId){
+    customTypesValuesCache.delete(varId);
+    varDefCache.delete(varId);
+    let persistence = getDefaultPersistence();
+    return await persistence.deleteVariable(varId);
+}
 async function updateVariableWrapper(varId, varContext){
     customTypesValuesCache.delete(varId);
     varDefCache.delete(varId);
@@ -436,5 +441,6 @@ export {
     updateErrorInfo,
     updateWarningInfo,
     updateDebugInfo,
-    sameValue
+    sameValue,
+    deleteVariableWrapper
 }

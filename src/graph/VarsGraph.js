@@ -239,7 +239,7 @@ function VarsGraph(commandsRegistry) {
             delete graph[varId];
             await defaultPersistence.updateGraph("GRAPH", {state: graph});
         }
-        await defaultPersistence.deleteVariable(varId);
+        await varUtil.deleteVariableWrapper(varId);
     }
 
     this.topologicalSort = function () {
