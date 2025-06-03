@@ -18,6 +18,7 @@ await $$.registerPlugin("Workspace", "../plugins/Workspace.js");
 await $$.registerPlugin("Agents", "../plugins/Agent.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
 await $$.registerPlugin("Documents", "../plugins/Documents.js");
+await $$.registerPlugin("Table", "../plugins/Table.js");
 
 import {compareObjects} from "../../src/util/soplangUtil.js";
 

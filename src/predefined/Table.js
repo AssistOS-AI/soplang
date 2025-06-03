@@ -109,8 +109,32 @@ function Table(docId, tableVarId) {
         return self;
     }
 
-    self.internalAppend = async function (row) {
-        self.data.push(row);
+    self.internalInsert = async function (validJson, graph, position) {
+        if(position == null){
+            position = self.data.length; // Default to append
+        }
+        if (position < 0 || position > self.data.length) {
+            throw new Error(`Invalid position ${position} for inserting into table with length ${self.data.length}`);
+        }
+        let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
+        self.data.splice(position, 0, computedRow);
+    }
+    self.internalUpdateRow = async function (validJson, graph) {
+        let rowId = validJson.truid;
+        if(!rowId){
+            return await self.internalInsert(validJson, docId, graph);
+        }
+        let rowToUpdate = self.data.find(row => row.truid === rowId);
+        if(!rowToUpdate){
+            return await self.internalInsert(validJson, docId, graph);
+        }
+        let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
+        for(let key in computedRow){
+            if(key === "truid"){
+                continue;
+            }
+            rowToUpdate[key] = computedRow[key];
+        }
     }
 
     self.exwipe = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
@@ -123,7 +147,7 @@ function Table(docId, tableVarId) {
             //$$.debug("table", "Type of row", typeof row, "row", JSON.stringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
             if(result && result !== "false"){
-                await newTable.internalAppend(row);
+                await newTable.internalInsert(row, currentDocId, graph);
             }
         }
         self.data = [];
