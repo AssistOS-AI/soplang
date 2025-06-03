@@ -15,21 +15,21 @@ for(let i = 0; i < 10; i++) {
     let chapter = await documents.createChapter(doc.id, `Chapter ${i}`);
     chapters.push(chapter);
 }
-await createParagraphs(chapters[0].id).then(async paragraphs => {
+ createParagraphs(chapters[0].id).then(async paragraphs => {
     for(let i = 0; i < 9; i++) {
-        await documents.deleteParagraph(chapters[0].id, paragraphs[i].id).catch(error => {
+         documents.deleteParagraph(chapters[0].id, paragraphs[i].id).catch(error => {
             console.error(`Error deleting paragraph ${paragraphs[i].id} from chapter 0:`, error);
         });
     }
 })
 //await new Promise(resolve => setTimeout(resolve, 2000));
-await createParagraphs(chapters[1].id).then(async paragraphs => {
+createParagraphs(chapters[1].id).then(async paragraphs => {
     for(let i = 0; i < 9; i++) {
-        await documents.deleteParagraph(chapters[1].id, paragraphs[i].id).catch(error => {
+         documents.deleteParagraph(chapters[1].id, paragraphs[i].id).catch(error => {
             console.error(`Error deleting paragraph ${paragraphs[i].id} from chapter 1:`, error);
         });
     }
 })
-//await new Promise(resolve => setTimeout(resolve, 5000));
+await new Promise(resolve => setTimeout(resolve, 2000));
 
 await $$.exit();

@@ -168,7 +168,7 @@ function VarsGraph(commandsRegistry) {
             for (let i = 0; i < embeddedVars.length; i++) {
                 let varName = embeddedVars[i].variable;
                 let varValue = embeddedVars[i].value;
-                self.defineVariable(varName, docId, chapterId, paragraphId,
+                await self.defineVariable(varName, docId, chapterId, paragraphId,
                     {command: "assign", inputVars: [varValue], outputVars: [varName], varTypes: ["text"]}, varValue);
             }
         }
