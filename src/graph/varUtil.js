@@ -188,8 +188,8 @@ async function setVarValue(varId, newValue, options){
             await $$.throwError(`Variable ${targetVarId} not found!`);
         }
         obj[varDef.parsedCommand.inputVars[1]] = newValue;
-        await updateVariableWrapper(targetVarId, {value: serialiseValue(obj), clock: defaultPersistenceSingleton.getLogicalTimestamp()});
-        return await updateVariableWrapper(varDef.varId, {value: undefined, clock: defaultPersistenceSingleton.getLogicalTimestamp()});
+        await updateVariableWrapper(targetVarId, {value: serialiseValue(obj), clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
+        return await updateVariableWrapper(varDef.varId, {value: undefined, clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
     }
 
     let serialisedNewValue = serialiseValue(newValue);
@@ -199,7 +199,7 @@ async function setVarValue(varId, newValue, options){
     }
 
 
-    let varContext = {value: serialisedNewValue, clock: defaultPersistenceSingleton.getLogicalTimestamp()};
+    let varContext = {value: serialisedNewValue, clock: await defaultPersistenceSingleton.getLogicalTimestamp()};
     varContext.updateTime = Date.now();
     if(options){
         if(options.duration){
@@ -321,7 +321,7 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId){
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
     //console.debug(">>>>>>>>> New alias made as ", varId, "to", referencedVarId);
-    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
+    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
 }
 
 async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, buildInstance){
@@ -335,7 +335,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, b
             return;
         }
     }
-    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
+    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
     await buildInstance.restartBuild(varId);
 }
 
