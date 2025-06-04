@@ -122,11 +122,11 @@ function Table(docId, tableVarId) {
     self.internalUpdateRow = async function (validJson, graph) {
         let rowId = validJson.truid;
         if(!rowId){
-            return await self.internalInsert(validJson, docId, graph);
+            return await self.internalInsert(validJson, graph);
         }
         let rowToUpdate = self.data.find(row => row.truid === rowId);
         if(!rowToUpdate){
-            return await self.internalInsert(validJson, docId, graph);
+            return await self.internalInsert(validJson, graph);
         }
         let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
         for(let key in computedRow){
@@ -147,7 +147,7 @@ function Table(docId, tableVarId) {
             //$$.debug("table", "Type of row", typeof row, "row", JSON.stringify(row));
             let result = await graph.runCustomCommand(currentDocId, testRowCommand, row);
             if(result && result !== "false"){
-                await newTable.internalInsert(row, currentDocId, graph);
+                await newTable.internalInsert(row, graph);
             }
         }
         self.data = [];

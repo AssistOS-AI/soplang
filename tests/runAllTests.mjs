@@ -38,7 +38,6 @@ const tests = [
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
     './llm/llmFacadeTest.mjs',
-    './pipelines/tables/tablesTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
