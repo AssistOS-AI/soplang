@@ -86,12 +86,17 @@ function VarsGraph(commandsRegistry) {
 
         for(let i = 0; i < document.chapters.length; i++){
             let chapter = await defaultPersistence.getChapter(document.chapters[i]);
-            let chapterCommands = sopLangUtil.parseCommandsForUI(chapter.commands, chapter.id);
-            commands = commands.concat(chapterCommands);
+            if(chapter.commands.trim() !== ""){
+                let chapterCommands = sopLangUtil.parseCommandsForUI(chapter.commands, chapter.id);
+                commands = commands.concat(chapterCommands);
+            }
+
             for(let i = 0; i < chapter.paragraphs.length; i++){
                 let paragraph = await defaultPersistence.getParagraph(chapter.paragraphs[i]);
-                let paragraphCommands = sopLangUtil.parseCommandsForUI(paragraph.commands, chapter.id, paragraph.id);
-                commands = commands.concat(paragraphCommands);
+                if(paragraph.text.trim() !== ""){
+                    let paragraphCommands = sopLangUtil.parseCommandsForUI(paragraph.commands, chapter.id, paragraph.id);
+                    commands = commands.concat(paragraphCommands);
+                }
             }
         }
         let variables = await defaultPersistence.getVariablesObjectsByDocId(docId);
