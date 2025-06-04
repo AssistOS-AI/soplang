@@ -28,9 +28,11 @@ async function Documents(){
     }
 
     self.updateDocument = async (documentId, title, docId, category, infoText, commands, comments) => {
-        if(!title || !docId || !category || infoText === null || infoText === undefined || commands === null || commands === undefined){
-            throw new Error("All fields are required to be defined");
-        }
+        if (!title) throw new Error("Field 'title' is required, received: " + title);
+        if (!docId) throw new Error("Field 'docId' is required, received: " + docId);
+        if (!category) throw new Error("Field 'category' is required, received: " + category);
+        if (infoText == null) throw new Error("Field 'infoText' is required, received: " + infoText);
+        if (commands == null) throw new Error("Field 'commands' is required, received: " + commands);
         let doc = await persistence.getDocument(documentId);
 
         await graph.analiseCommandSection(doc.docId, undefined, undefined, commands, doc.commands);
@@ -250,9 +252,11 @@ async function Documents(){
     }
 
     self.updateChapter = async function (chapterId, chapterTitle, comments, commands) {
-        if(!chapterId || chapterTitle === undefined || chapterTitle === null || commands === undefined || commands === null){
-            throw new Error("All fields are required to be defined");
-        }
+        if (!chapterId) throw new Error(`Field 'chapterId' is required but received: ${chapterId}`);
+        if (!chapterTitle) throw new Error(`Field 'chapterTitle' is required but received: ${chapterTitle}`);
+        // if (!comments) throw new Error(`Field 'comments' is required but received: ${comments}`);
+        if (commands == null) throw new Error(`Field 'commands' is required but received: ${commands}`);
+
         let chapter = await persistence.getChapter(chapterId);
         await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands, chapter.commands);
         await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
@@ -274,9 +278,12 @@ async function Documents(){
     }
 
     self.updateParagraph = async function (chapterId, paragraphId, paragraphText, commands, comments) {
-        if(!chapterId || !paragraphId|| paragraphText === undefined || paragraphText === null || commands === undefined || commands === null){
-            throw new Error("All fields are required to be defined");
-        }
+        if (!chapterId) throw new Error(`Field 'chapterId' is required but received: ${chapterId}`);
+        if (!paragraphId) throw new Error(`Field 'paragraphId' is required but received: ${paragraphId}`);
+        if (paragraphText == null) throw new Error(`Field 'paragraphText' is required but received: ${paragraphText}`);
+        if (commands == null) throw new Error(`Field 'commands' is required but received: ${commands}`);
+        // if (!comments) throw new Error(`Field 'comments' is required but received: ${comments}`);
+
         let chapter = await persistence.getChapter(chapterId);
         let paragraph = await persistence.getParagraph(paragraphId);
         await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands, paragraph.commands);
