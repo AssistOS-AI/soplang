@@ -2,7 +2,6 @@ import {} from "../deps/clean.mjs";
 import assert from "assert";
 let documents = await $$.loadPlugin("Documents");
 
-//TODO - fix this
 const doc = await documents.createDocument("docId", "category", "title");
 const commands = `
     @docVar1 := "doc var 1"

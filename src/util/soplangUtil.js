@@ -614,6 +614,56 @@ function sameValue(oldValue, newValue){
 }
 let compareObjects = sameValue;
 
+function parseCommandsForUI(commandsBlock, chapterId, paragraphId) {
+    let commandTextSeparatedByNewLine = extractMacroOrJSDefOnASingleLine(commandsBlock);
+    let splitCommands = commandTextSeparatedByNewLine.split("\n");
+    let commands = [];
+    for (let i = 0; i < splitCommands.length; i++) {
+        let parsedCommand = {};
+        let line = splitCommands[i].trim();
+        if(line.length === 0){
+            continue;
+        }
+        if (line.startsWith("#") || line.startsWith("//")) {
+            continue;
+        }
+        let splitCommand = line.split(" ");
+        if(!splitCommand[0].startsWith("@")){
+            continue;
+        }
+        let varName = splitCommand.splice(0, 1)[0];
+        parsedCommand.varName = varName.slice(1);
+        let command = splitCommand.splice(0, 1)[0];
+        if (command.startsWith("?")){
+            command = command.slice(1);
+            parsedCommand.conditional = true;
+        }
+        parsedCommand.command = command;
+        if(command === "new"){
+            parsedCommand.customType = splitCommand.splice(0, 1)[0];
+        }
+        let expression;
+        if (command === "macro" || command === "jsdef") {
+            let paramsSeparatedByCommas = splitCommand.splice(0, 1)[0];
+            paramsSeparatedByCommas = paramsSeparatedByCommas.slice(1, -1); // remove the quotes
+            parsedCommand.params = paramsSeparatedByCommas.split(",");
+            expression = splitCommand.join(" ");
+            expression = expression.slice(1, -1); // remove the quotes
+            expression = decodeSOPCode(expression);
+        } else {
+            expression = splitCommand.join(" ");
+        }
+        parsedCommand.expression = expression;
+        if(chapterId){
+            parsedCommand.chapterId = chapterId;
+        }
+        if(paragraphId){
+            parsedCommand.paragraphId = paragraphId;
+        }
+        commands.push(parsedCommand);
+    }
+    return commands;
+}
 export {
     parseCommandLine,
     parseTextVars,
@@ -627,4 +677,5 @@ export {
     decodeSOPCode,
     sameValue,
     compareObjects,
+    parseCommandsForUI
 }

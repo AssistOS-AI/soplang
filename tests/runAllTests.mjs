@@ -29,6 +29,7 @@ const tests = [
     './pipelines/macros/basic/bestCommandTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
     './pipelines/documents/workWithDocsTest.mjs',
+    './pipelines/documents/parseDocCommands.js',
     './pipelines/overwrite/customTypesTest.mjs',
     './pipelines/overwrite/basicOverwriteTest.mjs',
     './pipelines/macros/advanced/containersTest.mjs',

@@ -40,55 +40,79 @@ function VarsGraph(commandsRegistry) {
         $$.debug("variable", "============> Parsed code", ...lines);
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
-            let line = lines[i];
-            line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
-            //$$.debug("variable", "============> Defining variable from line", line);
-
-            let parsedCommand = null;
-            try {
-                parsedCommand = varUtil.parseCommandLine(line);
-            } catch (e) {
-                await $$.recordBuildError("Error parsing command!" + `Line ${line}  will be ignored`);
+            let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
+            if(!parsedCommand){
+                $$.debug("variable", `============> Skipping line ${i} in code block, because it is not a valid command`);
                 continue;
             }
-
-            if (parsedCommand.outputVars.length === 0) {
-                parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
-            }
-
             await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
             $$.debug("variable",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
         }
     }
+    async function parseCommand(chapterId, paragraphId, line, i){
+        line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
+        let parsedCommand = null;
+        try {
+            parsedCommand = varUtil.parseCommandLine(line);
+        } catch (e) {
+            console.error("Error parsing command!" + `Line ${line}  will be ignored`);
+            return;
+        }
 
-    this.parseCommands = async function (chapterId, paragraphId, commandTextSeparatedByNewLine){
+        //console.debug("!!!!!!!! Parsed command", parsedCommand);
+        if (parsedCommand.outputVars.length === 0) {
+            parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
+        }
+        return parsedCommand;
+    }
+    async function parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine){
         let parsedCommands = [];
         let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
-            let line = lines[i];
-            line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
-            let parsedCommand = null;
-            try {
-                parsedCommand = varUtil.parseCommandLine(line);
-            } catch (e) {
-                console.error("Error parsing command!" + `Line ${line}  will be ignored`);
-                continue;
+            let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
+            if(parsedCommand){
+                parsedCommands.push(parsedCommand);
             }
-
-            //console.debug("!!!!!!!! Parsed command", parsedCommand);
-            if (parsedCommand.outputVars.length === 0) {
-                parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
-            }
-            parsedCommands.push(parsedCommand);
         }
         return parsedCommands;
     }
 
+    this.getDocCommandsParsed = async function (docId) {
+        let commands = [];
+        let document = await defaultPersistence.getDocument(docId);
+        let docCommands = sopLangUtil.parseCommandsForUI(document.commands);
+        commands = commands.concat(docCommands);
+
+        for(let i = 0; i < document.chapters.length; i++){
+            let chapter = await defaultPersistence.getChapter(document.chapters[i]);
+            let chapterCommands = sopLangUtil.parseCommandsForUI(chapter.commands, chapter.id);
+            commands = commands.concat(chapterCommands);
+            for(let i = 0; i < chapter.paragraphs.length; i++){
+                let paragraph = await defaultPersistence.getParagraph(chapter.paragraphs[i]);
+                let paragraphCommands = sopLangUtil.parseCommandsForUI(paragraph.commands, chapter.id, paragraph.id);
+                commands = commands.concat(paragraphCommands);
+            }
+        }
+        let variables = await defaultPersistence.getVariablesObjectsByDocId(docId);
+        for(let variable of variables){
+            variable.value = await self.getVarValue(docId, variable.varName);
+        }
+        for(let command of commands){
+            let variable = variables.find(v => v.varName === command.varName);
+            if(variable){
+                command.value = variable.value;
+                if(variable.errorInfo){
+                    command.errorInfo = variable.errorInfo;
+                }
+            }
+        }
+        return commands;
+    }
     this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "") {
-        let newCommandsParsed = await self.parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
+        let newCommandsParsed = await parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
         const newNames = new Set(newCommandsParsed.map(cmd => cmd.outputVars[0]));
-        let oldCommandsParsed = await self.parseCommands(chapterId, paragraphId, oldCommands);
+        let oldCommandsParsed = await parseCommands(chapterId, paragraphId, oldCommands);
         const removedVars = oldCommandsParsed.filter(cmd => !newNames.has(cmd.outputVars[0]));
         for( let removedVar of removedVars){
             await deleteVariable(removedVar.outputVars[0], docId);
