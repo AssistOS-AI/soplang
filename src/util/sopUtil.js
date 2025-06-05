@@ -1,5 +1,5 @@
 let typesRegistry = {};
-import {convertToBase36Id} from "../../Persisto/src//persistence/utils.js"
+import {convertToBase36Id} from "../../Persisto/src/persistence/utils.js"
 let parseType = function (typeDescription) {
     let words = typeDescription.split(" ");
     let type = words[0];
