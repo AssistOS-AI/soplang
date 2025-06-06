@@ -8,6 +8,11 @@ async function Table() {
         await tableValue.internalInsert(row, graph, position);
         await workspace.setVarValue(docId, varName, tableValue);
     };
+    self.deleteRow = async function (docId, varName, position) {
+        let tableValue = await workspace.getVarValue(docId, varName);
+        await tableValue.internalDeleteRow(position, graph);
+        await workspace.setVarValue(docId, varName, tableValue);
+    }
     self.updateRow = async function (docId, varName, row) {
         let tableValue = await workspace.getVarValue(docId, varName);
         await tableValue.internalUpdateRow(row, graph);
