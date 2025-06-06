@@ -42,7 +42,8 @@ const tests = [
     './pipelines/tables/tableProcessingTest.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
-    './plugins/deleteDocumentCommandsFromBlock.mjs'
+    './plugins/deleteDocumentCommandsFromBlock.mjs',
+    './plugins/updateMacroVarValue.mjs'
 ];
 
 import fs from 'node:fs/promises';

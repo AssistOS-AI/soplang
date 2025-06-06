@@ -1,5 +1,4 @@
 import {} from "../deps/clean.mjs";
-import assert from "assert";
 let documents = await $$.loadPlugin("Documents");
 
 const doc = await documents.createDocument("docId", "category", "title");
