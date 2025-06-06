@@ -23,7 +23,7 @@ await table.insert(docId, varName , {c1: "c", c2: 4, c3: 8}, 0);
 tableVar = await workspace.getVarValue(docId, varName);
 $$.checkValue(tableVar.data[0].c4, 32);
 
-await table.deleteRow(docId, varName, 1);
+await table.deleteRow(docId, varName, tableVar.data[1].truid);
 tableVar = await workspace.getVarValue(docId, varName);
 $$.checkValue(tableVar.data[1].c1, "b");
 

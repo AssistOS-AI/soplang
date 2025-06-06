@@ -119,13 +119,8 @@ function Table(docId, tableVarId) {
         let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
         self.data.splice(position, 0, computedRow);
     }
-    self.internalDeleteRow = async function (position) {
-        if(position == null){
-            position = self.data.length; // Default to append
-        }
-        if (position < 0 || position > self.data.length) {
-            throw new Error(`Invalid position ${position} for inserting into table with length ${self.data.length}`);
-        }
+    self.internalDeleteRow = async function (rowId) {
+        let position = self.data.findIndex(row => row.truid === rowId);
         self.data.splice(position, 1);
     }
     self.internalUpdateRow = async function (validJson, graph) {
