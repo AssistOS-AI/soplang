@@ -118,6 +118,7 @@ function Table(docId, tableVarId) {
         }
         let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
         self.data.splice(position, 0, computedRow);
+        return computedRow;
     }
     self.internalDeleteRow = async function (rowId) {
         let position = self.data.findIndex(row => row.truid === rowId);
@@ -139,6 +140,7 @@ function Table(docId, tableVarId) {
             }
             rowToUpdate[key] = computedRow[key];
         }
+        return computedRow;
     }
 
     self.exwipe = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
