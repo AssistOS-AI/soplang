@@ -3,9 +3,8 @@ import {createRegistry} from "../src/graph/CommandsRegistry.js";
 import '../src/util/debugUtil.js';
 
 const ROLES = {
-    OWNER: "owner",
     ADMIN: "admin",
-    WRITE: "member",
+    MEMBER: "member",
     GUEST: "guest",
 }
 
@@ -81,7 +80,8 @@ async function Workspace() {
         return await graph.insertCode(docId, code);
     }
 
-   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId, email) {
+        await WorkspaceUser.createUser(email, email, ROLES.ADMIN);
         return await persistence.createWorkspace({
             id: workspaceName,
             ownerId: ownerId,
@@ -90,6 +90,7 @@ async function Workspace() {
             clock: 0
         });
     }
+
     self.getCollaborators = async function () {
         const userIds = await WorkspaceUser.getAllUsers();
         let users = [];
@@ -119,7 +120,7 @@ async function Workspace() {
     self.removeCollaborator = async function (email) {
         let allUsers = await self.getCollaborators();
         let user = await allUsers.find(user => user.email === email);
-        if (user === ROLES.OWNER) {
+        if (user === ROLES.ADMIN) {
             let owners = self.getOwnersCount(allUsers);
             if (owners === 1) {
                 return "Can't delete the last owner of the space";
@@ -130,9 +131,9 @@ async function Workspace() {
     self.setCollaboratorRole = async function (email, role) {
         let allUsers = await self.getCollaborators();
         let user = await allUsers.find(user => user.email === email);
-        if (user === ROLES.OWNER) {
+        if (user === ROLES.ADMIN) {
             let owners = self.getOwnersCount(allUsers);
-            if (owners === 1 && role !== ROLES.OWNER) {
+            if (owners === 1 && role !== ROLES.ADMIN) {
                 return "Can't change the role of the last owner of the space";
             }
         }
@@ -142,7 +143,7 @@ async function Workspace() {
     self.getOwnersCount = function (users) {
         let owners = 0;
         for (let id in users) {
-            if (users[id].role === ROLES.OWNER) {
+            if (users[id].role === ROLES.ADMIN) {
                 owners++;
             }
         }
