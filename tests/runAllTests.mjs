@@ -6,6 +6,7 @@ let missingPaths = [];
 const tests = [
     '../Persisto/tests/typesPersistence.mjs',
     '../Persisto/tests/getObjectsRange.mjs',
+    '../Persisto/tests/getObjectByOtherObjectId.mjs',
     './persisto/multipleGroupingTest.mjs',
     './util/SOPStringifyTest.mjs',
     './util/commandLineParserTest.js',

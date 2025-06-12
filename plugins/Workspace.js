@@ -80,8 +80,7 @@ async function Workspace() {
         return await graph.insertCode(docId, code);
     }
 
-   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId, email) {
-        await WorkspaceUser.createUser(email, email, ROLES.ADMIN);
+   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
         return await persistence.createWorkspace({
             id: workspaceName,
             ownerId: ownerId,
