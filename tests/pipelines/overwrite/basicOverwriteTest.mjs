@@ -46,3 +46,4 @@ await $$.check("doc1", "x", "vx1", "After second build");
 await $$.check("doc1", "y", "vx1", "After second build");
 
 await $$.endTest();
+
