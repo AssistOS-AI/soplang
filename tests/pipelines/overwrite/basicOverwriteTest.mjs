@@ -39,8 +39,8 @@ await $$.check("doc1", "var0", "v1" , "After second build");
 await $$.check("doc1", "var1", "v1", "After second build");
 await $$.check("doc1", "var2", "v1", "After second build");
 
-await $$.check("doc1", "a", "B", "After second build");
-await $$.check("doc1", "b", "B", "After second build");
+await $$.check("doc1", "a", "C", "After second build");
+await $$.check("doc1", "b", "C", "After second build");
 
 await $$.check("doc1", "x", "vx1", "After second build");
 await $$.check("doc1", "y", "vx1", "After second build");
