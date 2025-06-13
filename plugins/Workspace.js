@@ -91,13 +91,7 @@ async function Workspace() {
     }
 
     self.getCollaborators = async function () {
-        const userIds = await WorkspaceUser.getAllUsers();
-        let users = [];
-        for (let userId of userIds) {
-            let user = await WorkspaceUser.getUser(userId);
-            users.push(user);
-        }
-        return users;
+        return await WorkspaceUser.getAllUsers();
     }
     self.addCollaborators = async function (referrerEmail, collaborators, spaceName) {
         const users = await self.getCollaborators();
@@ -151,6 +145,19 @@ async function Workspace() {
 
     self.getWorkspace = async function (globalId) {
         return await persistence.getWorkspace(globalId);
+    }
+    self.getWorkspaceInfo = async function (globalId) {
+        let workspace = await persistence.getWorkspace(globalId);
+        let users = await self.getCollaborators();
+        let documents = await persistence.getEveryDocument();
+        return {
+            id: workspace.id,
+            spaceGlobalId: workspace.spaceGlobalId,
+            name: workspace.name,
+            documents: documents,
+            clock: workspace.clock,
+            users: users,
+        };
     }
 
     self.defineCustomType = function (typeName, typeDefinition) {

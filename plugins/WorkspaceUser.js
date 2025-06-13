@@ -26,7 +26,7 @@ async function WorkspaceUser(){
     }
 
     self.getAllUsers = async function () {
-        return await persistence.getEveryUser();
+        return await persistence.getEveryUserObject();
     }
 
     self.forceSave = async function () {
