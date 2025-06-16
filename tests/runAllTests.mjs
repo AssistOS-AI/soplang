@@ -4,6 +4,7 @@ let failedTests = [];
 let missingPaths = [];
 
 const tests = [
+    '../Persisto/tests/getEveryIndexValue.mjs',
     '../Persisto/tests/typesPersistence.mjs',
     '../Persisto/tests/getObjectsRange.mjs',
     '../Persisto/tests/getObjectByOtherObjectId.mjs',
