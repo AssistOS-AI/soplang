@@ -103,6 +103,9 @@ async function Workspace() {
                 continue;
             }
             await WorkspaceUser.createUser(collaborator.email, collaborator.email, collaborator.role);
+            if (process.env.NODE_ENV === 'development'){
+                continue;
+            }
             let subject = "You have been added to a space";
             let text = `You have been added to the space ${spaceName} by ${referrerEmail}`;
             let html = `<p>You have been added to the space ${spaceName} by ${referrerEmail}</p>`;
