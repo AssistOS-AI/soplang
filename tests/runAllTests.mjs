@@ -23,6 +23,8 @@ const tests = [
     './plugins/documentSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
+    './pipelines/discussion/discussionCommand.mjs',
+    './pipelines/discussion/callDiscussionInDiscussion.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/macros/basic/runMacroTest.mjs',
@@ -30,6 +32,7 @@ const tests = [
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',
+    './pipelines/macros/basic/defineMacroInMacro.mjs',
     './pipelines/macros/basic/importMacroTest.mjs',
     './pipelines/macros/basic/bestCommandTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored

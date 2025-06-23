@@ -56,7 +56,41 @@ function CommandsRegistry( workspace) {
         commands[parsedCommand.outputVars[0]] = eval(code);
     };
 
+    commands.discussion = async function (inputValues, parsedCommand, currentDocId, graph) {
+        let declaredParams = inputValues[0].split(",");
+        if(inputValues[0].length === 0){
+            declaredParams = [];
+        }
+        let parameters = [];
+        let sopCode = varUtil.decodeSOPCode(parsedCommand.inputVars[1]);
+        //in parsedCommand.inputVars[0] if a variable starts with a ~ it means that it is a variable that will be imported otherwise is a parameter
+        for(let i = 0; i < declaredParams.length; i++){
+            let varName = declaredParams[i];
+            if(varName[0] === "~"){
+                parameters.push(varName.slice(1));
+            } else {
+                parameters.push(varName);
+            }
+        }
 
+        $$.debug("discussion", `>>> Defining sop code:${parsedCommand.outputVars[0]}`, sopCode);
+        commands[parsedCommand.outputVars[0]] = async function(__inputValues, __parsedCommand) {
+            let context = [];
+            for(let v in parameters){
+                let varName = parameters[v];
+                let fullVarName = varUtil.getVarID(currentDocId, varName);
+                let varDef = await varUtil.getVariable(fullVarName);
+                if(varDef === undefined){
+                    await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Ignoring invalid command trying to import unknown variable '${fullVarName}`);
+                    //continue;
+                }
+                context.push(varName);
+            }
+
+            let executionResult = await graph.runLocalCode(sopCode, currentDocId, context);
+            return executionResult;
+        };
+    }
     commands.jsdef = async function (inputValues, parsedCommand, originalCurrentDocId, graph) {
         let declaredParams = inputValues[0].split(",");
         let parameters = [];
@@ -149,7 +183,7 @@ function CommandsRegistry( workspace) {
         const typeName = inputValues[0];
         const primaryKey = inputValues[1];
         const args = inputValues.slice(2);
-        let instance =  customTypeRegistry.lookupInstance(currentDocId, typeName, outputVarId, primaryKey, ...args);
+        let instance =  await customTypeRegistry.lookupInstance(currentDocId, typeName, outputVarId, primaryKey, ...args);
         if(instance === undefined){
             await varUtil.updateErrorInfo(parsedCommand.outputVars[0], `Invalid lookup command. The instance of type ${typeName} with primary key ${primaryKey} was not found. The output variable ${parsedCommand.outputVars[0]} will remain undefined`);
             return undefined;
@@ -261,6 +295,7 @@ const createRegistry = async function (workspace) {
     await import("../predefined/DocumentCommands.js");
     await import("../predefined/Set.js");
     await import("../predefined/Agent.js");
+    await import("../predefined/Workflow.js");
 
     let {ifCommand} = await import("../predefined/ifCommand.js");
     registry.registerCommand("ifCommand", ifCommand);
