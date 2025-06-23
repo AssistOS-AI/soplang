@@ -13,6 +13,17 @@ function Workflow(){
     this.configure = async function(inputValues, parsedCommand, currentDocId, graph) {
         console.log(inputValues);
     }
+    this.getTextResponse = async function(inputValues, parsedCommand, currentDocId, graph){
+        const llm = await $$.loadPlugin("LLM");
+        const [provider, model, prompt,options={}] = inputValues;
+        return await llm.getTextResponse(provider, model, prompt, options);
+
+    }
+    this.getChatCompletionResponse = async function(inputValues, parsedCommand, currentDocId, graph) {
+        const llm = await $$.loadPlugin("LLM");
+        const [provider, model, messages,options={}] = inputValues;
+        return await llm.getChatCompletionResponse(provider, model, messages, options);
+    }
 
     this.restore = async function(JSONSerialisation) {
         persistence = await $$.loadPlugin("DefaultPersistence");
