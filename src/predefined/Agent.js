@@ -18,6 +18,17 @@ function Agent(){
             agentInstance = await persistence.getAgent(this.agentName);
         }
     }
+
+    this.getQuestion = async function(prompt) {
+
+    }
+    this.response = async function (questioningAgent,question){
+
+    }
+    this.acknowledgeResponse = async function(respondingAgent,question){
+
+    }
+
     /*
     Methods:
 
