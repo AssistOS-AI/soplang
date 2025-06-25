@@ -31,4 +31,4 @@ assert(workFlow.isCompleted, true);
 assert(workFlow.answers, [
     {"carName": "Tesla Model S", "color": "Red", "year": 2020}
 ]);
-$$.endTest();
+await $$.endTest();

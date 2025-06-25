@@ -1,6 +1,7 @@
 import {} from "../../deps/clean.mjs";
 
 let workspace = await $$.loadPlugin("Workspace");
+let Chat = await $$.loadPlugin("Chat");
 const llms =
     [
         {
@@ -149,15 +150,15 @@ for (const model of llms) {
     await llm.registerModel(model);
 }
 let script = `
-    @currentUser := "USER.1"
-    @currentChatId := "CHAT.1"
+    @chatId := "TestChat"
+    @currentUser := "John"
     @agentName := "Assistant"
-    @agentName2 := "FoodAgent"
-    @chat new Chat
-    chat.setQueryAgent $currentUser
-    chat.setResponseAgent $agentName
-    chat.addAgent $agentName2
+    @assistant new Agent $agentName
+    @user new Agent $currentUser true
+    @chat new Chat $chatId $assistant $user
 `;
-
-
-let docId = await workspace.runCode(script);
+//script needs to have @chat variable
+let docId = "TestChat"
+await Chat.createChat(docId, script);
+await Chat.activateChat(docId);
+await $$.endTest();

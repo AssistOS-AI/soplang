@@ -2,7 +2,7 @@ function Workflow(docId, varId){
     let self = this;
     let persistence, agentPlugin, workspace;
     this.agentName = undefined;
-    this.varID = varId;
+    this.varId = varId;
     let agentInstance = undefined;
     self.__type = "Agent";
     this.forms = [];
@@ -72,13 +72,13 @@ function Workflow(docId, varId){
         //find any possible answers for the current form
         let answers = await this.findPossibleAnswers(response);
         if(Object.keys(answers).length > 0) {
-            //store the answer
             if(!this.answers[this.currentFormIndex]) {
                 this.answers[this.currentFormIndex] = {};
             }
             for(let fieldName of Object.keys(answers)) {
                 this.answers[this.currentFormIndex][fieldName] = answers[fieldName];
             }
+            //update persistence
         }
     }
     this.canProceedToNextForm = async function() {

@@ -2,8 +2,11 @@ async function Chat() {
     const self = {}
 
     const Document = await $$.loadPlugin('Documents')
+    const Workspace = await $$.loadPlugin('Workspace')
 
-    self.getChat = async chatId => Document.getDocument(chatId)
+    self.getChat = async function(chatId) {
+       return await Document.dumpDocument(chatId)
+    }
 
     self.getChatMessage = async (chatId, messageId) =>
         Document.getParagraph(messageId)
@@ -24,11 +27,13 @@ async function Chat() {
         return Promise.all(contextChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
     }
 
-    self.createChat = async docId => {
-        const document = await Document.createDocument(docId, 'chat', docId)
-        await Document.createChapter(document.id, 'Messages', '')
-        await Document.createChapter(document.id, 'Context', '')
-        return document.id
+    self.createChat = async function (docId, script) {
+        const document = await Document.createDocument(docId, 'chat', docId);
+        await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, script, document.comments);
+        await Document.createChapter(document.id, 'Messages', '');
+        await Document.createChapter(document.id, 'Context', '');
+        await Workspace.buildOnlyForDocument(docId);
+        return document.id;
     }
 
     self.deleteChat = chatId => Document.deleteDocument(chatId)
@@ -122,10 +127,8 @@ async function Chat() {
         const chat = await Document.getDocument(chatId)
         let chapterId
         if (chat.chapters.length === 0) {
-            ;[chapterId] = await Promise.all([
-                Document.createChapter(chatId, 'Messages', {}, [], 0),
-                Document.createChapter(chatId, 'Context', {}, [], 1)
-            ])
+            chapterId = await Document.createChapter(chatId, 'Messages', "");
+            await Document.createChapter(chatId, 'Context', "");
         } else {
             const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
             chapterId = chapters.find(chapter => chapter.title === 'Messages')?.id
@@ -136,10 +139,26 @@ async function Chat() {
 
     self.sendQuery = async (chatId, personalityId, userId, userPrompt) => {}
 
-    self.sendStreamingQuery = async (chatId, personalityId, userId, userPrompt) =>
-        self.sendQuery(chatId, personalityId, userId, userPrompt)
+    self.sendStreamingQuery = async (chatId, personalityId, userId, userPrompt) => {
+        return await self.sendQuery(chatId, personalityId, userId, userPrompt)
+    }
 
-    return self
+    self.activateChat = async function (chatId){
+        let graph = Workspace.getGraph();
+        let chatInstance = await graph.getVarValue(chatId, "chat");
+        chatInstance.activateChat();
+    }
+    self.deactivateChat = async function (chatId){
+        let graph = Workspace.getGraph();
+        let chatInstance = await graph.getVarValue(chatId, "chat");
+        chatInstance.deactivateChat();
+    }
+    self.userInput = function (chatId, userId, message) {
+        let graph = Workspace.getGraph();
+        let userInstance = graph.getVarValue(chatId, userId);
+        userInstance.resolveQuestionOrResponse(message);
+    }
+    return self;
 }
 
 let singletonInstance
@@ -156,5 +175,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ['Documents']
+    return ['Documents', "Workspace"]
 }
