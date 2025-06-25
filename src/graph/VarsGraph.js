@@ -131,29 +131,6 @@ function VarsGraph(commandsRegistry) {
         await defineVarsFromCode(inDocId, "_", "_", code);
     }
 
-    this.runLocalCode = async function (code, parentDocId, context) {
-        if (code === "" || code === null || code === undefined) {
-            return;
-        }
-        const CODE_EXECUTION = "CODEX";
-        let inDocId = CODE_EXECUTION + "_" + await defaultPersistence.getNextNumber(CODE_EXECUTION);
-        await defaultPersistence.createDocument({
-            docId: inDocId,
-            title: inDocId,
-            chapters: [],
-            category: CODE_EXECUTION,
-            commands: code
-        });
-        let initialisation = "@arg0 := " + inDocId + "\n";
-        for(let varName of context){
-            initialisation += `@${varName} alias "${parentDocId}" ` + varName + "\n";
-        }
-        code = initialisation + code;
-        await defineVarsFromCode(inDocId, "_", "_", code);
-        await self.buildOnlyForDocument(inDocId, context);
-        //todo delete temp document?
-        return inDocId;
-    }
     this.runCode = async function (code, ...args) {
         if (code === "" || code === null || code === undefined) {
             return;
@@ -417,7 +394,18 @@ function VarsGraph(commandsRegistry) {
         console.debug(`DEBUG# Expanding inline macro '${intendedCommand}' for return variable '${returnVarName}' with input vars [${parsedCommand.inputVars}]`);
         return returnVarName;
     }
-
+    async function isFunctionCommand(command) {
+        let hasVariable = await defaultPersistence.hasVariable(command);
+        if(!hasVariable){
+            return false;
+        }
+        let macroVar = await varUtil.getVariable(command);
+        let functionCommands = ["macro", "jsdef", "discussion"];
+        if(functionCommands.includes(macroVar.parsedCommand.command)){
+            return macroVar.parsedCommand.command;
+        }
+        return false;
+    }
     async function runCommand(targetVar, buildInstance) {
         function isChain(command) {
             return command.includes(".");
@@ -476,15 +464,8 @@ function VarsGraph(commandsRegistry) {
             if(value === "#"){
                 continue;
             }
-
             switch (parsedCommand.varTypes[i]) {
                 case "var":
-                    if(buildInstance.context){
-                        if(buildInstance.context[value]){
-                            inputValues.push(buildInstance.context[value]);
-                            break;
-                        }
-                    }
                     inputValues.push(await resolveValue(value));
                     break;
                 default:
@@ -700,8 +681,8 @@ function VarsGraph(commandsRegistry) {
         return undefined;
     }
 
-    self.buildAll = async function (onlyForDocId, context) {
-        let buildInstance = new BuildInstance(onlyForDocId, context);
+    self.buildAll = async function (onlyForDocId) {
+        let buildInstance = new BuildInstance(onlyForDocId);
         let result = await buildInstance.run();
         if(!result){
             console.log("Build stopped with error");
@@ -710,8 +691,8 @@ function VarsGraph(commandsRegistry) {
         return result;
     }
 
-    self.buildOnlyForDocument = async function (docID, context) {
-        await self.buildAll(docID, context);
+    self.buildOnlyForDocument = async function (docID) {
+        await self.buildAll(docID);
     }
 
     function generateCSV(header, values) {
