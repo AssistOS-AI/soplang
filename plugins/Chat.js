@@ -27,13 +27,25 @@ async function Chat() {
         return Promise.all(contextChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
     }
 
-    self.createChat = async function (docId, script) {
+    self.createChat = async function (docId, code, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
-        await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, script, document.comments);
+        let initialisation = "@arg0 := " + document.docId + "\n";
+        if (Array.isArray(args)) {
+            for (let i = 0; i < args.length; i++) {
+                initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
+            }
+        } else {
+            initialisation += ("@arg1 := " + args + "\n");
+        }
+        code = initialisation + code;
+        await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await Document.createChapter(document.id, 'Messages', '');
         await Document.createChapter(document.id, 'Context', '');
         await Workspace.buildOnlyForDocument(docId);
-        return document.id;
+        let graph = Workspace.getGraph();
+        let chat = await graph.getVarValue(docId, "chat");
+        await chat.start();
+        return chat;
     }
 
     self.deleteChat = chatId => Document.deleteDocument(chatId)
@@ -143,20 +155,11 @@ async function Chat() {
         return await self.sendQuery(chatId, personalityId, userId, userPrompt)
     }
 
-    self.activateChat = async function (chatId){
+    self.chatInput = async function (chatId, agentName, message) {
         let graph = Workspace.getGraph();
-        let chatInstance = await graph.getVarValue(chatId, "chat");
-        chatInstance.activateChat();
-    }
-    self.deactivateChat = async function (chatId){
-        let graph = Workspace.getGraph();
-        let chatInstance = await graph.getVarValue(chatId, "chat");
-        chatInstance.deactivateChat();
-    }
-    self.userInput = function (chatId, userId, message) {
-        let graph = Workspace.getGraph();
-        let userInstance = graph.getVarValue(chatId, userId);
-        userInstance.resolveQuestionOrResponse(message);
+        let chat = await graph.getVarValue(chatId, "chat");
+        await chat.input(agentName, message);
+        await Workspace.buildOnlyForDocument(chatId);
     }
     return self;
 }

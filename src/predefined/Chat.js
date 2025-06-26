@@ -1,47 +1,42 @@
 function Chat(docId, varId) {
-    let self = this;
+    this.__type = "Chat"
     let instance, persistence;
     this.docId = docId;
     this.varId = varId;
     this.activated = false;
     let workspace, chatPlugin;
-    this.init = async function (chatId, ...agents) {
-        this.chatId = chatId;
+    this.messages = [];
+    this.init = async function (...agents) {
         this.interrogator = agents[0].varId;
-        agents.shift();
-        this.respondents = agents.map(agent => agent.varId);
+        this.agents = agents.map((agent) => agent.varId);
+    }
+    this.input = async function (from, message) {
+        this.messages.push({from, message});
+        let graph = workspace.getGraph();
+        for(let respondent of this.agents) {
+            let agent = await graph.getVarValue(respondent);
+            if(agent.agentName === from){
+                continue;
+            }
+            agent.acknowledge(from, message);
+        }
+    }
+    this.start = async function () {
+        let graph = workspace.getGraph();
+        let interrogator = await graph.getVarValue(this.interrogator);
+        await interrogator.acknowledge("waitInput", "Begin conversation");
     }
 
-    this.activateChat = async function() {
-        this.activated = true;
-        let graph = workspace.getGraph();
-        let respondent = await graph.getVarValue(this.respondents[0]);
-        if (!respondent) {
-            throw new Error("Respondent agent is not defined.");
-        }
-        let interrogatorAgent = await graph.getVarValue(this.interrogator);
-        if (!interrogatorAgent) {
-            throw new Error("Interrogator agent is not defined.");
-        }
-        while(this.activated) {
-            let question = await interrogatorAgent.getQuestion();
-            console.log(question);
-            //await chatPlugin.displayMessage(question);
-            let response = await respondent.getResponse(interrogatorAgent, question);
-            console.log(response);
-            await interrogatorAgent.acknowledgeResponse(respondent, response);
-        }
+    this.displayMessage = async function (from, message) {
+
     }
-    this.deactivateChat = async function () {
-        this.activated = false;
-    }
+
     this.restore = async function(JSONSerialisation) {
         if(JSONSerialisation){
             this.docId = JSONSerialisation.docId;
             this.chatId = JSONSerialisation.chatId;
             this.interrogator = JSONSerialisation.interrogator;
-            this.respondents = JSONSerialisation.respondents;
-            this.activated = JSONSerialisation.activated;
+            this.agents = JSONSerialisation.agents;
         }
         workspace = $$.loadPlugin("Workspace");
         chatPlugin = $$.loadPlugin("Chat");

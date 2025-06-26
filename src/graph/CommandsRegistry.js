@@ -308,7 +308,8 @@ const createRegistry = async function (workspace) {
     await import("../predefined/Table.js");
     await import("../predefined/DocumentCommands.js");
     await import("../predefined/Set.js");
-    await import("../predefined/Agent.js");
+    await import("../predefined/ChatAIAgent.js");
+    await import("../predefined/ChatUserAgent.js");
     await import("../predefined/Workflow.js");
     await import("../predefined/Form.js");
     await import("../predefined/Chat.js");
