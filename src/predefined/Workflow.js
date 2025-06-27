@@ -24,8 +24,7 @@ function Workflow(docId, varId){
             }
             if(value.__type === "Form"){
                 this.forms.push(value.varId);
-                let instance = value.instance;
-                self.generalInstructionPrompt += JSON.stringify(instance.formData) + " ";
+                self.generalInstructionPrompt += JSON.stringify(value.formData) + " ";
             }
         }
         await persistence.updateAgent(self.agentName, {forms:this.forms});
@@ -33,7 +32,7 @@ function Workflow(docId, varId){
     this.getCurrentRequiredFields = async function() {
         let graph = workspace.getGraph();
         let form = await graph.getVarValue(this.docId, this.forms[this.currentFormIndex]);
-        return form.instance.formData || {};
+        return form.formData || {};
     }
     this.getMissingFields = async function() {
         const formAnswers = this.answers[this.currentFormIndex] || {};
@@ -62,7 +61,7 @@ function Workflow(docId, varId){
         let currentForm = await workspace.getVarValue(this.docId, this.forms[this.currentFormIndex]);
         let answers = {};
         for(let fieldName in response) {
-            if(currentForm.instance.formData[fieldName]){
+            if(currentForm.formData[fieldName]){
                 answers[fieldName] = response[fieldName];
             }
         }

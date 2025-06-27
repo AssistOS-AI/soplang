@@ -19,7 +19,6 @@ await $$.registerPlugin("Agents", "../plugins/Agent.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
 await $$.registerPlugin("Documents", "../plugins/Documents.js");
 await $$.registerPlugin("Table", "../plugins/Table.js");
-await $$.registerPlugin("Form", "../plugins/Form.js");
 await $$.registerPlugin("LLM", "../plugins/LLM.js");
 await $$.registerPlugin("Chat", "../plugins/Chat.js");
 

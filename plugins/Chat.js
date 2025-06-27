@@ -161,6 +161,22 @@ async function Chat() {
         await chat.input(agentName, message);
         await Workspace.buildOnlyForDocument(chatId);
     }
+    let messagePromises = [];
+    self.waitMessage = async function (chatId) {
+        let resolveFn;
+        const promise = new Promise((resolve) => {
+            resolveFn = resolve;
+        });
+        messagePromises.push({ chatId, resolve: resolveFn });
+        return promise;
+    }
+    self.notify = function (chatId, response) {
+        let entry = messagePromises.find(p => p.chatId === chatId);
+        if (entry) {
+            entry.resolve(response);
+            messagePromises.splice(messagePromises.indexOf(entry), 1);
+        }
+    }
     return self;
 }
 

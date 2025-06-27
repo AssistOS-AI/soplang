@@ -17,11 +17,16 @@ let docId = "TestChat"
 await chatPlugin.createChat(docId, script, ["John", "Assistant"]);
 
 await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?");
-await chatPlugin.chatInput(docId, "John", "What is your name?");
 
-let chat = await workspace.getVarValue(docId, "chat");
-assert(chat.messages[0].from === "John", "first message should be from John");
-assert(chat.messages[1].from === "Assistant", "second message should be from Assistant");
-assert(chat.messages[2].from === "John", "third message should be from John");
-assert(chat.messages[3].from === "Assistant", "fourth message should be from Assistant");
+let response = await chatPlugin.waitMessage(docId);
+assert(response.from === "John", "response should be from waitInput");
+
+await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?");
+response = await chatPlugin.waitMessage(docId);
+assert(response.from === "Assistant", "response should be from Assistant");
+
+await chatPlugin.chatInput(docId, "John", "What is your name?");
+response = await chatPlugin.waitMessage(docId);
+assert(response.from === "Assistant", "response should be from Assistant");
+
 await $$.endTest();

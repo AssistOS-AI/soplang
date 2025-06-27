@@ -4,6 +4,7 @@ function ChatAIAgent(docId, varId) {
     this.__type = "ChatAIAgent";
     this.varId = varId;
     this.docId = docId;
+    let interrogator;
     this.init = async function(agentName) {
         persistence = await $$.loadPlugin("DefaultPersistence");
         this.agentName = agentName;
@@ -23,7 +24,9 @@ function ChatAIAgent(docId, varId) {
         //recordResponse
         let graph = workspace.getGraph();
         let chat = await graph.getVarValue(this.docId, "chat");
-        chat.input(this.agentName, `hello, im ${this.agentName}`);
+        //if(from === chat.interrogator){
+            await chat.input(this.agentName, `hello, im ${this.agentName}`);
+        //}
     }
 
     /*
