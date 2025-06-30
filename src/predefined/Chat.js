@@ -1,3 +1,5 @@
+import { getVarID } from "../graph/varUtil.js";
+
 function Chat(docId, varId) {
     this.__type = "Chat"
     let instance, persistence;
@@ -7,11 +9,19 @@ function Chat(docId, varId) {
     let workspace, chatPlugin;
 
     this.init = async function (...agents) {
-        this.interrogator = agents[0].varId;
-        this.agents = agents.map((agent) => agent.varId);
+        let agentIds = [];
+        for(let agent of agents) {
+            if(typeof(agent) === "string") {
+                agentIds.push(getVarID(this.docId, agent));
+            } else {
+                agentIds.push(agent.varId);
+            }
+        }
+        this.interrogator = agentIds[0];
+        this.agents = agentIds;
     }
     this.input = async function (from, message) {
-        chatPlugin.notify({from, message});
+        chatPlugin.notify(this.docId, {from, message});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);

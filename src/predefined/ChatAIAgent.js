@@ -22,11 +22,11 @@ function ChatAIAgent(docId, varId) {
 
     this.acknowledge = async function(from, message) {
         //recordResponse
-        let graph = workspace.getGraph();
-        let chat = await graph.getVarValue(this.docId, "chat");
-        //if(from === chat.interrogator){
+        setTimeout(async ()=> {
+            let graph = workspace.getGraph();
+            let chat = await graph.getVarValue(this.docId, "chat");
             await chat.input(this.agentName, `hello, im ${this.agentName}`);
-        //}
+        },0);
     }
 
     /*

@@ -1,3 +1,6 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const soundpubsub = require('soundpubsub').soundPubSub;
 async function Chat() {
     const self = {}
 
@@ -169,27 +172,25 @@ async function Chat() {
         return await self.sendQuery(chatId, personalityId, userId, userPrompt)
     }
 
-    self.chatInput = async function (chatId, agentName, message) {
-        let graph = Workspace.getGraph();
-        let chat = await graph.getVarValue(chatId, "chat");
-        await chat.input(agentName, message);
-        await Workspace.buildOnlyForDocument(chatId);
+    self.chatInput = function (chatId, agentName, message) {
+        setTimeout(async ()=>{
+            let graph = Workspace.getGraph();
+            let chat = await graph.getVarValue(chatId, "chat");
+            await chat.input(agentName, message);
+            await Workspace.buildOnlyForDocument(chatId);
+        },0);
     }
-    let messagePromises = [];
     self.waitMessage = async function (chatId) {
-        let resolveFn;
-        const promise = new Promise((resolve) => {
-            resolveFn = resolve;
+        let resolveFN;
+        soundpubsub.subscribe(chatId, (response) => {
+            resolveFN(response);
         });
-        messagePromises.push({chatId, resolve: resolveFn});
-        return promise;
+        return new Promise((resolve) => {
+            resolveFN = resolve;
+        });
     }
     self.notify = function (chatId, response) {
-        let entry = messagePromises.find(p => p.chatId === chatId);
-        if (entry) {
-            entry.resolve(response);
-            messagePromises.splice(messagePromises.indexOf(entry), 1);
-        }
+        soundpubsub.publish(chatId, response);
     }
     return self;
 }
