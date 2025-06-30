@@ -3,11 +3,16 @@ async function Chat() {
 
     const Document = await $$.loadPlugin('Documents')
     const Workspace = await $$.loadPlugin('Workspace')
+    const Process = await $$.loadPlugin('Process')
 
-    self.getChat = async function(chatId) {
-       return await Document.dumpDocument(chatId)
+
+    self.getChat = async function (chatId) {
+        return await Document.dumpDocument(chatId)
     }
-
+    self.getChats = async function () {
+        const documents = await Document.getDocumentsByCategory('chat')
+        return Promise.all(documents.map(doc => Document.dumpDocument(doc)))
+    }
     self.getChatMessage = async (chatId, messageId) =>
         Document.getParagraph(messageId)
 
@@ -27,7 +32,7 @@ async function Chat() {
         return Promise.all(contextChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
     }
 
-    self.createChat = async function (docId, code, args) {
+    self.createChat = async function (docId, processId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
         let initialisation = "@arg0 := " + document.docId + "\n";
         if (Array.isArray(args)) {
@@ -37,14 +42,17 @@ async function Chat() {
         } else {
             initialisation += ("@arg1 := " + args + "\n");
         }
-        code = initialisation + code;
+        const script = await Process.getProcess(processId);
+        const saveScriptVar = "@scriptId := " + script.id + "\n";
+        const code = initialisation + saveScriptVar + script.soplang;
         await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await Document.createChapter(document.id, 'Messages', '');
         await Document.createChapter(document.id, 'Context', '');
         await Workspace.buildOnlyForDocument(docId);
+
         let graph = Workspace.getGraph();
         let chat = await graph.getVarValue(docId, "chat");
-        await chat.start();
+        //await chat.start();
         return chat;
     }
 
@@ -82,7 +90,7 @@ async function Chat() {
         const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
         const contextChapter = chapters.find(chapter => chapter.title === 'Context')
         if (!contextChapter) throw new Error('Context chapter not found')
-        return Document.createParagraph(contextChapter.id, message, { replay: { role: 'assistant' } }, {})
+        return Document.createParagraph(contextChapter.id, message, {replay: {role: 'assistant'}}, {})
     }
 
     self.deletePreferenceFromContext = async (chatId, messageId) => {
@@ -107,7 +115,12 @@ async function Chat() {
         message.commands.replay.isContext = true
         await Document.updateParagraph(messageChapter.id, messageId, message.text, message.commands, message.comments)
 
-        return Document.createParagraph(contextChapter.id, message.text, { replay: { role: 'assistant', isContextFor: message.id } }, {})
+        return Document.createParagraph(contextChapter.id, message.text, {
+            replay: {
+                role: 'assistant',
+                isContextFor: message.id
+            }
+        }, {})
     }
 
     self.removeMessageFromContext = async (chatId, messageId) => {
@@ -146,10 +159,11 @@ async function Chat() {
             chapterId = chapters.find(chapter => chapter.title === 'Messages')?.id
         }
         if (!chapterId) throw new Error('Messages chapter not found')
-        return Document.createParagraph(chapterId, message, { replay: { role, name: userId } }, {})
+        return Document.createParagraph(chapterId, message, {replay: {role, name: userId}}, {})
     }
 
-    self.sendQuery = async (chatId, personalityId, userId, userPrompt) => {}
+    self.sendQuery = async (chatId, personalityId, userId, userPrompt) => {
+    }
 
     self.sendStreamingQuery = async (chatId, personalityId, userId, userPrompt) => {
         return await self.sendQuery(chatId, personalityId, userId, userPrompt)
@@ -167,7 +181,7 @@ async function Chat() {
         const promise = new Promise((resolve) => {
             resolveFn = resolve;
         });
-        messagePromises.push({ chatId, resolve: resolveFn });
+        messagePromises.push({chatId, resolve: resolveFn});
         return promise;
     }
     self.notify = function (chatId, response) {
@@ -194,5 +208,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ['Documents', "Workspace"]
+    return ['Documents', "Workspace", "DefaultPersistence", "Process"]
 }

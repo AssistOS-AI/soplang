@@ -15,9 +15,7 @@ async function Agent() {
                 description: "string",
                 imageId: "string",
                 chatPrompt: "string",
-                chats: "array document",
                 contextSize: "integer",
-                selectedChat: "string",
                 selectedTextLlm: "llm",
                 selectedChatLlm: "llm",
                 telegramBot: "any",
@@ -101,13 +99,10 @@ async function Agent() {
         await self.updateAgent(agent.id, {...agent});
     }
     self.createAgent = async function (name, description, chatPrompt, imageId) {
-        const chatId = await Chat.createChat(name);
         return await persistence.createAgent({
             name: name,
             description: description,
             imageId: imageId,
-            chats: [chatId],
-            selectedChat: chatId,
             selectedChatLlm: null,
             selectedTextLlm: null,
             contextSize: 3,
