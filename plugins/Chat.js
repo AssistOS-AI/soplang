@@ -4,9 +4,9 @@ const soundpubsub = require('soundpubsub').soundPubSub;
 async function Chat() {
     const self = {}
 
-    const Document = await $$.loadPlugin('Documents')
-    const Workspace = await $$.loadPlugin('Workspace')
-    const Process = await $$.loadPlugin('Process')
+    const Document =  $$.loadPlugin('Documents');
+    const Workspace = $$.loadPlugin('Workspace');
+    const chatScriptPlugin = $$.loadPlugin('ChatScript');
 
 
     self.getChat = async function (chatId) {
@@ -35,7 +35,7 @@ async function Chat() {
         return Promise.all(contextChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
     }
 
-    self.createChat = async function (docId, processId, args) {
+    self.createChat = async function (docId, scriptId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
         let initialisation = "@arg0 := " + document.docId + "\n";
         if (Array.isArray(args)) {
@@ -45,9 +45,9 @@ async function Chat() {
         } else {
             initialisation += ("@arg1 := " + args + "\n");
         }
-        const script = await Process.getProcess(processId);
+        const script = await chatScriptPlugin.getChatScript(scriptId);
         const saveScriptVar = "@scriptId := " + script.id + "\n";
-        const code = initialisation + saveScriptVar + script.soplang;
+        const code = initialisation + saveScriptVar + script.code;
         await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await Document.createChapter(document.id, 'Messages', '');
         await Document.createChapter(document.id, 'Context', '');
@@ -55,7 +55,7 @@ async function Chat() {
 
         let graph = Workspace.getGraph();
         let chat = await graph.getVarValue(docId, "chat");
-        //await chat.start();
+        await chat.start();
         return chat;
     }
 
@@ -209,5 +209,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ['Documents', "Workspace", "DefaultPersistence", "Process"]
+    return ['Documents', "Workspace", "DefaultPersistence", "ChatScript"]
 }

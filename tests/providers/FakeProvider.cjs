@@ -29,14 +29,14 @@ function FakeProvider() {
 
     this.getTextResponse = async function(model, prompt, options = {}) {
         if (!responses.has(prompt)) {
-            throw new Error(`No response set for ${prompt}`)
+            return "Hello, I am an AI agent";
         }
         return responses.get(prompt)
     }
 
     this.getTextStreamingResponse = async function(model, prompt, options = {}, onDataChunk) {
         if (!responses.has(prompt)) {
-            throw new Error(`No response set for ${prompt}`)
+            return "Hello, I am an AI agent";
         }
         const responseStream = responses.get(prompt)
         const chunks = responseStream.split(' ')
@@ -49,14 +49,14 @@ function FakeProvider() {
 
     this.getChatCompletionResponse = async function (model, messages, options = {}) {
         if (!responses.has(messages)) {
-            throw new Error(`No response set for ${messages}`)
+            return "Hello, I am an AI agent";
         }
         return responses.get(messages)
     }
 
     this.getChatCompletionStreamingResponse = async function(model, messages, options = {}, onDataChunk) {
         if (!responses.has(messages)) {
-            throw new Error(`No response set for ${messages}`)
+            return "Hello, I am an AI agent";
         }
         const responseStream = responses.get(messages)
         for (const responseChunk of responseStream) {
