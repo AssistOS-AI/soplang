@@ -15,7 +15,7 @@ import {} from "../../Persisto/clean.mjs";
 await $$.clean();
 await $$.registerPlugin("DefaultPersistence", "../plugins/StandardPersistence.js");
 await $$.registerPlugin("Workspace", "../plugins/Workspace.js");
-await $$.registerPlugin("Agents", "../plugins/Agent.js");
+await $$.registerPlugin("Agent", "../plugins/Agent.js");
 await $$.registerPlugin("WorkspaceUsers", "../plugins/WorkspaceUser.js");
 await $$.registerPlugin("Documents", "../plugins/Documents.js");
 await $$.registerPlugin("Table", "../plugins/Table.js");

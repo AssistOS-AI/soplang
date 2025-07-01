@@ -1,22 +1,22 @@
 function ChatAIAgent(docId, varId) {
-    let workspace, persistence;
+    let workspace, persistence, llmPlugin;
     let agentConfig;
     this.__type = "ChatAIAgent";
     this.varId = varId;
     this.docId = docId;
-    let interrogator;
     this.init = async function(agentName) {
         persistence = await $$.loadPlugin("DefaultPersistence");
         this.agentName = agentName;
-        //agentConfig = await persistence.getAgent(agentName);
+        agentConfig = await persistence.getAgent(agentName);
     }
 
     this.restore = async function(JSONSerialisation) {
         persistence = $$.loadPlugin("DefaultPersistence");
         workspace = $$.loadPlugin("Workspace");
+        llmPlugin = $$.loadPlugin("LLM");
         if(JSONSerialisation){
             this.agentName = JSONSerialisation.agentName;
-            //agentConfig = await persistence.getAgent(this.agentName);
+            agentConfig = await persistence.getAgent(this.agentName);
         }
     }
 
@@ -25,7 +25,9 @@ function ChatAIAgent(docId, varId) {
         setTimeout(async ()=> {
             let graph = workspace.getGraph();
             let chat = await graph.getVarValue(this.docId, "chat");
-            await chat.input(this.agentName, `hello, im ${this.agentName}`);
+            let chatConfig = agentConfig.llms["chat"];
+            let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
+            await chat.input(this.agentName, response);
         },0);
     }
 

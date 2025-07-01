@@ -1,125 +1,95 @@
-async function LLM(Provider) {
+import fs from "fs";
+import path from "path";
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+async function LLM() {
     const self = {};
+    self.providers = {};
 
-    const persistence = await $$.loadPlugin("DefaultPersistence");
+    self.registerProviders = async function (dirPath) {
+        const providerFiles = fs.readdirSync(dirPath)
+            .filter(file => file.endsWith('.js') || file.endsWith('.cjs')) // Support both .js and .cjs files
+            .map(file => path.join(dirPath, file));
 
-    await persistence.configureTypes({
-        llm: {
-            id: "random",
-            name: "string",
-            provider: "provider",
-            type: "string",
-            capabilities: "array string",
-            description: "string",
-            pricing: "object",
-            contextWindow: "integer",
-            knowledgeCuttoff: "date"
-        },
-        provider: {
-            id: "random",
-            name: "string",
-            models: "array llm"
+        if (providerFiles.length === 0) {
+            console.warn(`No provider files found in ${dirPath}`);
+            return;
         }
-    })
 
-    await persistence.createIndex("llm", "name");
-    await persistence.createIndex("provider", "name");
-
-    const getProvider = async function (providerName) {
-        const provider = await persistence.getProviderByName(providerName);
-        if (!provider) {
-            throw new Error(`Provider ${providerName} not found`);
-        }
-        return new Provider(provider.name, provider.models, provider.id);
-    }
-    self.registerProvider = async function (providerObject) {
-        if (!providerObject.models) {
-            providerObject.models = []
-        }
-        return await persistence.createProvider(providerObject);
-    }
-
-    self.registerModel = async function (llmObject) {
-        const provider = await persistence.getProviderByName(llmObject.provider);
-        if (!provider) {
-            await self.registerProvider({name: llmObject.provider, models: []});
-        }
-        const providerObject = await persistence.getProviderByName(llmObject.provider);
-        const llm = await persistence.createLlm(llmObject);
-        providerObject.models.push(llm.id);
-        await persistence.updateProvider(providerObject.id, providerObject);
-        return llm
-    }
-
-    self.getProvider = async function (providerName) {
-        return await getProvider(providerName);
-    }
-    self.getModels = async function () {
-        return await persistence.getEveryLlmObject();
-    }
-
-    self.getProviderModels = async function (providerName) {
-        const provider = await getProvider(providerName);
-        return provider.models;
-    }
-
-    self.getLlmByName = async function (name) {
-        return await persistence.getLlmByName(name);
-    }
-    self.getLlmById = async function (id) {
-        const models = await persistence.getEveryLlmObject();
-        for (const model of models) {
-            if (model.id === id) {
-                return model;
+        for (const providerFile of providerFiles) {
+            try {
+                const module = loadProviderModule(providerFile);
+                // Use filename (without extension) as the provider name
+                const name = path.basename(providerFile, path.extname(providerFile));
+                self.providers[name] = module;
+            } catch (error) {
+                console.error(`Error loading provider from ${providerFile}: ${error.message}`);
             }
         }
-        throw new Error(`Model with id ${id} not found`);
+    }
+    const loadProviderModule = (providerPath) => {
+        try {
+            return require(providerPath);
+        } catch (e) {
+            throw Error(`Cannot load provider module at path ${providerPath}: ${e.message}`);
+        }
+    };
+
+    self.getProvider = function(providerName) {
+        return self.providers[providerName];
+    }
+    self.getProviderModels = async function (providerName) {
+        const provider = await self.getProvider(providerName);
+        return provider.getModels();
+    }
+    self.getModels = async function () {
+        const models = {};
+        for (const providerName in self.providers) {
+            const provider = self.providers[providerName];
+            models[providerName] = await provider.getModels();
+            models[providerName].provider = providerName;
+        }
+        return models;
     }
 
-    self.getTextResponse = async (provider, model, prompt, options = {}) => {
-        const Provider = await getProvider(provider)
+    self.getTextResponse = async (providerName, model, prompt, options = {}) => {
+        const Provider = await self.getProvider(providerName)
         return await Provider.getTextResponse(model, prompt, options);
     }
 
-    self.getTextStreamingResponse = async (provider, model, prompt, options = {}, onDataChunk) => {
-        const Provider = await getProvider(provider)
+    self.getTextStreamingResponse = async (providerName, model, prompt, options = {}, onDataChunk) => {
+        const Provider = await self.getProvider(providerName)
         return await Provider.getTextStreamingResponse(model, prompt, options, onDataChunk);
     }
 
-    self.getChatCompletionResponse = async (provider, model, messages, options = {}) => {
-        const Provider = await getProvider(provider)
+    self.getChatCompletionResponse = async (providerName, model, messages, options = {}) => {
+        const Provider = await self.getProvider(providerName)
         return await Provider.getChatCompletionResponse(model, messages, options);
     }
 
-    self.getChatCompletionStreamingResponse = async (provider, model, messages, options = {}, onDataChunk) => {
-        const Provider = await getProvider(provider)
+    self.getChatCompletionStreamingResponse = async (providerName, model, messages, options = {}, onDataChunk) => {
+        const Provider = await self.getProvider(providerName);
         return await Provider.getChatCompletionStreamingResponse(model, messages, options, onDataChunk);
     }
-    self.getTextResponseJson = (provider, model, prompt, options = {}) =>
-        self.getTextResponse(provider, model, prompt, {...options, json: true})
+    self.getTextResponseJson = (providerName, model, prompt, options = {}) =>
+        self.getTextResponse(providerName, model, prompt, {...options, json: true})
 
-    self.getTextStreamingResponseJson = (provider, model, prompt, options = {}, onDataChunk) =>
-        self.getTextStreamingResponse(provider, model, prompt, {...options, json: true}, onDataChunk)
+    self.getTextStreamingResponseJson = (providerName, model, prompt, options = {}, onDataChunk) =>
+        self.getTextStreamingResponse(providerName, model, prompt, {...options, json: true}, onDataChunk)
 
-    self.getChatCompletionResponseJson = (provider, model, messages, options = {}) =>
-        self.getChatCompletionResponse(provider, model, messages, {...options, json: true})
+    self.getChatCompletionResponseJson = (providerName, model, messages, options = {}) =>
+        self.getChatCompletionResponse(providerName, model, messages, {...options, json: true})
 
-    self.getChatCompletionStreamingResponseJson = (provider, model, messages, options = {}, onDataChunk) =>
-        self.getChatCompletionStreamingResponse(provider, model, messages, {...options, json: true}, onDataChunk)
+    self.getChatCompletionStreamingResponseJson = (providerName, model, messages, options = {}, onDataChunk) =>
+        self.getChatCompletionStreamingResponse(providerName, model, messages, {...options, json: true}, onDataChunk)
 
     return self;
 }
 let singletonInstance;
 
-const getInstance = async function (ProviderArg) {
-
-    if (ProviderArg) {
-        return await LLM(ProviderArg);
-    }
-    const { default: Provider } = await import('../../apihub-component-utils/provider.cjs')
-
+const getInstance = async function () {
     if (!singletonInstance) {
-        singletonInstance = await LLM(Provider);
+        singletonInstance = await LLM();
     }
     return singletonInstance;
 }

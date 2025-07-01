@@ -1,8 +1,15 @@
 import {} from "../../deps/clean.mjs";
+import path from "path";
 
 import assert from "assert"
 
 let chatPlugin = $$.loadPlugin("Chat");
+let llmPlugin = $$.loadPlugin("LLM");
+await llmPlugin.registerProviders(path.join(process.cwd(),"../../providers"));
+let agentPlugin = $$.loadPlugin("Agent");
+await agentPlugin.createAgent("Assistant", "");
+await agentPlugin.selectLLM("Assistant", "chat", "FakeProvider", "fakeModel");
+
 
 let script = `
     @currentUser := $arg1
@@ -11,6 +18,8 @@ let script = `
     @user new ChatUserAgent $currentUser
     @chat new Chat $user $assistant 
 `;
+//let chatScriptPlugin = $$.loadPlugin("Process");
+
 //script needs to have @chat variable
 let docId = "TestChat"
 await chatPlugin.createChat(docId, script, ["John", "Assistant"]);

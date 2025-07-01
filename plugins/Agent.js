@@ -5,8 +5,8 @@ async function Agent() {
     let self = {};
 
     let persistence = await $$.loadPlugin("DefaultPersistence")
-    const Chat = await $$.loadPlugin("Chat");
-    const Llm = await $$.loadPlugin("LLM");
+    const chatPlugin = await $$.loadPlugin("Chat");
+    const llmPlugin = await $$.loadPlugin("LLM");
 
     await persistence.configureTypes({
             agent: {
@@ -16,8 +16,7 @@ async function Agent() {
                 imageId: "string",
                 chatPrompt: "string",
                 contextSize: "integer",
-                selectedTextLlm: "llm",
-                selectedChatLlm: "llm",
+                llms: "object",
                 telegramBot: "any",
                 info: "object",
             },
@@ -103,13 +102,24 @@ async function Agent() {
             name: name,
             description: description,
             imageId: imageId,
-            selectedChatLlm: null,
-            selectedTextLlm: null,
+            llms: {},
             contextSize: 3,
             chatPrompt: chatPrompt || "You will be given instructions in the form of a string from a user and you need to execute them",
             telegramBot: null
         });
 
+    }
+    self.selectLLM = async function (agentName, llmType, llmName, provider){
+        const agent = await persistence.getAgentByName(agentName);
+        if(!agent.llms){
+            agent.llms = {};
+        }
+        agent.llms[llmType] = {
+            modelName: llmName,
+            providerName: provider
+        };
+        await self.updateAgent(agent.id, agent);
+        return agent;
     }
     self.createAgentFromFile = async function (agentsFolder, entry) {
         const filePath = path.join(agentsFolder, entry.name);
@@ -117,7 +127,6 @@ async function Agent() {
         agent.configuredLlms = [];
         let imagesPath = path.join(agentsFolder, 'images');
         let imageBuffer = await fsPromises.readFile(path.join(imagesPath, `${agent.imageId}.png`));
-
         //personality.imageId = await spaceModule.putImage(imageBuffer);
         return await self.createAgent(agent.name, agent.description, agent.chatPrompt)
     }
@@ -161,7 +170,7 @@ async function Agent() {
             await self.updateAgent(existingAgent.id, agentData);
             overwritten = true;
         } else {
-            const chatId = await Chat.createChat(agentData.name);
+            const chatId = await chatPlugin.createChat(agentData.name);
             let agent = await self.createAgent(agentData.name, agentData.description, chatId);
             await self.updateAgent(agent.id, agentData);
             agentId = agent.id;
@@ -177,12 +186,13 @@ async function Agent() {
         })
         return apiKey.value;
     }
+
     const getCurrentAgentChatLlm = async function (agentId) {
         const agent = await self.getAgent(agentId);
         if (!agent) {
             throw new Error("Agent not found");
         }
-        return await Llm.getRandomLlm(agent.selectedChatLlm);
+        return await llmPlugin.getRandomLlm(agent.selectedChatLlm);
     }
 
     self.sendQuery = async function (chatId, personalityId, userId, userPrompt) {
@@ -223,7 +233,7 @@ async function Agent() {
                 return await Promise.all(promises);
             }
 
-            const llmRes = await Llm.generateText(generateMemoizationPrompt(prompt));
+            const llmRes = await llmPlugin.generateText(generateMemoizationPrompt(prompt));
 
             let parsedLlmAnswer;
             try {
@@ -257,7 +267,7 @@ async function Agent() {
         }
 
         const buildContext = async function (chatId, agentId) {
-            const chat = await Chat.getChat(chatId);
+            const chat = await chatPlugin.getChat(chatId);
 
             const {chatPrompt, contextSize} = await self.getAgent(agentId);
 
@@ -277,7 +287,7 @@ async function Agent() {
 
         const combinedQueryPrompt = applyChatPrompt(chatPrompt, userPrompt, context, description);
 
-        const llmRes = await Llm.generateText(combinedQueryPrompt)
+        const llmRes = await llmPlugin.generateText(combinedQueryPrompt)
 
         const message = await self.sendMessage(chatId, userId, llmRes, "assistant");
 
@@ -290,18 +300,18 @@ async function Agent() {
 
 
     self.sendChatQuery = async function (chatId, agentId, userId, prompt) {
-        const userMessage = await Chat.sendMessage(chatId, userId, prompt, "user");
+        const userMessage = await chatPlugin.sendMessage(chatId, userId, prompt, "user");
 
         const model = await getCurrentAgentChatLlm(agentId);
         const apiKey = await getApiKey(model.provider);
 
-        const llmResponse = await Llm.getChatCompletionResponse({
+        const llmResponse = await llmPlugin.getChatCompletionResponse({
             provider: model.provider,
             model: model.name,
             apiKey,
             messages: prompt
         })
-        const message = await Chat.sendMessage(chatId, agentId, llmResponse, "assistant");
+        const message = await chatPlugin.sendMessage(chatId, agentId, llmResponse, "assistant");
         return {
             id: message.id
         };

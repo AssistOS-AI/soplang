@@ -27,6 +27,8 @@ const tests = [
     './pipelines/customTypes/workFlowAgent.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
+    './pipelines/customTypes/chatTestAgentAnswers.js',
+    './pipelines/customTypes/chatTestUserAnswers.js',
     './pipelines/macros/basic/runMacroTest.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
@@ -46,12 +48,12 @@ const tests = [
     './pipelines/macros/advanced/filterWithMacroTest.mjs',
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
-    './llm/llmFacadeTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
-    './plugins/updateMacroVarValue.mjs'
+    './plugins/updateMacroVarValue.mjs',
+    './plugins/llmAPICalls.mjs',
 ];
 
 import fs from 'node:fs/promises';
