@@ -37,7 +37,8 @@ async function LLM() {
     }
 
     if(process.env.LLM_PROVIDERS_FOLDER) {
-       await registerProviders(process.env.LLM_PROVIDERS_FOLDER);
+        let providersPath = path.join(process.env.PERSISTENCE_FOLDER, process.env.LLM_PROVIDERS_FOLDER);
+        await registerProviders(providersPath);
     } else {
         //this log makes tests fail in runAllTests.mjs
         //console.warn("LLM_PROVIDERS_FOLDER environment variable is not set, using soplang/tests/llms/providers");
