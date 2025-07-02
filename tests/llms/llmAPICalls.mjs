@@ -1,8 +1,6 @@
 import {} from "../deps/clean.mjs";
-import path from "path";
 import assert from "assert";
 const llmPlugin = $$.loadPlugin("LLM");
-await llmPlugin.registerProviders(path.join(process.cwd(),"../providers"));
 
 let Provider = llmPlugin.getProvider("FakeProvider")
 Provider.setResponse("Hello LLM, how are you?", "I'm fine thank you!");

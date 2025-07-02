@@ -172,7 +172,7 @@ async function Chat() {
         return await self.sendQuery(chatId, personalityId, userId, userPrompt)
     }
 
-    self.chatInput = function (chatId, agentName, message) {
+    self.chatInput = async function (chatId, agentName, message) {
         setTimeout(async ()=>{
             let graph = Workspace.getGraph();
             let chat = await graph.getVarValue(chatId, "chat");
@@ -180,14 +180,10 @@ async function Chat() {
             await Workspace.buildOnlyForDocument(chatId);
         },0);
     }
-    self.waitMessage = async function (chatId) {
-        let resolveFN;
-        soundpubsub.subscribe(chatId, (response) => {
-            resolveFN(response);
-        });
-        return new Promise((resolve) => {
-            resolveFN = resolve;
-        });
+    self.waitMessage = function (chatId) {
+        let slowResponse = $$.createSlowResponse();
+        soundpubsub.subscribe(chatId, slowResponse.end.bind(slowResponse));
+        return slowResponse;
     }
     self.notify = function (chatId, response) {
         soundpubsub.publish(chatId, response);

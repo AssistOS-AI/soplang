@@ -1,10 +1,7 @@
-import {} from "../../deps/clean.mjs";
-import assert from "assert"
-import path from "path";
+import {} from "../deps/clean.mjs";
+import assert from "assert";
 
 let chatPlugin = $$.loadPlugin("Chat");
-let llmPlugin = $$.loadPlugin("LLM");
-await llmPlugin.registerProviders(path.join(process.cwd(),"../../providers"));
 let agentPlugin = $$.loadPlugin("Agent");
 await agentPlugin.createAgent("Assistant");
 await agentPlugin.selectLLM("Assistant", "chat", "fakeModel", "FakeProvider");

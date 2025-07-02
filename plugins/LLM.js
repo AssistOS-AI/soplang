@@ -1,12 +1,20 @@
 import fs from "fs";
 import path from "path";
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 async function LLM() {
     const self = {};
     self.providers = {};
 
-    self.registerProviders = async function (dirPath) {
+    const loadProviderModule = (providerPath) => {
+        try {
+            return require(providerPath);
+        } catch (e) {
+            throw Error(`Cannot load provider module at path ${providerPath}: ${e.message}`);
+        }
+    };
+    async function registerProviders(dirPath) {
         const providerFiles = fs.readdirSync(dirPath)
             .filter(file => file.endsWith('.js') || file.endsWith('.cjs')) // Support both .js and .cjs files
             .map(file => path.join(dirPath, file));
@@ -27,13 +35,18 @@ async function LLM() {
             }
         }
     }
-    const loadProviderModule = (providerPath) => {
-        try {
-            return require(providerPath);
-        } catch (e) {
-            throw Error(`Cannot load provider module at path ${providerPath}: ${e.message}`);
-        }
-    };
+
+    if(process.env.LLM_PROVIDERS_FOLDER) {
+       await registerProviders(process.env.LLM_PROVIDERS_FOLDER);
+    } else {
+        //this log makes tests fail in runAllTests.mjs
+        //console.warn("LLM_PROVIDERS_FOLDER environment variable is not set, using soplang/tests/llms/providers");
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        await registerProviders(path.join(__dirname, "../tests/llms/providers"));
+    }
+
+
 
     self.getProvider = function(providerName) {
         return self.providers[providerName];

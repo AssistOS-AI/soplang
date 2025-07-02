@@ -3,7 +3,7 @@ function FakeProvider() {
     this.models = [{
         name: "fakeModel",
         type: "chat",
-        description: "GPT-3.5 Turbo model for chat completions",
+        description: "",
         capabilities: "",
         pricing: "",
         contextWindow: "",
@@ -12,7 +12,7 @@ function FakeProvider() {
     {
         name: "fakeModel2",
         type: "chat",
-        description: "GPT-4 model for chat completions",
+        description: "",
         capabilities: "",
         pricing: "",
         contextWindow: "",
