@@ -73,23 +73,6 @@ async function Agent() {
         return await persistence.updateAgent(id, values);
     }
 
-    self.addChat = async function (id, chatId) {
-        const agent = await self.getAgent(id);
-        if (!agent.chats) {
-            agent.chats = [];
-        }
-        agent.chats.push(chatId);
-        agent.selectedChat = chatId;
-
-        await self.updateAgent(agent.id, {...agent});
-    }
-
-    self.removeChatFromAgent = async function (agentId, chatId) {
-        let agent = await self.getAgent(agentId);
-        agent.chats = agent.chats.filter(c => c !== chatId);
-        agent.selectedChat = agent.chats[0]
-        await self.updateAgent(agent.id, {...agent});
-    }
     self.createAgent = async function (name, description, chatPrompt, imageId) {
         return await persistence.createAgent({
             name: name,
@@ -118,17 +101,7 @@ async function Agent() {
         return await persistence.deleteAgent(id);
     }
 
-    self.getConversationIds = async function (id) {
-        const agent = await self.getAgent(id)
-        return agent.chats;
-    }
-
-    self.getPersonalityImageUrl = async function (id) {
-        const agent = await self.getAgent(id);
-        const imageId = agent.imageId;
-        //return await storage.getDownloadURL("image/png", imageId);
-    }
-    self.exportPersonality = async function (id) {
+    self.exportAgent = async function (id) {
         await $$.throwAsyncError("Exporting personalities is not supported yet");
         //import archiver from "archiver";
         let agent = await self.getAgent(id);
@@ -159,23 +132,6 @@ async function Agent() {
             agentId = agent.id;
         }
         return {id: agentId, overwritten: overwritten, name: agentData.name};
-    }
-
-    const getApiKey = async function (provider) {
-        const API_KEYS = JSON.parse(process.env.API_KEYS)
-        const keyTypes = Object.values(API_KEYS)
-        const apiKey = keyTypes.find(obj => {
-            return obj.name === provider;
-        })
-        return apiKey.value;
-    }
-
-    const getCurrentAgentChatLlm = async function (agentId) {
-        const agent = await self.getAgent(agentId);
-        if (!agent) {
-            throw new Error("Agent not found");
-        }
-        return await llmPlugin.getRandomLlm(agent.selectedChatLlm);
     }
 
     self.sendQuery = async function (chatId, personalityId, userId, userPrompt) {
@@ -276,31 +232,6 @@ async function Agent() {
 
         await checkApplyContextInstructions(chatId, userPrompt, userId);
         return message;
-    }
-    self.sendStreamingQuery = async function (chatId, personalityId, userId, userPrompt) {
-        return self.sendQuery(chatId, personalityId, userId, userPrompt);
-    }
-
-
-    self.sendChatQuery = async function (chatId, agentId, userId, prompt) {
-        const userMessage = await chatPlugin.sendMessage(chatId, userId, prompt, "user");
-
-        const model = await getCurrentAgentChatLlm(agentId);
-        const apiKey = await getApiKey(model.provider);
-
-        const llmResponse = await llmPlugin.getChatCompletionResponse({
-            provider: model.provider,
-            model: model.name,
-            apiKey,
-            messages: prompt
-        })
-        const message = await chatPlugin.sendMessage(chatId, agentId, llmResponse, "assistant");
-        return {
-            id: message.id
-        };
-    }
-    self.sendChatStreamingQuery = async function (chatId, personalityId, userId, userPrompt) {
-        return await self.sendChatQuery(chatId, personalityId, userId, userPrompt);
     }
 
     return self;

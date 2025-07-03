@@ -173,12 +173,12 @@ async function Chat() {
     }
 
     self.chatInput = async function (chatId, agentName, message) {
-        setTimeout(async ()=>{
+        //setTimeout(async ()=>{
             let graph = Workspace.getGraph();
             let chat = await graph.getVarValue(chatId, "chat");
             await chat.input(agentName, message);
             await Workspace.buildOnlyForDocument(chatId);
-        },0);
+        //},0);
     }
     self.waitMessage = function (chatId) {
         let slowResponse = $$.createSlowResponse();

@@ -82,12 +82,17 @@ async function Workspace() {
 
    self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
         return await persistence.createWorkspace({
-            id: workspaceName,
+            name: workspaceName,
             ownerId: ownerId,
             spaceGlobalId: spaceGlobalId,
             documents: [],
             clock: 0
         });
+    }
+    self.setCurrentChatId = async function(spaceId, chatId) {
+        let spaceStatus = await persistence.getWorkspace(spaceId);
+        spaceStatus.currentChatId = chatId;
+        await persistence.updateWorkspace(spaceId, spaceStatus);
     }
 
     self.getCollaborators = async function () {

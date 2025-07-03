@@ -22,13 +22,13 @@ function ChatAIAgent(docId, varId) {
 
     this.acknowledge = async function(from, message) {
         //recordResponse
-        setTimeout(async ()=> {
+        //setTimeout(async ()=> {
             let graph = workspace.getGraph();
             let chat = await graph.getVarValue(this.docId, "chat");
             let chatConfig = agentConfig.llms["chat"];
             let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
             await chat.input(this.agentName, response);
-        },0);
+        //},0);
     }
 
     /*
