@@ -63,17 +63,10 @@ async function Agent() {
         return await persistence.getEveryAgentObject();
     }
 
-    self.copyDefaultAgents = async function (spacePath, spaceId) {
-        let agentsFolder = '../apihub-components/globalServerlessAPI/default-agents';
-        const files = await fsPromises.readdir(agentsFolder, {withFileTypes: true});
-
-        let promises = [];
-        for (const entry of files) {
-            if (entry.isFile()) {
-                promises.push(self.createAgentFromFile(agentsFolder, entry, spaceId));
-            }
-        }
-        await Promise.all(promises);
+    self.createDefaultAgent = async function() {
+        let agentPath = '../apihub-components/globalServerlessAPI/AssistantAgent.json';
+        let agent = JSON.parse(await fsPromises.readFile(agentPath));
+        return await self.createAgent(agent.name, agent.description, agent.chatPrompt)
     }
 
     self.updateAgent = async function (id, values) {
@@ -107,7 +100,6 @@ async function Agent() {
             chatPrompt: chatPrompt || "You will be given instructions in the form of a string from a user and you need to execute them",
             telegramBot: null
         });
-
     }
     self.selectLLM = async function (agentName, llmType, llmName, provider){
         const agent = await persistence.getAgentByName(agentName);
@@ -120,15 +112,6 @@ async function Agent() {
         };
         await self.updateAgent(agent.id, agent);
         return agent;
-    }
-    self.createAgentFromFile = async function (agentsFolder, entry) {
-        const filePath = path.join(agentsFolder, entry.name);
-        let agent = JSON.parse(await fsPromises.readFile(filePath, 'utf8'));
-        agent.configuredLlms = [];
-        let imagesPath = path.join(agentsFolder, 'images');
-        let imageBuffer = await fsPromises.readFile(path.join(imagesPath, `${agent.imageId}.png`));
-        //personality.imageId = await spaceModule.putImage(imageBuffer);
-        return await self.createAgent(agent.name, agent.description, agent.chatPrompt)
     }
 
     self.deleteAgent = async function (id) {

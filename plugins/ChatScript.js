@@ -13,7 +13,7 @@ async function ChatScript() {
 
     await persistence.createIndex("chatScript", "name");
 
-    self.getProcesses = async function () {
+    self.getChatScripts= async function () {
         return await persistence.getEveryChatScriptObject();
     }
     self.getChatScript = async function (scriptId) {
