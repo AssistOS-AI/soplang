@@ -179,7 +179,7 @@ async function Chat() {
         await Workspace.buildOnlyForDocument(chatId);
     }
     self.listenForMessages = function (chatId) {
-        let slowResponse = $$.createSlowResponse();
+        let slowResponse = $$.createObservableResponse();
         soundpubsub.subscribe(chatId, slowResponse.progress.bind(slowResponse));
         return slowResponse;
     }
