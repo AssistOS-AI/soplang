@@ -31,17 +31,27 @@ let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);
 await chatPlugin.createChat(docId, chatScript.id, ["John", "Assistant", "Writer", "Reviewer"]);
 
-chatPlugin.chatInput(docId, "John", "Hello agent, how are you?");
-let response = await chatPlugin.waitMessage(docId);
-assert(response.from === "John", "response should be from John");
+let slowResponse = chatPlugin.listenForMessages(docId);
+let expectedChatResponses = [
+    {from: "John", message: "Hello agents"},
+    {from: "Assistant"},
+    {from: "Writer"},
+    {from: "Reviewer"}
+];
+let responses = [];
+slowResponse.onProgress((response) => {
+    responses.push(response);
+});
 
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Assistant", "response should be from Assistant");
-
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Writer", "response should be from Writer");
-
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Reviewer", "response should be from Reviewer");
+throw new Error("test not finished yet");
+// await chatPlugin.chatInput(docId, "John", "Hello agents");
+//
+// await new Promise(resolve => setTimeout(resolve, 2000));
+// for(let i = 0; i < expectedChatResponses.length; i++) {
+//     assert(responses[i].from === expectedChatResponses[i].from, `Response ${i} from should match`);
+//     if(expectedChatResponses[i].message) {
+//         assert(responses[i].message === expectedChatResponses[i].message, `Response ${i} message should match`);
+//     }
+// }
 
 await $$.endTest();

@@ -17,24 +17,30 @@ let script = `
 let docId = "TestChat"
 let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);
+
+let slowResponse = chatPlugin.listenForMessages(docId);
+let expectedChatResponses = [
+    {from: "Assistant"},
+    {from: "John", message: "Hello agent"},
+    {from: "Assistant"},
+    {from: "John", message: "Hello agent, how are you?"},
+];
+let responses = [];
+slowResponse.onProgress((response) => {
+    responses.push(response);
+});
+
 await chatPlugin.createChat(docId, chatScript.id, ["John", "Assistant"]);
 
-let response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Assistant", "response should be from Assistant");
+await chatPlugin.chatInput(docId, "John", "Hello agent");
+await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?");
 
-chatPlugin.chatInput(docId, "John", "Agent, what is your name?");
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "John", "response should be from John");
-
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Assistant", "response should be from Assistant");
-
-chatPlugin.chatInput(docId, "John", "Agent, what is your name?");
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "John", "response should be from Assistant");
-assert(response.message === "Agent, what is your name?", "message should be Agent, what is your name?");
-
-response = await chatPlugin.waitMessage(docId);
-assert(response.from === "Assistant", "response should be from Assistant");
+await new Promise(resolve => setTimeout(resolve, 2000));
+for(let i = 0; i < expectedChatResponses.length; i++) {
+    assert(responses[i].from === expectedChatResponses[i].from, `Response ${i} from should be from ${expectedChatResponses[i].from}`);
+    if(expectedChatResponses[i].message) {
+        assert(responses[i].message === expectedChatResponses[i].message, `Response ${i} message should match`);
+    }
+}
 
 await $$.endTest();

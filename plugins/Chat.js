@@ -173,16 +173,14 @@ async function Chat() {
     }
 
     self.chatInput = async function (chatId, agentName, message) {
-        //setTimeout(async ()=>{
-            let graph = Workspace.getGraph();
-            let chat = await graph.getVarValue(chatId, "chat");
-            await chat.input(agentName, message);
-            await Workspace.buildOnlyForDocument(chatId);
-        //},0);
+        let graph = Workspace.getGraph();
+        let chat = await graph.getVarValue(chatId, "chat");
+        await chat.input(agentName, message);
+        await Workspace.buildOnlyForDocument(chatId);
     }
-    self.waitMessage = function (chatId) {
+    self.listenForMessages = function (chatId) {
         let slowResponse = $$.createSlowResponse();
-        soundpubsub.subscribe(chatId, slowResponse.end.bind(slowResponse));
+        soundpubsub.subscribe(chatId, slowResponse.progress.bind(slowResponse));
         return slowResponse;
     }
     self.notify = function (chatId, response) {
