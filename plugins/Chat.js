@@ -178,13 +178,20 @@ async function Chat() {
         await chat.input(agentName, message);
         await Workspace.buildOnlyForDocument(chatId);
     }
+    let responses = [];
     self.listenForMessages = function (chatId) {
-        let slowResponse = $$.createObservableResponse();
-        soundpubsub.subscribe(chatId, slowResponse.progress.bind(slowResponse));
-        return slowResponse;
+        let observableResponse = $$.createObservableResponse();
+        observableResponse._boundProgress = observableResponse.progress.bind(observableResponse);
+        responses.push({chatId, observableResponse});
+        soundpubsub.subscribe(chatId, observableResponse._boundProgress);
+        return observableResponse;
     }
     self.notify = function (chatId, response) {
         soundpubsub.publish(chatId, response);
+    }
+    self.stopListeningForMessages = async function (chatId) {
+        soundpubsub.unsubscribe(chatId);
+        responses = responses.filter(item => item.chatId !== chatId);
     }
     return self;
 }

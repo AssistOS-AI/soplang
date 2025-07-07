@@ -1,12 +1,16 @@
 import { getVarID } from "../graph/varUtil.js";
+import crypto from "crypto";
 
+function generateId() {
+    return crypto.randomBytes(8).toString('hex');
+}
 function Chat(docId, varId) {
     this.__type = "Chat"
     let instance, persistence;
     this.docId = docId;
     this.varId = varId;
-    this.activated = false;
-    let workspace, chatPlugin;
+    let workspace = $$.loadPlugin("Workspace");
+    let chatPlugin = $$.loadPlugin("Chat");
 
     this.init = async function (...agents) {
         let agentIds = [];
@@ -20,8 +24,12 @@ function Chat(docId, varId) {
         this.interrogator = agentIds[0];
         this.agents = agentIds;
     }
-    this.input = async function (from, message) {
-        chatPlugin.notify(this.docId, {from, message});
+    this.input = async function (from, message, replyId = null) {
+        if(!replyId){
+            replyId = generateId();
+        }
+        let timestamp = new Date().toISOString();
+        chatPlugin.notify(this.docId, {from, message, timestamp, id: replyId});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);
@@ -32,7 +40,7 @@ function Chat(docId, varId) {
             agent.acknowledge(from, message);
         }
         await workspace.buildOnlyForDocument(this.docId);
-        return await graph.getVarValue(this.docId, "chat");
+        return replyId;
     }
     this.start = async function () {
         let graph = workspace.getGraph();
@@ -49,8 +57,6 @@ function Chat(docId, varId) {
             this.interrogator = JSONSerialisation.interrogator;
             this.agents = JSONSerialisation.agents;
         }
-        workspace = $$.loadPlugin("Workspace");
-        chatPlugin = $$.loadPlugin("Chat");
     }
 }
 

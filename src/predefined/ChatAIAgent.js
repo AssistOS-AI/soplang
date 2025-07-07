@@ -23,9 +23,10 @@ function ChatAIAgent(docId, varId) {
     this.acknowledge = async function(from, message) {
         let graph = workspace.getGraph();
         let chat = await graph.getVarValue(this.docId, "chat");
+        let replyId = await chat.input(this.agentName, "Processing request...");
         let chatConfig = agentConfig.llms["chat"];
         let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
-        await chat.input(this.agentName, response);
+        await chat.input(this.agentName, response, replyId);
     }
 
     /*
