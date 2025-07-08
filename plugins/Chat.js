@@ -1,6 +1,5 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const soundpubsub = require('soundpubsub').soundPubSub;
 async function Chat() {
     const self = {}
 
