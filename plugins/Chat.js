@@ -7,7 +7,6 @@ async function Chat() {
     const Workspace = $$.loadPlugin('Workspace');
     const chatScriptPlugin = $$.loadPlugin('ChatScript');
 
-
     self.getChat = async function (chatId) {
         return await Document.dumpDocument(chatId)
     }
@@ -15,16 +14,7 @@ async function Chat() {
         const documents = await Document.getDocumentsByCategory('chat')
         return Promise.all(documents.map(doc => Document.dumpDocument(doc)))
     }
-    self.getChatMessage = async (chatId, messageId) =>
-        Document.getParagraph(messageId)
 
-    self.getChatMessages = async chatId => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const messagesChapter = chapters.find(chapter => chapter.title === 'Messages')
-        if (!messagesChapter) throw new Error('Messages chapter not found')
-        return Promise.all(messagesChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
-    }
 
     self.getChatContext = async chatId => {
         const chat = await Document.getDocument(chatId)
@@ -36,7 +26,8 @@ async function Chat() {
 
     self.createChat = async function (docId, scriptId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
-        let initialisation = "@arg0 := " + document.docId + "\n";
+        let initialisation = `@arg0 := ${document.docId} \n
+                                    @chatHistory new ChatHistory \n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
                 initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
@@ -52,8 +43,7 @@ async function Chat() {
         await Document.createChapter(document.id, 'Context', '');
         await Workspace.buildOnlyForDocument(docId);
 
-        let graph = Workspace.getGraph();
-        let chat = await graph.getVarValue(docId, "chat");
+        let chat = await Workspace.getVarValue(docId, "chat");
         await chat.start();
         return chat;
     }
@@ -150,32 +140,26 @@ async function Chat() {
         return Document.updateParagraph(contextChapter.id, contextItemId, newText, contextItem.commands, contextItem.comments)
     }
 
-    self.sendMessage = async (chatId, userId, message, role) => {
-        const chat = await Document.getDocument(chatId)
-        let chapterId
-        if (chat.chapters.length === 0) {
-            chapterId = await Document.createChapter(chatId, 'Messages', "");
-            await Document.createChapter(chatId, 'Context', "");
-        } else {
-            const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-            chapterId = chapters.find(chapter => chapter.title === 'Messages')?.id
-        }
-        if (!chapterId) throw new Error('Messages chapter not found')
-        return Document.createParagraph(chapterId, message, {replay: {role, name: userId}}, {})
-    }
-
-    self.sendQuery = async (chatId, personalityId, userId, userPrompt) => {
-    }
-
     self.sendStreamingQuery = async (chatId, personalityId, userId, userPrompt) => {
         return await self.sendQuery(chatId, personalityId, userId, userPrompt)
     }
 
+    self.getChatHistory = async function (chatId) {
+        let chatHistoryVar = await Workspace.getVarValue(chatId, "chatHistory");
+        return chatHistoryVar.getHistory();
+    }
+
     self.chatInput = async function (chatId, agentName, message) {
-        let graph = Workspace.getGraph();
-        let chat = await graph.getVarValue(chatId, "chat");
-        await chat.input(agentName, message);
+        let chat = await Workspace.getVarValue(chatId, "chat");
+        let resultReplyId = await chat.input(agentName, message);
         await Workspace.buildOnlyForDocument(chatId);
+        return resultReplyId;
+    }
+    self.editReply = async function (replyId, chatId, agentName, message) {
+        let chat = await Workspace.getVarValue(chatId, "chat");
+        let resultReplyId = await chat.editReply(replyId, agentName, message);
+        await Workspace.buildOnlyForDocument(chatId);
+        return resultReplyId;
     }
     let responses = [];
     self.listenForMessages = function (chatId) {

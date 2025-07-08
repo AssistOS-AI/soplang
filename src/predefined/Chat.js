@@ -1,4 +1,4 @@
-import { getVarID } from "../graph/varUtil.js";
+import { getVarID, getVariable } from "../graph/varUtil.js";
 import crypto from "crypto";
 
 function generateId() {
@@ -6,7 +6,6 @@ function generateId() {
 }
 function Chat(docId, varId) {
     this.__type = "Chat"
-    let instance, persistence;
     this.docId = docId;
     this.varId = varId;
     let workspace = $$.loadPlugin("Workspace");
@@ -24,12 +23,21 @@ function Chat(docId, varId) {
         this.interrogator = agentIds[0];
         this.agents = agentIds;
     }
-    this.input = async function (from, message, replyId = null) {
-        if(!replyId){
-            replyId = generateId();
-        }
+    async function saveReply(replyId, from, message, timestamp) {
+        let varId = getVarID(docId, "chatHistory");
+        let history = await workspace.getVarValue(varId);
+        await history.addReply(replyId, from, message, timestamp);
+    }
+    async function editReply(replyId, message, timestamp) {
+        let varId = getVarID(docId, "chatHistory");
+        let history = await workspace.getVarValue(varId);
+        await history.editReply(replyId, message, timestamp);
+    }
+    this.input = async function (from, message) {
+        let replyId = generateId();
         let timestamp = new Date().toISOString();
         chatPlugin.notify(this.docId, {from, message, timestamp, id: replyId});
+        await saveReply(replyId, from, message, timestamp);
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);
@@ -39,7 +47,21 @@ function Chat(docId, varId) {
             //called without await
             agent.acknowledge(from, message);
         }
-        await workspace.buildOnlyForDocument(this.docId);
+        return replyId;
+    }
+    this.editReply = async function (replyId, from, message) {
+        let timestamp = new Date().toISOString();
+        chatPlugin.notify(this.docId, {from, message, timestamp, id: replyId});
+        await editReply(replyId, message, timestamp);
+        let graph = workspace.getGraph();
+        for(let respondent of this.agents) {
+            let agent = await graph.getVarValue(respondent);
+            if(agent.agentName === from){
+                continue;
+            }
+            //called without await
+            agent.acknowledge(from, message);
+        }
         return replyId;
     }
     this.start = async function () {
