@@ -28,7 +28,7 @@ async function Chat() {
     self.createChat = async function (docId, scriptId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
         let initialisation = `@arg0 := ${document.docId} \n
-                                    @chatHistory new ChatHistory \n`;
+                                    @chatHistory new Table from message timestamp\n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
                 initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
@@ -147,7 +147,10 @@ async function Chat() {
 
     self.getChatHistory = async function (chatId) {
         let chatHistoryVar = await Workspace.getVarValue(chatId, "chatHistory");
-        return chatHistoryVar.getHistory();
+        for(let reply of chatHistoryVar.data) {
+            reply.id = reply.truid;
+        }
+        return chatHistoryVar.data;
     }
 
     self.chatInput = async function (chatId, agentName, message) {

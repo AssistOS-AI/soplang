@@ -313,7 +313,6 @@ const createRegistry = async function (workspace) {
     await import("../predefined/Workflow.js");
     await import("../predefined/Form.js");
     await import("../predefined/Chat.js");
-    await import("../predefined/ChatHistory.js");
 
     let {ifCommand} = await import("../predefined/ifCommand.js");
     registry.registerCommand("ifCommand", ifCommand);

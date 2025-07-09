@@ -21,10 +21,10 @@ function ChatAIAgent(docId, varId) {
     }
 
     this.acknowledge = async function(from, message) {
-        let replyId = await chatPlugin.chatInput(this.docId, this.agentName, "Processing request...")
+        let id = await chatPlugin.chatInput(this.docId, this.agentName, "Processing request...")
         let chatConfig = agentConfig.llms["chat"];
         let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
-        await chatPlugin.editReply(replyId, this.docId, this.agentName, response);
+        await chatPlugin.editReply(id, this.docId, this.agentName, response);
     }
 
     /*

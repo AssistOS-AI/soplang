@@ -23,21 +23,23 @@ function Chat(docId, varId) {
         this.interrogator = agentIds[0];
         this.agents = agentIds;
     }
-    async function saveReply(replyId, from, message, timestamp) {
+    async function saveReply(from, message, timestamp) {
         let varId = getVarID(docId, "chatHistory");
-        let history = await workspace.getVarValue(varId);
-        await history.addReply(replyId, from, message, timestamp);
+        let table = await workspace.getVarValue(varId);
+        let graph = workspace.getGraph();
+        let computedRow = await table.internalInsert({from, message, timestamp}, graph);
+        return computedRow.truid;
     }
-    async function editReply(replyId, message, timestamp) {
+    async function editReply(id, from, message, timestamp) {
         let varId = getVarID(docId, "chatHistory");
-        let history = await workspace.getVarValue(varId);
-        await history.editReply(replyId, message, timestamp);
+        let table = await workspace.getVarValue(varId);
+        let graph = workspace.getGraph();
+        await table.internalUpdateRow({truid: id, from, message, timestamp}, graph);
     }
     this.input = async function (from, message) {
-        let replyId = generateId();
         let timestamp = new Date().toISOString();
-        chatPlugin.notify(this.docId, {from, message, timestamp, id: replyId});
-        await saveReply(replyId, from, message, timestamp);
+        let id = await saveReply(from, message, timestamp);
+        chatPlugin.notify(this.docId, {id, from, message, timestamp});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);
@@ -47,12 +49,12 @@ function Chat(docId, varId) {
             //called without await
             agent.acknowledge(from, message);
         }
-        return replyId;
+        return id;
     }
-    this.editReply = async function (replyId, from, message) {
+    this.editReply = async function (id, from, message) {
         let timestamp = new Date().toISOString();
-        chatPlugin.notify(this.docId, {from, message, timestamp, id: replyId});
-        await editReply(replyId, message, timestamp);
+        await editReply(id, from, message, timestamp);
+        chatPlugin.notify(this.docId, {id, from, message, timestamp});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);
@@ -62,7 +64,7 @@ function Chat(docId, varId) {
             //called without await
             agent.acknowledge(from, message);
         }
-        return replyId;
+        return id;
     }
     this.start = async function () {
         let graph = workspace.getGraph();
