@@ -10,6 +10,7 @@ function Chat(docId, varId) {
     this.varId = varId;
     let workspace = $$.loadPlugin("Workspace");
     let chatPlugin = $$.loadPlugin("Chat");
+    let tablePlugin = $$.loadPlugin("Table");
 
     this.init = async function (...agents) {
         let agentIds = [];
@@ -24,17 +25,11 @@ function Chat(docId, varId) {
         this.agents = agentIds;
     }
     async function saveReply(from, message, timestamp) {
-        let varId = getVarID(docId, "chatHistory");
-        let table = await workspace.getVarValue(varId);
-        let graph = workspace.getGraph();
-        let computedRow = await table.internalInsert({from, message, timestamp}, graph);
+        let computedRow = await tablePlugin.insert(docId, "chatHistory", {from, message, timestamp});
         return computedRow.truid;
     }
     async function editReply(id, from, message, timestamp) {
-        let varId = getVarID(docId, "chatHistory");
-        let table = await workspace.getVarValue(varId);
-        let graph = workspace.getGraph();
-        await table.internalUpdateRow({truid: id, from, message, timestamp}, graph);
+        await tablePlugin.updateRow(docId, "chatHistory", {truid: id, from, message, timestamp});
     }
     this.input = async function (from, message) {
         let timestamp = new Date().toISOString();
