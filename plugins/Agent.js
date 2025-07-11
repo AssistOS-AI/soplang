@@ -233,7 +233,9 @@ async function Agent() {
         await checkApplyContextInstructions(chatId, userPrompt, userId);
         return message;
     }
-
+    self.getAgentNames = async function () {
+        return await persistence.getEveryAgentName();
+    }
     return self;
 }
 

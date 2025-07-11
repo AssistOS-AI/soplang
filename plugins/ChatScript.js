@@ -16,6 +16,9 @@ async function ChatScript() {
     self.getChatScripts= async function () {
         return await persistence.getEveryChatScriptObject();
     }
+    self.getChatScriptNames = async function () {
+        return await persistence.getEveryChatScriptName();
+    }
     self.getChatScript = async function (scriptId) {
         return await persistence.getChatScript(scriptId);
     }
