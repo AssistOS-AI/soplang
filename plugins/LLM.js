@@ -57,13 +57,16 @@ async function LLM() {
         return provider.getModels();
     }
     self.getModels = async function () {
-        const models = {};
+        let allModels = [];
         for (const providerName in self.providers) {
             const provider = self.providers[providerName];
-            models[providerName] = await provider.getModels();
-            models[providerName].provider = providerName;
+            let models = await provider.getModels();
+            for(let model of models) {
+                model.providerName = providerName;
+            }
+            allModels = allModels.concat(models);
         }
-        return models;
+        return allModels;
     }
 
     self.getTextResponse = async (providerName, model, prompt, options = {}) => {

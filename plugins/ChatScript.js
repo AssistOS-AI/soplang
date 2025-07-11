@@ -22,8 +22,11 @@ async function ChatScript() {
     self.createChatScript = async function (name, code, description) {
         return await persistence.createChatScript({name, code, description});
     }
-    self.updateChatScript = async function (scriptId, processObject) {
-        return await persistence.updateChatScript(scriptId, processObject);
+    self.updateChatScript = async function (scriptId, chatScript) {
+        return await persistence.updateChatScript(scriptId, chatScript);
+    }
+    self.updateChatScriptName = async function (scriptId, name) {
+        return await persistence.setNameForChatScript(scriptId, name);
     }
     self.deleteChatScript = async function (scriptId) {
         return await persistence.deleteChatScript(scriptId);
