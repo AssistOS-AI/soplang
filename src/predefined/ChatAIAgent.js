@@ -20,11 +20,18 @@ function ChatAIAgent(docId, varId) {
             agentConfig = await persistence.getAgent(this.agentName);
         }
     }
-
+    this.getSystemPromptReply = function() {
+        let message = `You are an assistant within a web application. Your name is ${this.agentName}. You must respect these general instructions: ${agentConfig.description}`;
+        return {
+            role: "system",
+            message: message
+        }
+    }
     this.acknowledge = async function(from, message) {
         let id = await chatPlugin.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let chatConfig = agentConfig.llms["chat"];
         let chatHistory = await chatPlugin.getChatHistory(this.docId);
+        chatHistory.unshift(this.getSystemPromptReply());
         //let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
         let response = await llmPlugin.getChatCompletionResponse(chatConfig.providerName, chatConfig.modelName, chatHistory);
         await chatPlugin.editReply(id, this.docId, this.agentName, response, constants.ROLES.AI);
