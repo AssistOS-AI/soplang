@@ -24,8 +24,10 @@ await chatPlugin.createChat(docId, chatScript.id, ["John", "Assistant"]);
 let slowResponse = chatPlugin.listenForMessages(docId);
 let expectedChatResponses = [
     {from: "John", message: "Hello agent"},
+    {from: "Assistant"}, //processing response
     {from: "Assistant"},
     {from: "John", message: "Hello agent, how are you?"},
+    {from: "Assistant"}, //processing response
     {from: "Assistant"}
 ];
 let responses = [];
@@ -33,8 +35,8 @@ slowResponse.onProgress((response) => {
     responses.push(response);
 });
 
-await chatPlugin.chatInput(docId, "John", "Hello agent");
-await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?");
+await chatPlugin.chatInput(docId, "John", "Hello agent", "human");
+await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?", "human");
 
 await new Promise(resolve => setTimeout(resolve, 2000));
 for(let i = 0; i < expectedChatResponses.length; i++) {

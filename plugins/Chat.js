@@ -28,7 +28,7 @@ async function Chat() {
     self.createChat = async function (docId, scriptId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
         let initialisation = `@arg0 := ${document.docId} \n
-                                    @chatHistory new Table from message timestamp\n`;
+                                    @chatHistory new Table from message timestamp role\n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
                 initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
@@ -153,15 +153,15 @@ async function Chat() {
         return chatHistoryVar.data;
     }
 
-    self.chatInput = async function (chatId, agentName, message) {
+    self.chatInput = async function (chatId, agentName, message, role) {
         let chat = await Workspace.getVarValue(chatId, "chat");
-        let resultReplyId = await chat.input(agentName, message);
+        let resultReplyId = await chat.input(agentName, message, role);
         await Workspace.buildOnlyForDocument(chatId);
         return resultReplyId;
     }
-    self.editReply = async function (replyId, chatId, agentName, message) {
+    self.editReply = async function (replyId, chatId, agentName, message, role) {
         let chat = await Workspace.getVarValue(chatId, "chat");
-        let resultReplyId = await chat.editReply(replyId, agentName, message);
+        let resultReplyId = await chat.editReply(replyId, agentName, message, role);
         await Workspace.buildOnlyForDocument(chatId);
         return resultReplyId;
     }

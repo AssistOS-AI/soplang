@@ -85,14 +85,20 @@ async function LLM() {
         return await Provider.getTextStreamingResponse(model, prompt, options, onDataChunk);
     }
 
-    self.getChatCompletionResponse = async (providerName, model, messages, options = {}) => {
+    self.getChatCompletionResponse = async (providerName, model, chatHistory, options = {}) => {
         const Provider = await self.getProvider(providerName)
-        return await Provider.getChatCompletionResponse(model, messages, options);
+        let message;
+        try {
+            message = await Provider.getChatCompletionResponse(model, chatHistory, options);
+        } catch (e) {
+            message = e.message;
+        }
+        return message;
     }
 
-    self.getChatCompletionStreamingResponse = async (providerName, model, messages, options = {}, onDataChunk) => {
+    self.getChatCompletionStreamingResponse = async (providerName, model, chatHistory, options = {}, onDataChunk) => {
         const Provider = await self.getProvider(providerName);
-        return await Provider.getChatCompletionStreamingResponse(model, messages, options, onDataChunk);
+        return await Provider.getChatCompletionStreamingResponse(model, chatHistory, options, onDataChunk);
     }
     self.getTextResponseJson = (providerName, model, prompt, options = {}) =>
         self.getTextResponse(providerName, model, prompt, {...options, json: true})

@@ -24,17 +24,17 @@ function Chat(docId, varId) {
         this.interrogator = agentIds[0];
         this.agents = agentIds;
     }
-    async function saveReply(from, message, timestamp) {
-        let computedRow = await tablePlugin.insert(docId, "chatHistory", {from, message, timestamp});
+    async function saveReply(from, message, timestamp, role) {
+        let computedRow = await tablePlugin.insert(docId, "chatHistory", {from, message, timestamp, role});
         return computedRow.truid;
     }
     async function editReply(id, from, message, timestamp) {
         await tablePlugin.updateRow(docId, "chatHistory", {truid: id, from, message, timestamp});
     }
-    this.input = async function (from, message) {
+    this.input = async function (from, message, role) {
         let timestamp = new Date().toISOString();
-        let id = await saveReply(from, message, timestamp);
-        chatPlugin.notify(this.docId, {id, from, message, timestamp});
+        let id = await saveReply(from, message, timestamp, role);
+        chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);
@@ -46,10 +46,10 @@ function Chat(docId, varId) {
         }
         return id;
     }
-    this.editReply = async function (id, from, message) {
+    this.editReply = async function (id, from, message, role) {
         let timestamp = new Date().toISOString();
-        await editReply(id, from, message, timestamp);
-        chatPlugin.notify(this.docId, {id, from, message, timestamp});
+        await editReply(id, from, message, timestamp, role);
+        chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
         let graph = workspace.getGraph();
         for(let respondent of this.agents) {
             let agent = await graph.getVarValue(respondent);

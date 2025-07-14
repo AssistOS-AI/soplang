@@ -1,3 +1,4 @@
+import constants from "../util/constants.js"
 function ChatAIAgent(docId, varId) {
     let agentConfig;
     this.__type = "ChatAIAgent";
@@ -21,10 +22,12 @@ function ChatAIAgent(docId, varId) {
     }
 
     this.acknowledge = async function(from, message) {
-        let id = await chatPlugin.chatInput(this.docId, this.agentName, "Processing request...")
+        let id = await chatPlugin.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let chatConfig = agentConfig.llms["chat"];
-        let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
-        await chatPlugin.editReply(id, this.docId, this.agentName, response);
+        let chatHistory = await chatPlugin.getChatHistory(this.docId);
+        //let response = await llmPlugin.getTextResponse(chatConfig.providerName, chatConfig.modelName, message, {});
+        let response = await llmPlugin.getChatCompletionResponse(chatConfig.providerName, chatConfig.modelName, chatHistory);
+        await chatPlugin.editReply(id, this.docId, this.agentName, response, constants.ROLES.AI);
     }
 
     /*
