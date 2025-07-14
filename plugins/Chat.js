@@ -17,7 +17,7 @@ async function Chat() {
     }
 
 
-    self.getChatContext = async chatId => {
+    self.getChatContext = async function(chatId) {
         const chat = await Document.getDocument(chatId)
         const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
         const contextChapter = chapters.find(chapter => chapter.title === 'Context')
@@ -49,99 +49,13 @@ async function Chat() {
 
     self.deleteChat = chatId => Document.deleteDocument(chatId)
 
-    self.resetChat = async chatId => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const contextChapter = chapters.find(chapter => chapter.title === 'Context')
-        const messagesChapter = chapters.find(chapter => chapter.title === 'Messages')
-        return Promise.all([
-            ...messagesChapter.paragraphs.map(paragraph => Document.deleteParagraph(messagesChapter.id, paragraph.id)),
-            ...contextChapter.paragraphs.map(paragraph => Document.deleteParagraph(contextChapter.id, paragraph.id))
-        ])
+    self.resetChat = async function (chatId) {
     }
 
-    self.resetChatContext = async chatId => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const contextChapter = chapters.find(chapter => chapter.title === 'Context')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        await Promise.all(contextChapter.paragraphs.map(paragraph => Document.deleteParagraph(contextChapter.id, paragraph.id)))
+    self.resetChatContext = async function (chatId) {
+
     }
 
-    self.resetChatMessages = async chatId => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const messagesChapter = chapters.find(chapter => chapter.title === 'Messages')
-        if (!messagesChapter) throw new Error('Messages chapter not found')
-        await Promise.all(messagesChapter.paragraphs.map(paragraph => Document.deleteParagraph(messagesChapter.id, paragraph.id)))
-    }
-
-    self.addPreferenceToContext = async (chatId, message) => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const contextChapter = chapters.find(chapter => chapter.title === 'Context')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        return Document.createParagraph(contextChapter.id, message, {replay: {role: 'assistant'}}, {})
-    }
-
-    self.deletePreferenceFromContext = async (chatId, messageId) => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const contextChapter = chapters.find(chapter => chapter.title === 'Context')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        return Document.deleteParagraph(contextChapter.id, messageId)
-    }
-
-    self.addMessageToContext = async (chatId, messageId) => {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
-        const contextChapter = chapters.find(chapter => chapter.title === 'Context')
-        const messageChapter = chapters.find(chapter => chapter.title === 'Messages')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        if (!messageChapter) throw new Error('Messages chapter not found')
-
-        const message = messageChapter.paragraphs.find(paragraph => paragraph.id === messageId)
-        if (!message) throw new Error('Message not found')
-
-        message.commands.replay.isContext = true
-        await Document.updateParagraph(messageChapter.id, messageId, message.text, message.commands, message.comments)
-
-        return Document.createParagraph(contextChapter.id, message.text, {
-            replay: {
-                role: 'assistant',
-                isContextFor: message.id
-            }
-        }, {})
-    }
-
-    self.removeMessageFromContext = async (chatId, messageId) => {
-        const chat = await Document.getDocument(chatId)
-        const contextChapter = chat.chapters.find(chapter => chapter.title === 'Context')
-        const messageChapter = chat.chapters.find(chapter => chapter.title === 'Messages')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        if (!messageChapter) throw new Error('Messages chapter not found')
-
-        const contextMessage = contextChapter.paragraphs.find(paragraph => paragraph.id === messageId)
-        const referenceMessage = messageChapter.paragraphs.find(paragraph => paragraph.id === contextMessage.commands.replay.isContextFor)
-
-        referenceMessage.commands.replay.isContext = false
-        await Document.updateParagraph(messageChapter.id, referenceMessage.id, referenceMessage.text, referenceMessage.commands, referenceMessage.comments)
-
-        return Document.deleteParagraph(contextChapter.id, messageId)
-    }
-
-    self.updateChatContextItem = async (chatId, contextItemId, newText) => {
-        const chat = await Document.getDocument(chatId)
-        const contextChapter = chat.chapters.find(chapter => chapter.title === 'Context')
-        if (!contextChapter) throw new Error('Context chapter not found')
-        const contextItem = contextChapter.paragraphs.find(paragraph => paragraph.id === contextItemId)
-        if (!contextItem) throw new Error('Context item not found')
-        return Document.updateParagraph(contextChapter.id, contextItemId, newText, contextItem.commands, contextItem.comments)
-    }
-
-    self.sendStreamingQuery = async (chatId, personalityId, userId, userPrompt) => {
-        return await self.sendQuery(chatId, personalityId, userId, userPrompt)
-    }
 
     self.getChatHistory = async function (chatId) {
         let chatHistoryVar = await Workspace.getVarValue(chatId, "chatHistory");

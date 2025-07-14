@@ -71,13 +71,7 @@ async function LLM() {
 
     self.getTextResponse = async (providerName, model, prompt, options = {}) => {
         const Provider = await self.getProvider(providerName);
-        let message;
-        try {
-            message = await Provider.getTextResponse(model, prompt, options);
-        } catch (e) {
-            message = e.message;
-        }
-        return message;
+        return await Provider.getTextResponse(model, prompt, options);
     }
 
     self.getTextStreamingResponse = async (providerName, model, prompt, options = {}, onDataChunk) => {
@@ -87,13 +81,7 @@ async function LLM() {
 
     self.getChatCompletionResponse = async (providerName, model, chatHistory, options = {}) => {
         const Provider = await self.getProvider(providerName)
-        let message;
-        try {
-            message = await Provider.getChatCompletionResponse(model, chatHistory, options);
-        } catch (e) {
-            message = e.message;
-        }
-        return message;
+        return await Provider.getChatCompletionResponse(model, chatHistory, options);
     }
 
     self.getChatCompletionStreamingResponse = async (providerName, model, chatHistory, options = {}, onDataChunk) => {
