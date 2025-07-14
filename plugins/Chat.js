@@ -13,7 +13,7 @@ async function Chat() {
     }
     self.getChats = async function () {
         const documents = await Document.getDocumentsByCategory('chat')
-        return Promise.all(documents.map(doc => Document.dumpDocument(doc)))
+        return Promise.all(documents.map(doc => Document.getDocument(doc)))
     }
 
 
