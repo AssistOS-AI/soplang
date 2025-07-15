@@ -9,11 +9,20 @@ await agentPlugin.selectLLM("Assistant", "chat", "fakeModel", "FakeProvider");
 
 
 let script = `
+    @history new Table from message timestamp role
+    @context new Table from message timestamp role
     @currentUser := $arg1
     @agentName := $arg2
     @assistant new ChatAIAgent $agentName
     @user new ChatUserAgent $currentUser
-    @chat new Chat $user $assistant 
+    @chat new Chat $history $context $user $assistant
+    
+    @newReply macro reply ~history ~context
+        context.append $reply 
+        @res history.append $reply
+        return $res
+    end
+    chat.start
 `;
 let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);

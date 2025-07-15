@@ -1,5 +1,3 @@
-import {markAsReferenceToVariable} from "../graph/varUtil.js";
-
 let varUtil = await import("../graph/varUtil.js");
 const TABLE_ROW_UID = "TRUID"
 
@@ -64,6 +62,7 @@ function Table(docId, tableVarId) {
     self.columnDescription = undefined; // Column names
     self.data = [];    // Array of objects
     self.__type = "Table";
+    this.varId = tableVarId;
     if(!docId || !tableVarId){
         throw new Error("Table constructor requires docId and tableVarId");
     }

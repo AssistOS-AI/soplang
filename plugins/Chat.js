@@ -1,4 +1,5 @@
-import { createRequire } from 'module';
+import {createRequire} from 'module';
+
 const require = createRequire(import.meta.url);
 const soundpubsub = require("soundpubsub").soundPubSub;
 async function Chat() {
@@ -27,7 +28,7 @@ async function Chat() {
 
     self.createChat = async function (docId, scriptId, args) {
         const document = await Document.createDocument(docId, 'chat', docId);
-        let initialisation = `@arg0 := ${document.docId} \n@chatHistory new Table from message timestamp role\n`;
+        let initialisation = `@arg0 := ${document.docId} \n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
                 initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
@@ -36,15 +37,12 @@ async function Chat() {
             initialisation += ("@arg1 := " + args + "\n");
         }
         const script = await chatScriptPlugin.getChatScript(scriptId);
-        const saveScriptVar = "@scriptId := " + script.id + "\n";
-        const code = initialisation + saveScriptVar + script.code;
+        const code = initialisation + script.code;
         await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await Document.createChapter(document.id, 'Messages', '');
         await Workspace.buildOnlyForDocument(docId);
 
-        let chat = await Workspace.getVarValue(docId, "chat");
-        await chat.start();
-        return chat;
+        return await Workspace.getVarValue(docId, "chat");
     }
 
     self.deleteChat = chatId => Document.deleteDocument(chatId)
@@ -58,8 +56,9 @@ async function Chat() {
 
 
     self.getChatHistory = async function (chatId) {
-        let chatHistoryVar = await Workspace.getVarValue(chatId, "chatHistory");
-        for(let reply of chatHistoryVar.data) {
+        let chat = await Workspace.getVarValue(chatId, "chat");
+        let chatHistoryVar = await chat.getHistory();
+        for(let reply of chatHistoryVar) {
             reply.id = reply.truid;
         }
         return chatHistoryVar.data;
