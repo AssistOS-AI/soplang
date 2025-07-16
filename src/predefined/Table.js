@@ -91,10 +91,16 @@ function Table(docId, tableVarId) {
         let validJson;
         try {
             let pseudoJson = inputValues[0];
-            if (typeof pseudoJson === "string") {
+            if (typeof pseudoJson === "string" && inputValues.length === 1) {
                 validJson = $$.SOPParse(pseudoJson);
-            } else {
+            } else if(typeof pseudoJson === "object"){
                 validJson = pseudoJson;
+            } else {
+                validJson = {};
+                for(let i = 0; i < self.columnDescription.length; i++){
+                    let key = self.columnDescription[i];
+                    validJson[key] = inputValues[i];
+                }
             }
         } catch (error) {
             console.error("Error parsing JSON self.data:", error);

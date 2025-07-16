@@ -30,10 +30,9 @@ function ChatAIAgent(docId, varId) {
         }
     }
 
-    this.acknowledge = async function(from, message) {
+    this.acknowledge = async function(from, message, chatContext) {
         let id = await chatPlugin.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let chatConfig = agentConfig.llms["chat"];
-        let chatContext = await this.buildDynamicContext(from, message);
         let response;
         try {
             response = await llmPlugin.getChatCompletionResponse(chatConfig.providerName, chatConfig.modelName, chatContext);

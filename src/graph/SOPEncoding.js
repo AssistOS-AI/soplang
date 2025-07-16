@@ -100,6 +100,6 @@ $$.SOPParse = async function (str) {
         case "undefined":
             return undefined;
         default:
-            return $$.restoreCustomTypeInstance(parts[1], decodeString(encodedText));
+            return await $$.restoreCustomTypeInstance(parts[1], decodeString(encodedText));
     }
 }

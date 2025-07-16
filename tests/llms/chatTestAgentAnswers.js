@@ -17,12 +17,12 @@ let script = `
     @user new ChatUserAgent $currentUser
     @chat new Chat $history $context $user $assistant
     
+    context.append system assistant.description "" system
     @newReply macro reply ~history ~context
         context.append $reply 
         @res history.append $reply
         return $res
     end
-    chat.start
 `;
 let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);
@@ -45,9 +45,11 @@ slowResponse.onProgress((response) => {
 });
 
 await chatPlugin.chatInput(docId, "John", "Hello agent", "human");
-await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?", "human");
-
 await new Promise(resolve => setTimeout(resolve, 2000));
+
+await chatPlugin.chatInput(docId, "John", "Hello agent, how are you?", "human");
+await new Promise(resolve => setTimeout(resolve, 2000));
+
 for(let i = 0; i < expectedChatResponses.length; i++) {
     assert(responses[i].from === expectedChatResponses[i].from, `Response ${i} from should match`);
     if(expectedChatResponses[i].message) {

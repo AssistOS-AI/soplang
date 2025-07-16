@@ -1,4 +1,4 @@
-import { getVarID, getVariable, getVarValue } from "../graph/varUtil.js";
+import { getVarID, getVarValue } from "../graph/varUtil.js";
 import constants from "../util/constants.js";
 
 function Chat(docId, varId) {
@@ -36,7 +36,7 @@ function Chat(docId, varId) {
         this.agentVarIds = agentVarIds;
     }
 
-    async function editReply(id, from, message, timestamp) {
+    const editReply = async (id, from, message, timestamp) =>{
         let tableValue = await getVarValue(this.historyVarId);
         let graph = workspace.getGraph();
         return await tableValue.internalUpdateRow({truid: id, from, message, timestamp}, graph);
@@ -47,30 +47,28 @@ function Chat(docId, varId) {
         let lastRow = historyTable.data[historyTable.data.length - 1];
         let id = lastRow.truid;
         chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
+        notifyAgents(from, message);
+        return id;
+    }
+    const notifyAgents = (from, message) => {
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
-            let agent = await graph.getVarValue(respondent);
-            if(agent.agentName === from){
-                continue;
-            }
-            //called without await
-            agent.acknowledge(from, message);
+            graph.getVarValue(respondent).then(agent =>{
+                if(agent.agentName === from){
+                    return;
+                }
+                //called without await
+                this.getHistory().then(chatContext => {
+                    agent.acknowledge(from, message, chatContext);
+                });
+            });
         }
-        return id;
     }
     this.editReply = async function (id, from, message, role) {
         let timestamp = new Date().toISOString();
         await editReply(id, from, message, timestamp, role);
         chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
-        let graph = workspace.getGraph();
-        for(let respondent of this.agentVarIds) {
-            let agent = await graph.getVarValue(respondent);
-            if(agent.agentName === from){
-                continue;
-            }
-            //called without await
-            agent.acknowledge(from, message);
-        }
+        notifyAgents(from, message);
         return id;
     }
     this.getHistory = async function () {
@@ -138,6 +136,7 @@ function Chat(docId, varId) {
         dynamicContext = dynamicContext.concat(chatHistory.slice(-lastRepliesNr));
         return dynamicContext;
     }
+
     this.restore = async function(JSONSerialisation) {
         if(JSONSerialisation){
             this.docId = JSONSerialisation.docId;

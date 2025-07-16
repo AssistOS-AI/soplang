@@ -62,7 +62,7 @@ function CommandsRegistry( workspace) {
         if(inputValues[0].length === 0){
             declaredParams = [];
         }
-        let outputVarId = parsedCommand.outputVars[0];
+        let outputVarId = getVarID(currentDocId, parsedCommand.outputVars[0]);
         let args = [];
         let sopCode = varUtil.decodeSOPCode(parsedCommand.inputVars[1]);
         let lines = sopCode.split("\n");
@@ -92,16 +92,16 @@ function CommandsRegistry( workspace) {
         }
         //first parameter is the form data
         args.unshift(formData);
-        if(await varUtil.isDefined(outputVarId)){
-            let instance = graph.getVarValue(outputVarId);
-            let initialArgs = instance.__initialArgs;
-            if(!varUtil.sameValue(initialArgs, args)){
-                if(instance.reinit !== undefined){
-                    await instance.reinit(...args);
-                }
-            }
-            return instance;
-        }
+        // if(await varUtil.isDefined(outputVarId)){
+        //     let instance = graph.getVarValue(outputVarId);
+        //     let initialArgs = instance.__initialArgs;
+        //     if(!varUtil.sameValue(initialArgs, args)){
+        //         if(instance.reinit !== undefined){
+        //             await instance.reinit(...args);
+        //         }
+        //     }
+        //     return instance;
+        // }
 
         return customTypeRegistry.newInstance(currentDocId, "Form", outputVarId, ...args);
 

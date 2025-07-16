@@ -42,7 +42,9 @@ async function Chat() {
         await Document.createChapter(document.id, 'Messages', '');
         await Workspace.buildOnlyForDocument(docId);
 
-        return await Workspace.getVarValue(docId, "chat");
+        let chat = await Workspace.getVarValue(docId, "chat");
+        await chat.start();
+        return chat;
     }
 
     self.deleteChat = chatId => Document.deleteDocument(chatId)
@@ -61,7 +63,7 @@ async function Chat() {
         for(let reply of chatHistoryVar) {
             reply.id = reply.truid;
         }
-        return chatHistoryVar.data;
+        return chatHistoryVar;
     }
 
     self.chatInput = async function (chatId, agentName, message, role) {
