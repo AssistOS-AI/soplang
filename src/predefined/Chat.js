@@ -1,10 +1,11 @@
-import { getVarID, getVarValue } from "../graph/varUtil.js";
+import {getLocalVarName, getVarID, getVarValue} from "../graph/varUtil.js";
 import constants from "../util/constants.js";
 
-function Chat(docId, varId) {
+function Chat(docId, varName) {
     this.__type = "Chat"
     this.docId = docId;
-    this.varId = varId;
+    this.varName = varName;
+    this.varId = getVarID(docId, varName);
     let workspace = $$.loadPlugin("Workspace");
     let chatPlugin = $$.loadPlugin("Chat");
     let tablePlugin = $$.loadPlugin("Table");
@@ -23,17 +24,16 @@ function Chat(docId, varId) {
         } else {
             this.contextVarId = context.varId;
         }
-        let agents = args.slice(2);
-        let agentVarIds = [];
-        for(let agent of agents) {
-            if(typeof(agent) === "string") {
-                agentVarIds.push(getVarID(this.docId, agent));
-            } else {
-                agentVarIds.push(agent.varId);
+        let agentInstances = args.slice(2);
+        let agents = [];
+        for(let agent of agentInstances) {
+            if(!agent.agentName && !agent.varId){
+                throw new Error("Agent must have an agentName and varId defined");
             }
+            agents.push({name: agent.agentName, varName: getLocalVarName(this.docId, agent.varId)});
         }
-        this.interrogatorVarId = agentVarIds[0];
-        this.agentVarIds = agentVarIds;
+        this.agents = agents;
+        this.interrogator = agents[0];
     }
 
     const editReply = async (id, from, message, timestamp) =>{
@@ -41,14 +41,24 @@ function Chat(docId, varId) {
         let graph = workspace.getGraph();
         return await tableValue.internalUpdateRow({truid: id, from, message, timestamp}, graph);
     }
+    this.notify = function (reply) {
+        reply.id = reply.truid;
+        delete reply.truid;
+        chatPlugin.notify(this.docId, reply);
+    }
+    const getAgentByName = (name) =>{
+        return this.agents.find(agent => agent.name === name);
+    }
     this.input = async function (from, message, role) {
         let timestamp = new Date().toISOString();
-        let historyTable = await workspace.runMacro(this.docId, "newReply", {from, message, timestamp, role});
-        let lastRow = historyTable.data[historyTable.data.length - 1];
-        let id = lastRow.truid;
-        chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
-        notifyAgents(from, message);
-        return id;
+        let agent = getAgentByName(from);
+        let instance = await workspace.getVarValue(getVarID(this.docId, agent.varName));
+        let reply = await workspace.runMacro(this.docId, "newReply", {from, message, timestamp, role}, `$${agent.varName}`);
+        //let lastRow = historyTable.data[historyTable.data.length - 1];
+        //let id = lastRow.truid;
+        //chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
+        //notifyAgents(from, message);
+        return reply.truid;
     }
     const notifyAgents = (from, message) => {
         let graph = workspace.getGraph();
@@ -77,7 +87,7 @@ function Chat(docId, varId) {
     }
     this.start = async function () {
         let graph = workspace.getGraph();
-        let interrogator = await graph.getVarValue(this.interrogatorVarId);
+        let interrogator = await graph.getVarValue(getVarID(this.docId, this.interrogator.varName));
         let from = "waitInput";
         let message = "Begin conversation";
         await interrogator.acknowledge(from, message);
@@ -141,8 +151,8 @@ function Chat(docId, varId) {
         if(JSONSerialisation){
             this.docId = JSONSerialisation.docId;
             this.chatId = JSONSerialisation.chatId;
-            this.interrogatorVarId = JSONSerialisation.interrogatorVarId;
-            this.agentVarIds = JSONSerialisation.agentVarIds;
+            this.interrogator = JSONSerialisation.interrogator;
+            this.agents = JSONSerialisation.agents;
             this.historyVarId = JSONSerialisation.historyVarId;
             this.contextVarId = JSONSerialisation.contextVarId;
         }
