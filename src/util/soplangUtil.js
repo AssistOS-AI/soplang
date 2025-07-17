@@ -490,13 +490,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
             initialisation += `@${variables[argName]} alias ${macroDocId} ${argName}\n`;
         } else {
             variables[argName] = executionPrefix + "_" + argName;
-            if(typeof args[i] === "string" && args[i].startsWith("$")){
-                let argAlias = `${executionPrefix}_${args[i].slice(1)}_ALIAS`;
-                initialisation += `@${argAlias} alias ${macroDocId} ${args[i].slice(1)}\n`;
-                initialisation += `@${variables[argName]} := $${argAlias}\n`;
-            } else {
-                initialisation += `@${variables[argName]} := ${$$.SOPStringify(args[i])}\n`;
-            }
+            initialisation += `@${variables[argName]} := ${$$.SOPStringify(args[i])}\n`;
         }
     }
 

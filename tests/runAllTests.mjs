@@ -29,7 +29,6 @@ const tests = [
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/macros/basic/runMacroTest.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
-    './pipelines/macros/basic/callCustomTypeInMacro.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',
@@ -54,7 +53,8 @@ const tests = [
     './plugins/updateMacroVarValue.mjs',
     './llms/llmAPICalls.mjs',
     './llms/chatTestAgentAnswers.js',
-    './llms/chatTestUserAnswers.js'
+    './llms/chatTestUserAnswers.js',
+    './llms/multipleAgentsChat.js',
 ];
 
 import fs from 'node:fs/promises';

@@ -30,9 +30,7 @@ function ChatAIAgent(docId, varId) {
         }
     }
 
-    this.acknowledge = async function(inputValues) {
-        let chatContext = inputValues[0].data;
-        let reply = inputValues[1];
+    this.acknowledge = async function(from, message, chatContext) {
         let id = await chatPlugin.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let chatConfig = agentConfig.llms["chat"];
         let response;

@@ -107,12 +107,11 @@ function Table(docId, tableVarId) {
             await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
             return;
         }
-        let computedRow = await schemaUtil.computeValues(validJson, currentDocId, graph);
-        self.data.push(computedRow);
+        self.data.push(await schemaUtil.computeValues(validJson, currentDocId, graph));
         await varUtil.setVarValue(tableVarId, self);
         let resultedAliasTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
         await varUtil.markAsReferenceToVariable(resultedAliasTableId, tableVarId, currentDocId);
-        return computedRow;
+        return self;
     }
 
     self.internalInsert = async function (validJson, graph, position) {
