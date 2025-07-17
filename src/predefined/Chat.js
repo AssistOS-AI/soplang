@@ -7,7 +7,6 @@ function Chat(docId, varId) {
     this.varId = varId;
     let workspace = $$.loadPlugin("Workspace");
     let chatPlugin = $$.loadPlugin("Chat");
-    let tablePlugin = $$.loadPlugin("Table");
     const lastRepliesNr = 10; //number of last replies to consider in the context
 
     this.init = async function (...args) {
@@ -36,40 +35,28 @@ function Chat(docId, varId) {
         this.agentVarIds = agentVarIds;
     }
 
-    const editReply = async (id, from, message, timestamp) =>{
-        let tableValue = await getVarValue(this.historyVarId);
-        let graph = workspace.getGraph();
-        return await tableValue.internalUpdateRow({truid: id, from, message, timestamp}, graph);
-    }
-    this.input = async function (from, message, role) {
-        let timestamp = new Date().toISOString();
-        let historyTable = await workspace.runMacro(this.docId, "newReply", {from, message, timestamp, role});
+    this.notify = function (inputValues) {
+        let historyTable = inputValues[0];
         let lastRow = historyTable.data[historyTable.data.length - 1];
-        let id = lastRow.truid;
-        chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
-        notifyAgents(from, message);
-        return id;
-    }
-    const notifyAgents = (from, message) => {
+        chatPlugin.notifySubscribers(this.docId, lastRow);
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
-                if(agent.agentName === from){
-                    return;
-                }
-                //called without await
                 this.getHistory().then(chatContext => {
-                    agent.acknowledge(from, message, chatContext);
+                    agent.acknowledge(lastRow.from, lastRow.message, chatContext);
                 });
             });
         }
     }
-    this.editReply = async function (id, from, message, role) {
+
+    //called internally only by agent
+    this.updateReply = async function (truid, from, message, role) {
         let timestamp = new Date().toISOString();
-        await editReply(id, from, message, timestamp, role);
-        chatPlugin.notify(this.docId, {id, from, message, timestamp, role});
-        notifyAgents(from, message);
-        return id;
+        let tableValue = await getVarValue(this.historyVarId);
+        let graph = workspace.getGraph();
+        await tableValue.internalUpdateRow({from, message, timestamp, truid}, graph);
+        chatPlugin.notifySubscribers(this.docId, {from, message, timestamp, role, truid});
+        return truid;
     }
     this.getHistory = async function () {
         let historyTable = await getVarValue(this.historyVarId);

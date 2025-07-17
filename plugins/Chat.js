@@ -5,29 +5,29 @@ const soundpubsub = require("soundpubsub").soundPubSub;
 async function Chat() {
     const self = {}
 
-    const Document =  $$.loadPlugin('Documents');
-    const Workspace = $$.loadPlugin('Workspace');
+    const documentsPlugin =  $$.loadPlugin('Documents');
+    const workspace = $$.loadPlugin('Workspace');
     const chatScriptPlugin = $$.loadPlugin('ChatScript');
 
     self.getChat = async function (chatId) {
-        return await Document.dumpDocument(chatId)
+        return await documentsPlugin.dumpDocument(chatId)
     }
     self.getChats = async function () {
-        const documents = await Document.getDocumentsByCategory('chat')
-        return Promise.all(documents.map(doc => Document.getDocument(doc)))
+        const documents = await documentsPlugin.getDocumentsByCategory('chat')
+        return Promise.all(documents.map(doc => documentsPlugin.getDocument(doc)))
     }
 
 
     self.getChatContext = async function(chatId) {
-        const chat = await Document.getDocument(chatId)
-        const chapters = await Promise.all(chat.chapters.map(chapter => Document.getChapter(chapter)))
+        const chat = await documentsPlugin.getDocument(chatId)
+        const chapters = await Promise.all(chat.chapters.map(chapter => document.getChapter(chapter)))
         const contextChapter = chapters.find(chapter => chapter.title === 'Context')
         if (!contextChapter) throw new Error('Context chapter not found')
-        return Promise.all(contextChapter.paragraphs.map(paragraph => Document.getParagraph(paragraph)))
+        return Promise.all(contextChapter.paragraphs.map(paragraph => documentsPlugin.getParagraph(paragraph)))
     }
 
     self.createChat = async function (docId, scriptId, args) {
-        const document = await Document.createDocument(docId, 'chat', docId);
+        const document = await documentsPlugin.createDocument(docId, 'chat', docId);
         let initialisation = `@arg0 := ${document.docId} \n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
@@ -38,27 +38,21 @@ async function Chat() {
         }
         const script = await chatScriptPlugin.getChatScript(scriptId);
         const code = initialisation + script.code;
-        await Document.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
-        await Document.createChapter(document.id, 'Messages', '');
-        await Workspace.buildOnlyForDocument(docId);
+        await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
+        await documentsPlugin.createChapter(document.id, 'Messages', '');
+        await workspace.buildOnlyForDocument(docId);
 
-        let chat = await Workspace.getVarValue(docId, "chat");
+        let chat = await workspace.getVarValue(docId, "chat");
         await chat.start();
         return chat;
     }
 
-    self.deleteChat = chatId => Document.deleteDocument(chatId)
-
-    self.resetChat = async function (chatId) {
+    self.deleteChat = async function (chatId) {
+        return await documentsPlugin.deleteDocument(chatId);
     }
-
-    self.resetChatContext = async function (chatId) {
-
-    }
-
 
     self.getChatHistory = async function (chatId) {
-        let chat = await Workspace.getVarValue(chatId, "chat");
+        let chat = await workspace.getVarValue(chatId, "chat");
         let chatHistoryVar = await chat.getHistory();
         for(let reply of chatHistoryVar) {
             reply.id = reply.truid;
@@ -66,18 +60,15 @@ async function Chat() {
         return chatHistoryVar;
     }
 
-    self.chatInput = async function (chatId, agentName, message, role) {
-        let chat = await Workspace.getVarValue(chatId, "chat");
-        let resultReplyId = await chat.input(agentName, message, role);
-        await Workspace.buildOnlyForDocument(chatId);
+    self.chatInput = async function (chatId, from, message, role) {
+        let timestamp = new Date().toISOString();
+        let historyTable = await workspace.runMacro(chatId, "newReply", {from, message, timestamp, role});
+        let lastRow = historyTable.data[historyTable.data.length - 1];
+        let resultReplyId = lastRow.truid;
+        await workspace.buildOnlyForDocument(chatId);
         return resultReplyId;
     }
-    self.editReply = async function (replyId, chatId, agentName, message, role) {
-        let chat = await Workspace.getVarValue(chatId, "chat");
-        let resultReplyId = await chat.editReply(replyId, agentName, message, role);
-        await Workspace.buildOnlyForDocument(chatId);
-        return resultReplyId;
-    }
+
     let responses = [];
     self.listenForMessages = function (chatId) {
         let observableResponse = $$.createObservableResponse();
@@ -86,7 +77,7 @@ async function Chat() {
         soundpubsub.subscribe(chatId, observableResponse._boundProgress);
         return observableResponse;
     }
-    self.notify = function (chatId, response) {
+    self.notifySubscribers = function (chatId, response) {
         soundpubsub.publish(chatId, response);
     }
     self.stopListeningForMessages = async function (chatId) {
@@ -110,5 +101,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ['Documents', "Workspace", "DefaultPersistence", "ChatScript"]
+    return ['Documents', "workspace", "DefaultPersistence", "ChatScript"]
 }

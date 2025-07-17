@@ -16,9 +16,10 @@ let script = `
     @chat new Chat $history $context $assistant $user
     
     context.append system assistant.description "" system
-    @newReply macro reply ~history ~context
-        context.append $reply 
+    @newReply macro reply ~history ~context ~chat
         @res history.append $reply
+        context.upsert $res
+        chat.notify $res
         return $res
     end
 `;
