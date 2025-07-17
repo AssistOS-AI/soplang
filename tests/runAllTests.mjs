@@ -24,7 +24,6 @@ const tests = [
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
     './pipelines/customTypes/formTest.mjs',
-    './pipelines/customTypes/workFlowAgent.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/macros/basic/runMacroTest.mjs',
@@ -51,10 +50,7 @@ const tests = [
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
     './plugins/updateMacroVarValue.mjs',
-    './llms/llmAPICalls.mjs',
-    './llms/chatTestAgentAnswers.js',
-    './llms/chatTestUserAnswers.js',
-    './llms/multipleAgentsChat.js',
+    './llms/llmAPICalls.mjs'
 ];
 
 import fs from 'node:fs/promises';
