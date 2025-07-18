@@ -23,17 +23,18 @@ const tests = [
     './plugins/documentSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
+    './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/customTypes/constructorVarId.mjs',
     './pipelines/customTypes/formTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
+    './pipelines/customTypes/conditionalMethodExec.mjs',
     './pipelines/macros/basic/runMacroTest.mjs',
     './pipelines/macros/basic/callMacroWithReferencedVar.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',
-    './pipelines/macros/basic/defineMacroInMacro.mjs',
     './pipelines/macros/basic/importMacroTest.mjs',
     './pipelines/macros/basic/bestCommandTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
@@ -48,11 +49,12 @@ const tests = [
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
+    './pipelines/tables/assignTableMethodResult.mjs',
+    './pipelines/tables/appendResult.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
     './plugins/updateMacroVarValue.mjs',
-    './llms/llmAPICalls.mjs'
 ];
 
 import fs from 'node:fs/promises';

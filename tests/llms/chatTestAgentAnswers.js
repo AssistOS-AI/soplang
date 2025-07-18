@@ -1,12 +1,10 @@
 import {} from "../deps/clean.mjs";
-
 import assert from "assert"
 
 let chatPlugin = $$.loadPlugin("Chat");
 let agentPlugin = $$.loadPlugin("Agent");
-await agentPlugin.createAgent("Assistant");
+await agentPlugin.createAgent("Assistant", "You are a helpful assistant.");
 await agentPlugin.selectLLM("Assistant", "chat", "fakeModel", "FakeProvider");
-
 
 let script = `
     @history new Table from message timestamp role
@@ -20,13 +18,18 @@ let script = `
     context.append system [ assistant.getSystemPrompt ] "" system
     @newReply macro reply ~history ~context ~chat ~assistant
         @res history.append $reply
-       
-        @relevantReply assistant.analiseRelevance $reply
-        context.upsert? $relevantReply
+        
+        @analisePrompt := "Given the current discussion and a new user message, determine if the message contains any information relevant to the ongoing topic. User message: " $res ". Current discussion: " $history.data "."
+        @relevantReply assistant.analiseRelevance $res $analisePrompt
+        context.?upsert $relevantReply
         chat.notify $res
         return $res
     end
 `;
+let a = `
+        assistant.trimContext "Given the current discussion, determine if the information in the current context is still relevant. Current context: " $context.data ". Current discussion: " $history.data "."
+        
+`
 let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);
 //script needs to have @chat variable

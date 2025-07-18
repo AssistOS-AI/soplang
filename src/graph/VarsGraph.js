@@ -179,12 +179,16 @@ function VarsGraph(commandsRegistry) {
             docId: inDocId,
             title: inDocId,
             category: MACRO_RUN,
-            commands: macroCode
+            commands: macroCode,
+            chapters: []
         });
 
         await defineVarsFromCode(inDocId, "_", "_", macroCode);
         await self.buildOnlyForDocument(inDocId);
-        return self.getVarValue(inDocId, inDocId);
+        let value = await self.getVarValue(inDocId, inDocId);
+        let documentsPlugin = await $$.loadPlugin("Documents");
+        await documentsPlugin.deleteDocument(inDocId);
+        return value;
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {

@@ -23,15 +23,13 @@ function FakeProvider() {
     this.getModels = function(){
         return this.models;
     }
-    this.setResponse = function(input, output) {
-        responses.set(input, output)
-    }
-
     this.getTextResponse = async function(model, prompt, options = {}) {
-        if (!responses.has(prompt)) {
-            return "Hello, I am an AI agent";
+        if(prompt.includes(`{ "relevant": true/false, "context": "extracted context", "relevance": number from 1 to 10 }`)){
+            return `{"relevant": true, "context": "extracted context", "relevance": 10}`;
+        } else if(prompt.includes("Give a new relevance score from 1 to 10")){
+            return `[10, 7, 5, 0]`;
         }
-        return responses.get(prompt)
+        return "Hello, I am an AI agent";
     }
 
     this.getTextStreamingResponse = async function(model, prompt, options = {}, onDataChunk) {
@@ -48,10 +46,7 @@ function FakeProvider() {
     }
 
     this.getChatCompletionResponse = async function (model, messages, options = {}) {
-        if (!responses.has(messages)) {
-            return "Hello, I am an AI agent";
-        }
-        return responses.get(messages)
+        return "Hello, I am an AI agent";
     }
 
     this.getChatCompletionStreamingResponse = async function(model, messages, options = {}, onDataChunk) {
