@@ -88,15 +88,18 @@ function Table(docId, tableVarId) {
 
     // Append rows to the table - similar to tableUtil.js
     self.append = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-        let validJson;
+        let validJson = {};
         try {
             let pseudoJson = inputValues[0];
             if (typeof pseudoJson === "string" && inputValues.length === 1) {
-                validJson = $$.SOPParse(pseudoJson);
+                if( pseudoJson.startsWith("'sop:") || pseudoJson.startsWith('"sop:') ){
+                    validJson = $$.SOPParse(pseudoJson);
+                } else {
+                     validJson[self.columnDescription[0]] = inputValues[0];
+                }
             } else if(typeof pseudoJson === "object"){
                 validJson = pseudoJson;
             } else {
-                validJson = {};
                 for(let i = 0; i < self.columnDescription.length; i++){
                     let key = self.columnDescription[i];
                     validJson[key] = inputValues[i];

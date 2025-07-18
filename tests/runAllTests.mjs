@@ -48,8 +48,8 @@ const tests = [
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
-    //bugs
     './pipelines/tables/appendResult.mjs',
+    //bugs
     './plugins/updateMacroVarValue.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/customTypes/constructorVarId.mjs',
