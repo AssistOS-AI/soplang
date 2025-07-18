@@ -171,11 +171,11 @@ function CommandsRegistry( workspace) {
 
     commands.new = async function (inputValues, parsedCommand, currentDocId, graph) {
         const typeName = inputValues[0];
-        let outputVarId = parsedCommand.outputVars[0];
+        let outputVarName = parsedCommand.outputVars[0];
         const args = inputValues.slice(1);
 
-        if(await varUtil.isDefined(outputVarId)){
-            let instance = graph.getVarValue(outputVarId);
+        if(await varUtil.isDefined(outputVarName)){
+            let instance = graph.getVarValue(outputVarName);
             let initialArgs = instance.__initialArgs;
             if(!varUtil.sameValue(initialArgs, args)){
                 if(instance.reinit !== undefined){
@@ -185,7 +185,7 @@ function CommandsRegistry( workspace) {
             return instance;
         }
 
-        return customTypeRegistry.newInstance(currentDocId, typeName, outputVarId, ...args);
+        return customTypeRegistry.newInstance(currentDocId, typeName, outputVarName, ...args);
     }
 
 

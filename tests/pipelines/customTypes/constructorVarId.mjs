@@ -3,14 +3,15 @@ import assert from "assert";
 let workspace = await $$.loadPlugin("Workspace");
 
 let initialVarId;
-function CustomType(docId, varId) {
-    this.varId = varId;
+//the purpose of the test is to ensure thhat a p[roper varName and not a varId is passed to the constructor of a custom type
+function CustomType(docId, varName) {
+    this.varId = varName;
     if(!initialVarId){
-        initialVarId = varId;
+        initialVarId = varName;
     } else {
-        if(initialVarId !== varId) {
-            console.error(`CustomType should be created with the same varId, first instance: ${initialVarId}, second instance: ${varId}`);
-          throw new Error(`CustomType should be created with the same varId, first instance: ${initialVarId}, second instance: ${varId}`);
+        if(initialVarId !== varName) {
+          $$.failTest();
+          throw new Error(`CustomType should be created with the same varId, first instance: ${initialVarId}, second instance: ${varName}`);
         }
     }
 

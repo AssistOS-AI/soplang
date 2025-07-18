@@ -14,28 +14,28 @@ const registerType = (name, typeDefinition) => {
     customTypes[name] = typeDefinition;
 }
 
-const restoreInstance = async (currentDocId, typeName, outputVarID, JSONSerialisation) => {
+const restoreInstance = async (currentDocId, typeName, outputVarName, JSONSerialisation) => {
     if (typeof customTypes[typeName] === "undefined") {
         throw Error(`Type ${typeName} not registered`);
     }
 
-    if(customTypesValuesCache.has(outputVarID)){
-        return customTypesValuesCache.get(outputVarID);
+    if(customTypesValuesCache.has(outputVarName)){
+        return customTypesValuesCache.get(outputVarName);
     }
 
     if(!JSONSerialisation){
         return undefined;
     }
 
-    let instance = new customTypes[typeName](currentDocId, outputVarID);
-    customTypesValuesCache.set(outputVarID, instance);
+    let instance = new customTypes[typeName](currentDocId, outputVarName);
+    customTypesValuesCache.set(outputVarName, instance);
 
     try{
-        $$.debug("objectLifeCycle", `restoreInstance instance of type ${typeName} with output variable ${outputVarID}`);
+        $$.debug("objectLifeCycle", `restoreInstance instance of type ${typeName} with output variable ${outputVarName}`);
         await instance.restore(JSONSerialisation);
     }
     catch(e){
-        throw Error(`Exception restoring instance of type ${typeName} with output variable ${outputVarID}: ${e.message}`);
+        throw Error(`Exception restoring instance of type ${typeName} with output variable ${outputVarName}: ${e.message}`);
     }
     instance.__type = typeName;
     return instance;
@@ -55,34 +55,34 @@ $$.restoreCustomTypeInstance = async function(typeName, JSONSerialisation){
     }
 };
 
-const newInstance = async (currentDocId,  typeName, outputVarID, ...args) => {
+const newInstance = async (currentDocId,  typeName, outputVarName, ...args) => {
     if (typeof customTypes[typeName] === "undefined") {
         throw Error(`Type ${typeName} not registered`);
     }
-    let instance = new customTypes[typeName](currentDocId, outputVarID);
-    $$.debug("objectLifeCycle", `Creating new instance of type ${typeName} with output variable ${outputVarID}`);
+    let instance = new customTypes[typeName](currentDocId, outputVarName);
+    $$.debug("objectLifeCycle", `Creating new instance of type ${typeName} with output variable ${outputVarName}`);
     await instance.init(...args);
-    customTypesValuesCache.set(outputVarID, instance);
+    customTypesValuesCache.set(outputVarName, instance);
     instance.__type = typeName;
     instance.__initialArgs = args;
     return instance;
 }
 
-const lookupInstance = async (currentDocId,  typeName, outputVarID, primaryKey, ...args) => {
+const lookupInstance = async (currentDocId,  typeName, outputVarName, primaryKey, ...args) => {
     if (typeof customTypes[typeName] === "undefined") {
         $$.recordBuildError(`Type ${typeName} not registered! The output variable will remain undefined!`);
         return undefined;
     }
 
-    if (customTypesValuesCache.has(outputVarID)) {
-        return customTypesValuesCache.get(outputVarID);
+    if (customTypesValuesCache.has(outputVarName)) {
+        return customTypesValuesCache.get(outputVarName);
     }
 
-    let instance = new customTypes[typeName](currentDocId, outputVarID);
-    customTypesValuesCache.set(outputVarID, instance);
+    let instance = new customTypes[typeName](currentDocId, outputVarName);
+    customTypesValuesCache.set(outputVarName, instance);
 
     try{
-        $$.debug("objectLifeCycle", `Lookup  instance of type ${typeName} with output variable ${outputVarID}`);
+        $$.debug("objectLifeCycle", `Lookup  instance of type ${typeName} with output variable ${outputVarName}`);
         await instance.lookup(primaryKey, ...args);
     } catch(e){
         console.debug(`Error looking up instance of type ${typeName} with primary key ${primaryKey}: ${e.message}`);

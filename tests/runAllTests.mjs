@@ -49,10 +49,10 @@ const tests = [
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
     './pipelines/tables/appendResult.mjs',
+    './pipelines/customTypes/constructorVarId.mjs',
     //bugs
     './plugins/updateMacroVarValue.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
-    './pipelines/customTypes/constructorVarId.mjs',
     './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
     './pipelines/tables/assignTableMethodResult.mjs',
 ];

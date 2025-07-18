@@ -72,7 +72,9 @@ $$.deepEqual = function(obj1, obj2) {
 
 
 
-
+$$.failTest = function(){
+    $$.allOk = false;
+}
 
 $$.exit = async function () {
     let workspace = await $$.loadPlugin("Workspace");
