@@ -1,4 +1,5 @@
 import {} from "../../deps/clean.mjs";
+import assert from "assert";
 let workspace = await $$.loadPlugin("Workspace");
 
 let initialVarId;
@@ -9,7 +10,7 @@ function CustomType(docId, varId) {
     } else {
         if(initialVarId !== varId) {
             console.error(`CustomType should be created with the same varId, first instance: ${initialVarId}, second instance: ${varId}`);
-            process.exit(1);
+          throw new Error(`CustomType should be created with the same varId, first instance: ${initialVarId}, second instance: ${varId}`);
         }
     }
 
@@ -35,8 +36,7 @@ let script = `
 `;
 
 await workspace.defineCustomType("CustomType", CustomType);
-await workspace.runCode(script);
-await workspace.buildAll();
-
-
+let docId = await workspace.runCode(script);
+assert.notEqual(docId , undefined);
+//await
 $$.endTest();

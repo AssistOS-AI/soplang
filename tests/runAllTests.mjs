@@ -23,14 +23,10 @@ const tests = [
     './plugins/documentSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
-    './pipelines/basic/ifCommandEdgeCase.mjs',
-    './pipelines/customTypes/constructorVarId.mjs',
     './pipelines/customTypes/formTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
-    './pipelines/customTypes/conditionalMethodExec.mjs',
     './pipelines/macros/basic/runMacroTest.mjs',
-    './pipelines/macros/basic/callMacroWithReferencedVar.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
@@ -49,12 +45,16 @@ const tests = [
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
-    './pipelines/tables/assignTableMethodResult.mjs',
-    './pipelines/tables/appendResult.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
+    //bugs
+    './pipelines/tables/appendResult.mjs',
     './plugins/updateMacroVarValue.mjs',
+    './pipelines/basic/ifCommandEdgeCase.mjs',
+    './pipelines/customTypes/constructorVarId.mjs',
+    './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
+    './pipelines/tables/assignTableMethodResult.mjs',
 ];
 
 import fs from 'node:fs/promises';

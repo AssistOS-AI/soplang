@@ -320,7 +320,7 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId){
         }
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
-    //console.debug(">>>>>>>>> New alias made as ", varId, "to", referencedVarId);
+    $$.debug("alias", `Defining alias reference variable ${varId} for ${referencedVarId} in document ${docId}`);
     await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
 }
 
@@ -335,6 +335,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, b
             return;
         }
     }
+    $$.debug("alias", `Defining alias as mutable reference for variable ${varId} for ${referencedVarId}`);
     await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
     await buildInstance.restartBuild(varId);
 }

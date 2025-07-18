@@ -15,6 +15,20 @@ $$.recordBuildError = function (text, err) {
     });
 }
 
+$$.getBuildErrors = function () {
+    if (errorFromLastBuild.length === 0) {
+        return undefined;
+    }
+    let errors = errorFromLastBuild.map(error => {
+        return {
+            text: error.text,
+            err: error.err.message
+        };
+    });
+    errorFromLastBuild = [];
+    return errors;
+}
+
 $$.dumpObject = function (obj) {
     if(typeof obj !== "object"){
         return obj;
@@ -39,6 +53,7 @@ $$.debugEnabled = false;
 $$.debugFeatures = {
     special:true,
     macro:false,
+    alias:false,
     jsdef:false,
     parser:false,
     variable:false,

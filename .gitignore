@@ -1,3 +1,5 @@
+/tests/logs/
+/tests/temp_persistence/
 /tests/tobedeleted/persistence/logs/
 /tests/tobedeleted/persistence/work_space_data/
 /tests/workspace/logs/
@@ -9,9 +11,8 @@
 /tests/pipelines/work_space_data/
 /tests/pipelines/logs/
 /tests/work_space_data/
-/tests/logs/
 /tests/deps/logs/
 /tests/deps/audit/
 /tests/deps/temp_persistence/
 **/node_modules/**
-/tests/temp_persistence/
+
