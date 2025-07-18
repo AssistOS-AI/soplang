@@ -23,14 +23,14 @@ function ChatAIAgent(docId, varId) {
             this.description = agentConfig.description || "";
         }
     }
-    this.getSystemPromptReply = function() {
-        let message = `You are an assistant within a web application. Your name is ${this.agentName}. You must respect these general instructions: ${this.description}`;
-        return {
-            role: "system",
-            message: message
-        }
+    this.getSystemPrompt = function() {
+        return `You are an assistant within a web application. Your name is ${this.agentName}. You must respect these general instructions: ${this.description}`;
     }
-
+    this.analiseRelevance = async function(inputValues){
+        let reply = inputValues[0];
+        reply.relevance = 7
+        return reply;
+    }
     this.acknowledge = async function(from, message, chatContext) {
         if(from === this.agentName) {
             return;

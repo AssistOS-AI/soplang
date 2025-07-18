@@ -42,7 +42,7 @@ function Chat(docId, varId) {
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
-                this.getHistory().then(chatContext => {
+                this.getDynamicContext().then(chatContext => {
                     agent.acknowledge(lastRow.from, lastRow.message, chatContext);
                 });
             });
@@ -62,6 +62,13 @@ function Chat(docId, varId) {
         let historyTable = await getVarValue(this.historyVarId);
         return historyTable.data;
     }
+    this.getDynamicContext = async function () {
+        let contextTable = await getVarValue(this.contextVarId);
+        let dynamicContext = contextTable.data;
+        let chatHistory = await chatPlugin.getChatHistory(this.docId);
+        dynamicContext = dynamicContext.concat(chatHistory.slice(-lastRepliesNr));
+        return dynamicContext;
+    };
     this.start = async function () {
         let graph = workspace.getGraph();
         let interrogator = await graph.getVarValue(this.interrogatorVarId);
@@ -112,16 +119,6 @@ function Chat(docId, varId) {
         } catch (e){
             console.error(`Error extracting context for agent ${this.agentName}: ${e.message}`);
         }
-    }
-    this.buildDynamicContext = async function(from, message) {
-        let dynamicContext = [];
-        let chatHistory = await chatPlugin.getChatHistory(this.docId);
-        dynamicContext.push(this.getSystemPromptReply());
-        await this.extractAndSaveContext(from, message);
-        await this.trimCurrentContext();
-        dynamicContext = dynamicContext.concat(this.context);
-        dynamicContext = dynamicContext.concat(chatHistory.slice(-lastRepliesNr));
-        return dynamicContext;
     }
 
     this.restore = async function(JSONSerialisation) {
