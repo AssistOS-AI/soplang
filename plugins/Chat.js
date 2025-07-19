@@ -53,11 +53,7 @@ async function Chat() {
 
     self.getChatHistory = async function (chatId) {
         let chat = await workspace.getVarValue(chatId, "chat");
-        let chatHistoryVar = await chat.getHistory();
-        for(let reply of chatHistoryVar) {
-            reply.id = reply.truid;
-        }
-        return chatHistoryVar;
+        return await chat.getHistory();
     }
 
     self.chatInput = async function (chatId, from, message, role) {

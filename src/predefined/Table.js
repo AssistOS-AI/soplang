@@ -88,15 +88,18 @@ function Table(docId, tableVarId) {
 
     // Append rows to the table - similar to tableUtil.js
     self.append = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-        let validJson;
+        let validJson = {};
         try {
             let pseudoJson = inputValues[0];
             if (typeof pseudoJson === "string" && inputValues.length === 1) {
-                validJson = $$.SOPParse(pseudoJson);
+                if( pseudoJson.startsWith("'sop:") || pseudoJson.startsWith('"sop:') ){
+                    validJson = $$.SOPParse(pseudoJson);
+                } else {
+                     validJson[self.columnDescription[0]] = inputValues[0];
+                }
             } else if(typeof pseudoJson === "object"){
                 validJson = pseudoJson;
             } else {
-                validJson = {};
                 for(let i = 0; i < self.columnDescription.length; i++){
                     let key = self.columnDescription[i];
                     validJson[key] = inputValues[i];
@@ -107,11 +110,10 @@ function Table(docId, tableVarId) {
             await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
             return;
         }
-        self.data.push(await schemaUtil.computeValues(validJson, currentDocId, graph));
+        let computedRow = await schemaUtil.computeValues(validJson, currentDocId, graph);
+        self.data.push(computedRow);
         await varUtil.setVarValue(tableVarId, self);
-        let resultedAliasTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-        await varUtil.markAsReferenceToVariable(resultedAliasTableId, tableVarId, currentDocId);
-        return self;
+        return computedRow;
     }
 
     self.internalInsert = async function (validJson, graph, position) {

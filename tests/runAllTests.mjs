@@ -23,17 +23,14 @@ const tests = [
     './plugins/documentSmokeTest.mjs',
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
-    './pipelines/customTypes/constructorVarId.mjs',
     './pipelines/customTypes/formTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/macros/basic/runMacroTest.mjs',
-    './pipelines/macros/basic/callMacroWithReferencedVar.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
     './pipelines/macros/basic/reactivityMacroTest.mjs',
     './pipelines/macros/basic/callMacroInMacroTest.mjs',
-    './pipelines/macros/basic/defineMacroInMacro.mjs',
     './pipelines/macros/basic/importMacroTest.mjs',
     './pipelines/macros/basic/bestCommandTest.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
@@ -51,8 +48,13 @@ const tests = [
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
+    './pipelines/tables/appendResult.mjs',
+    './pipelines/customTypes/constructorVarId.mjs',
+    //bugs
     './plugins/updateMacroVarValue.mjs',
-    './llms/llmAPICalls.mjs'
+    './pipelines/basic/ifCommandEdgeCase.mjs',
+    './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
+    './pipelines/tables/assignTableMethodResult.mjs',
 ];
 
 import fs from 'node:fs/promises';

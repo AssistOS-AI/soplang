@@ -12,8 +12,6 @@ let script = `
 
 
 let docId = await workspace.runCode(script);
-
-await workspace.buildAll();
 await graph.printGraph();
 
 allOk &&= await workspace.getVarValue(docId,"v2") === "Hello World!";

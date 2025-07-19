@@ -112,6 +112,7 @@ async function getVariable(varId){
 }
 async function getVarValue(varId){
     let varDef = await getVariable(varId);
+    let varName = await getLocalVarName(getDocIdFromVarId(varId), varId);
     if(!varDef){
         $$.recordBuildError(`Variable ${varId} not found`);
         return undefined;
@@ -126,7 +127,7 @@ async function getVarValue(varId){
     if(varDef.__type){
         let instance;
         try{
-            instance = await customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varId, varDef.value);
+            instance = await customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varName, varDef.value);
         } catch(err){
             await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
         }
@@ -320,7 +321,7 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId){
         }
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
-    //console.debug(">>>>>>>>> New alias made as ", varId, "to", referencedVarId);
+    $$.debug("alias", `Defining alias reference variable ${varId} for ${referencedVarId} in document ${docId}`);
     await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
 }
 
@@ -335,6 +336,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, b
             return;
         }
     }
+    $$.debug("alias", `Defining alias as mutable reference for variable ${varId} for ${referencedVarId}`);
     await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
     await buildInstance.restartBuild(varId);
 }

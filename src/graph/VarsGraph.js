@@ -154,7 +154,10 @@ function VarsGraph(commandsRegistry) {
         }
         code = initialisation + code;
         await defineVarsFromCode(inDocId, "_", "_", code);
-        await self.buildOnlyForDocument(inDocId);
+        let buildResult = await self.buildOnlyForDocument(inDocId);
+        if(!buildResult){
+            await $$.throwError(`Failed to build document ${inDocId} with code ${code} and errors: ${JSON.stringify($$.getBuildErrors())}`);
+        }
         return inDocId;
     }
 
@@ -179,12 +182,16 @@ function VarsGraph(commandsRegistry) {
             docId: inDocId,
             title: inDocId,
             category: MACRO_RUN,
-            commands: macroCode
+            commands: macroCode,
+            chapters: []
         });
 
         await defineVarsFromCode(inDocId, "_", "_", macroCode);
         await self.buildOnlyForDocument(inDocId);
-        return self.getVarValue(inDocId, inDocId);
+        let value = await self.getVarValue(inDocId, inDocId);
+        let documentsPlugin = await $$.loadPlugin("Documents");
+        await documentsPlugin.deleteDocument(inDocId);
+        return value;
     }
 
     this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
@@ -665,9 +672,6 @@ function VarsGraph(commandsRegistry) {
         }
     }
 
-
-
-
     self.runCustomCommand = async function (docId, command, ...args) {
         try{
             if(commandsRegistry.commandExists(command)){
@@ -692,7 +696,7 @@ function VarsGraph(commandsRegistry) {
     }
 
     self.buildOnlyForDocument = async function (docID) {
-        await self.buildAll(docID);
+        return await self.buildAll(docID);
     }
 
     function generateCSV(header, values) {
