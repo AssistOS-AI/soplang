@@ -77,6 +77,37 @@ async function createStandardPersistencePlugin(){
             id: "singleton GRAPH",
             alias: "string",
             state: "any"
+        },
+        webAssistant: {
+            id: "singleton webAssistant",
+            alias: "string",
+            scripts: "array chatScript",
+            settings: "object"
+        },
+        theme: {
+            name: "string",
+            description: "string",
+            css: "any",
+            variables: "object"
+        },
+        page: {
+            name: "string",
+            description: "string",
+            chatSize: "string",
+            widget: "string",
+            data: "string",
+            role: "string",
+            generalSettings: "string",
+            css: "",
+            html: "",
+            js: ""
+        },
+        menuItem: {
+            name: "string",
+            description: "string",
+            targetPage: "string",
+            location: "string",
+            icon: "string"
         }
     });
 
@@ -92,6 +123,10 @@ async function createStandardPersistencePlugin(){
     await persistence.createGrouping("variables", "variable", "docId");
 
     await persistence.createIndex("graph", "alias");
+
+    await persistence.createIndex("theme", "name");
+    await persistence.createIndex("page", "name");
+    await persistence.createIndex("menuItem", "name");
 
     try{
         console.debug("Checking if GRAPH exists!");

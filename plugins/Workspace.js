@@ -11,7 +11,6 @@ const ROLES = {
 const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
 
-
 async function Workspace() {
     let self = {};
     let persistence = await $$.loadPlugin("DefaultPersistence");
@@ -42,7 +41,7 @@ async function Workspace() {
     }
     self.getVariablesForDoc = async function (docId) {
         let variables = await persistence.getVariablesObjectsByDocId(docId);
-        for(let variable of variables){
+        for (let variable of variables) {
             variable.value = await graph.getVarValue(docId, variable.varName);
         }
         return variables;
@@ -80,16 +79,32 @@ async function Workspace() {
         return await graph.insertCode(docId, code);
     }
 
-   self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+    self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+        const assistant = await persistence.createWebAssistant(
+            {
+                scripts: [],
+                settings: {
+                    header: "",
+                    footer: "",
+                    initialPrompt: "",
+                    chatIndications: "",
+                    agentId: "",
+                    knowledge: "",
+                    themeId: "",
+                    isPublic: false,
+                }
+            })
+
         return await persistence.createWorkspace({
             name: workspaceName,
             ownerId: ownerId,
             spaceGlobalId: spaceGlobalId,
             documents: [],
+            webAssistant:assistant.id,
             clock: 0
         });
     }
-    self.setCurrentChatId = async function(spaceId, chatId) {
+    self.setCurrentChatId = async function (spaceId, chatId) {
         let spaceStatus = await persistence.getWorkspace(spaceId);
         spaceStatus.currentChatId = chatId;
         await persistence.updateWorkspace(spaceId, spaceStatus);
@@ -108,7 +123,7 @@ async function Workspace() {
                 continue;
             }
             await WorkspaceUser.createUser(collaborator.email, collaborator.email, collaborator.role);
-            if (process.env.NODE_ENV === 'development'){
+            if (process.env.NODE_ENV === 'development') {
                 continue;
             }
             let subject = "You have been added to a space";
