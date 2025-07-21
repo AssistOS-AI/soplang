@@ -196,8 +196,8 @@ function Table(docId, varName) {
                 self.data.push(await schemaUtil.computeValues(inputTable.data[i], currentDocId, graph));
             }
         }
-        await varUtil.setVarValue(tableVarId, self);
-        await varUtil.markAsReferenceToVariable(parsedCommand.outputVars[0], tableVarId, currentDocId);
+        await varUtil.setVarValue(this.varId, self);
+        await varUtil.markAsReferenceToVariable(parsedCommand.outputVars[0], this.varId, currentDocId);
         return self;
     }
 }

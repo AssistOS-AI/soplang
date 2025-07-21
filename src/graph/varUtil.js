@@ -13,7 +13,7 @@ import {getCache} from "./varsValuesCache.js";
 let varDefCache = getCache("varDefCache");
 let customTypesValuesCache = getCache("customTypesValuesCache");
 
-let customTypeRegistry = await import("./customTypeRegistry.js");
+import {restoreInstance} from "./customTypeRegistry.js";
 
 let defaultPersistenceSingleton;
 function getDefaultPersistence(){
@@ -129,7 +129,7 @@ async function getVarValue(varId){
     if(varDef.__type){
         let instance;
         try{
-            instance = await customTypeRegistry.restoreInstance(varDef.docId, varDef.__type, varDef.varName, varDef.value);
+            instance = await restoreInstance(varDef.docId, varDef.__type, varDef.varName, varDef.value);
         } catch(err){
             await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
         }

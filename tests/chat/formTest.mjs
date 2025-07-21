@@ -1,5 +1,5 @@
-import {} from "../../deps/clean.mjs";
-let varUtils = await import("../../../src/graph/varUtil.js")
+import {} from "../deps/clean.mjs";
+let varUtils = await import("../../src/graph/varUtil.js")
 let workspace = await $$.loadPlugin("Workspace");
 let script = `
     @currentUser := "Michael"

@@ -1,3 +1,4 @@
+import {} from "./SOPEncoding.js"
 let varUtil = await import("./varUtil.js");
 let sopLangUtil = await import("../util/soplangUtil.js");
 let defaultPersistence;
