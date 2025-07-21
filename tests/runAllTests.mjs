@@ -26,6 +26,7 @@ const tests = [
     './pipelines/customTypes/formTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
+    './pipelines/customTypes/reinitBehaviorTest.mjs',
     './pipelines/macros/basic/runMacroTest.mjs',
     './pipelines/macros/basic/macroJSONTest.mjs',
     './pipelines/macros/basic/runDefinedMacroTest.mjs',
