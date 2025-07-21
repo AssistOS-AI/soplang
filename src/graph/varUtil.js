@@ -25,6 +25,9 @@ function getDefaultPersistence(){
 
 
 function getVarID(docId, varName){
+    if(varName.startsWith(docId + ".")){
+        $$.throwErrorSync(`Invalid varName, got ${varName}`);
+    }
     return docId + "." + varName;
 }
 async function deleteVariableWrapper(varId){
@@ -112,7 +115,6 @@ async function getVariable(varId){
 }
 async function getVarValue(varId){
     let varDef = await getVariable(varId);
-    let varName = await getLocalVarName(getDocIdFromVarId(varId), varId);
     if(!varDef){
         $$.recordBuildError(`Variable ${varId} not found`);
         return undefined;
@@ -127,7 +129,7 @@ async function getVarValue(varId){
     if(varDef.__type){
         let instance;
         try{
-            instance = await customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varName, varDef.value);
+            instance = await customTypeRegistry.restoreInstance(varDef.docId, varDef.__type, varDef.varName, varDef.value);
         } catch(err){
             await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
         }

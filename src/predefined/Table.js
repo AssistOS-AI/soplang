@@ -57,14 +57,16 @@ function RowSchemaUtil(columnDescriptionArray) {
         return res;
     }
 }
-function Table(docId, tableVarId) {
+function Table(docId, varName) {
     let self = this;
     self.columnDescription = undefined; // Column names
     self.data = [];    // Array of objects
     self.__type = "Table";
-    this.varId = tableVarId;
-    if(!docId || !tableVarId){
-        throw new Error("Table constructor requires docId and tableVarId");
+    this.docId = docId;
+    this.varName = varName;
+    this.varId = varUtil.getVarID(docId, varName);
+    if(!docId || !varName){
+        throw new Error("Table constructor requires docId and varName");
     }
     let schemaUtil;
 
@@ -81,6 +83,9 @@ function Table(docId, tableVarId) {
             self.columnDescription = JSONSerialisation.columnDescription ;
             self.data = JSONSerialisation.data || [];
             schemaUtil = new RowSchemaUtil(self.columnDescription);
+            this.docId = JSONSerialisation.docId;
+            this.varName = JSONSerialisation.varName;
+            this.varId = JSONSerialisation.varId;
         } else {
             throw new Error("Invalid JSONSerialisation for Table");
         }
@@ -112,7 +117,7 @@ function Table(docId, tableVarId) {
         }
         let computedRow = await schemaUtil.computeValues(validJson, currentDocId, graph);
         self.data.push(computedRow);
-        await varUtil.setVarValue(tableVarId, self);
+        await varUtil.setVarValue(this.varId, self);
         return computedRow;
     }
 
@@ -166,10 +171,10 @@ function Table(docId, tableVarId) {
         self.data = [];
         //$$.debug("table",">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
         await varUtil.setVarValue(newTableId, newTable);
-        await varUtil.setVarValue(tableVarId, self);
+        await varUtil.setVarValue(this.varId, self);
         return newTable;
     }
-
+//TODO upsert expects a table as input
     self.upsert = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let inputTable = inputValues[0];
         let truidIndex = {};

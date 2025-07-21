@@ -1,8 +1,8 @@
-function Workflow(docId, varId){
+function Workflow(docId, varName){
     let self = this;
     let persistence, agentPlugin, workspace;
     this.agentName = undefined;
-    this.varId = varId;
+    this.varName = varName;
     let agentInstance = undefined;
     self.__type = "Agent";
     this.forms = [];
@@ -23,7 +23,7 @@ function Workflow(docId, varId){
                 self.generalInstructionPrompt += value + " ";
             }
             if(value.__type === "Form"){
-                this.forms.push(value.varId);
+                this.forms.push(value.varName);
                 self.generalInstructionPrompt += JSON.stringify(value.formData) + " ";
             }
         }

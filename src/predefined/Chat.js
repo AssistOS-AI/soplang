@@ -1,9 +1,9 @@
-import { getVarID, getVarValue } from "../graph/varUtil.js";
+import {getVarID, getVarValue} from "../graph/varUtil.js";
 
-function Chat(docId, varId) {
+function Chat(docId, varName) {
     this.__type = "Chat"
     this.docId = docId;
-    this.varId = varId;
+    this.varName = varName;
     let workspace = $$.loadPlugin("Workspace");
     let chatPlugin = $$.loadPlugin("Chat");
 
@@ -12,13 +12,13 @@ function Chat(docId, varId) {
         if(typeof history === "string"){
             this.historyVarId = getVarID(this.docId, history);
         } else {
-            this.historyVarId = history.varId;
+            this.historyVarId = getVarID(this.docId, history.varName);
         }
         let context = args[1];
         if(typeof context === "string"){
             this.contextVarId = getVarID(this.docId, context);
         } else {
-            this.contextVarId = context.varId;
+            this.contextVarId = getVarID(this.docId, context.varName);
         }
         let agents = args.slice(2);
         let agentVarIds = [];
@@ -26,7 +26,7 @@ function Chat(docId, varId) {
             if(typeof(agent) === "string") {
                 agentVarIds.push(getVarID(this.docId, agent));
             } else {
-                agentVarIds.push(agent.varId);
+                agentVarIds.push(getVarID(this.docId, agent.varName));
             }
         }
         this.interrogatorVarId = agentVarIds[0];
@@ -34,14 +34,13 @@ function Chat(docId, varId) {
     }
 
     this.notify = function (inputValues) {
-        let historyTable = inputValues[0];
-        let lastRow = historyTable.data[historyTable.data.length - 1];
-        chatPlugin.notifySubscribers(this.docId, lastRow);
+        let reply = inputValues[0];
+        chatPlugin.notifySubscribers(this.docId, reply);
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
                 this.getDynamicContext().then(chatContext => {
-                    agent.acknowledge(lastRow.from, lastRow.message, chatContext);
+                    agent.acknowledge(reply.from, reply.message, chatContext);
                 });
             });
         }
@@ -57,12 +56,10 @@ function Chat(docId, varId) {
         return truid;
     }
     this.getHistory = async function () {
-        let historyTable = await getVarValue(this.historyVarId);
-        return historyTable.data;
+        return await getVarValue(this.historyVarId);
     }
     this.getContext = async function () {
-        let contextTable = await getVarValue(this.contextVarId);
-        return contextTable.data;
+        return await getVarValue(this.contextVarId);
     }
     this.getDynamicContext = async function () {
         const lastRepliesNr = 10; //number of last replies to consider in the context

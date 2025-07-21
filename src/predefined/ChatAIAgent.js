@@ -1,8 +1,8 @@
 import constants from "../util/constants.js"
-function ChatAIAgent(docId, varId) {
+function ChatAIAgent(docId, varName) {
     let agentConfig;
     this.__type = "ChatAIAgent";
-    this.varId = varId;
+    this.varName = varName;
     this.docId = docId;
     let persistence = $$.loadPlugin("DefaultPersistence");
     let llmPlugin = $$.loadPlugin("LLM");
@@ -57,7 +57,7 @@ function ChatAIAgent(docId, varId) {
     this.trimContext = async function(inputValues) {
         let prompt = inputValues[0];
         let chat = await workspace.getVarValue(this.docId, "chat");
-        let context = await chat.getContext();
+        let contextTable = await chat.getContext();
         let chatConfig = agentConfig.llms["chat"];
         let completePrompt = `${prompt} Give a new relevance score from 1 to 10 for each piece of context. 
         If the context is not relevant, set relevance to 0. Your response should be an array of numbers, each corresponding to the relevance of the context in the same order.`;
@@ -68,14 +68,19 @@ function ChatAIAgent(docId, varId) {
                 console.error("Invalid response format from LLM. Expected an array of context objects.");
                 return;
             }
-            for(let i = 0; i < context.length; i++) {
-                context[i].relevance = parsedResponse[i] || 0; // Default to 0 if no relevance score is provided
+            let graph = workspace.getGraph();
+            for(let i = 0; i < contextTable.data.length; i++) {
+                if(!parsedResponse[i] || parsedResponse[i] <3){
+                    await contextTable.internalDeleteRow(contextTable.data[i].truid);
+                } else {
+                    let reply = contextTable.data[i];
+                    reply.relevance = parsedResponse[i];
+                    await contextTable.internalUpdateRow(reply, graph);
+                }
             }
         } catch (e){
             console.error(e);
         }
-        context = context.filter(reply => reply.relevance > 3);
-
     }
 
     this.acknowledge = async function(from, message, chatContext) {

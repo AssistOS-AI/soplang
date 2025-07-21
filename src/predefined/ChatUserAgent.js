@@ -1,6 +1,6 @@
-function ChatUserAgent(docId, varId) {
+function ChatUserAgent(docId, varName) {
     this.__type = "ChatUserAgent";
-    this.varId = varId;
+    this.varName = varName;
     this.docId = docId;
     this.init = async function(agentName) {
         this.agentName = agentName;

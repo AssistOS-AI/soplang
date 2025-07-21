@@ -173,7 +173,8 @@ function CommandsRegistry( workspace) {
         const typeName = inputValues[0];
         let outputVarName = parsedCommand.outputVars[0];
         const args = inputValues.slice(1);
-
+        //TODO review this
+        //let outputVarId = getVarID(currentDocId, outputVarName);
         if(await varUtil.isDefined(outputVarName)){
             let instance = graph.getVarValue(outputVarName);
             let initialArgs = instance.__initialArgs;
