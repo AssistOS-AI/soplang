@@ -180,6 +180,7 @@ function CommandsRegistry( workspace) {
                 let initialArgs = instance.__initialArgs;
                 if(!varUtil.sameValue(initialArgs, args)){
                     if(instance.reinit !== undefined){
+                        $$.debug("objectLifeCycle", `Reinitializing instance of type ${typeName} with output variable ${outputVarName}`);
                         await instance.reinit(...args);
                     }
                 }
