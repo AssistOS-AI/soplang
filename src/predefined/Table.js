@@ -121,7 +121,7 @@ function Table(docId, varName) {
         if(!rowToUpdate){
             return await self.internalInsert(validJson, graph);
         }
-        let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
+        let computedRow = await schemaUtil.computeValues(validJson, rowToUpdate, docId, graph);
         for(let key in computedRow){
             if(key === "truid"){
                 continue;
