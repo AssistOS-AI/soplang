@@ -82,6 +82,7 @@ async function createStandardPersistencePlugin(){
             id: "singleton webAssistant",
             alias: "string",
             scripts: "array chatScript",
+            scriptsWidgetMap : `object`,
             settings: "object"
         },
         theme: {
@@ -108,6 +109,11 @@ async function createStandardPersistencePlugin(){
             targetPage: "string",
             location: "string",
             icon: "string"
+        },
+        guestUser : {
+            chats: "array",
+            lastActiveAt : "integer",
+            uuid: "string",
         }
     });
 

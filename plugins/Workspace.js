@@ -83,6 +83,7 @@ async function Workspace() {
         const assistant = await persistence.createWebAssistant(
             {
                 scripts: [],
+                scriptsWidgetsMap : {},
                 settings: {
                     header: "",
                     footer: "",
