@@ -45,10 +45,10 @@ const tests = [
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
+    './pipelines/tables/upsertTest.js',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
-    './pipelines/tables/appendResult.mjs',
     './pipelines/customTypes/constructorVarId.mjs',
     './chat/formTest.mjs',
     //bugs

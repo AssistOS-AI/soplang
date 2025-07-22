@@ -10,8 +10,8 @@ let testCode = `
     @t1_insights new Table "c1" "c2" "c3" "c4: math c2 * c3"
         
     @addRow macro row ~t1 ~t1_newData 
-        t1.append $row
-        t1_newData.append $row   
+        t1.upsert $row
+        t1_newData.upsert $row   
         return $t1   
     end
     
