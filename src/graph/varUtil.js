@@ -13,7 +13,7 @@ import {getCache} from "./varsValuesCache.js";
 let varDefCache = getCache("varDefCache");
 let customTypesValuesCache = getCache("customTypesValuesCache");
 
-let customTypeRegistry = await import("./customTypeRegistry.js");
+import {restoreInstance} from "./customTypeRegistry.js";
 
 let defaultPersistenceSingleton;
 function getDefaultPersistence(){
@@ -25,6 +25,9 @@ function getDefaultPersistence(){
 
 
 function getVarID(docId, varName){
+    if(varName.startsWith(docId + ".")){
+        $$.throwErrorSync(`Invalid varName, got ${varName}`);
+    }
     return docId + "." + varName;
 }
 async function deleteVariableWrapper(varId){
@@ -112,7 +115,6 @@ async function getVariable(varId){
 }
 async function getVarValue(varId){
     let varDef = await getVariable(varId);
-    let varName = await getLocalVarName(getDocIdFromVarId(varId), varId);
     if(!varDef){
         $$.recordBuildError(`Variable ${varId} not found`);
         return undefined;
@@ -127,7 +129,7 @@ async function getVarValue(varId){
     if(varDef.__type){
         let instance;
         try{
-            instance = await customTypeRegistry.restoreInstance(getDocIdFromVarId(varId), varDef.__type, varName, varDef.value);
+            instance = await restoreInstance(varDef.docId, varDef.__type, varDef.varName, varDef.value);
         } catch(err){
             await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
         }
@@ -260,6 +262,17 @@ async function updateDebugInfo(varId, debugMessage){
         $$.recordBuildError("Error updating debug info " + varId + errorMessage, err);
     }
 }
+async function isCustomCommand(docId, name) {
+    let marcoVarId = getVarID(docId, name);
+
+    let hasVariable = await defaultPersistenceSingleton.hasVariable(marcoVarId);
+    if(!hasVariable){
+        return false;
+    }
+    //check if the command is a macro
+    let macroVar = await getVariable(getVarID(docId, name));
+    return macroVar.parsedCommand.command === "macro" || macroVar.parsedCommand.command === "jsdef";
+}
 async function getDependencies(varId){
 
     let varDef = await getVariable(varId);
@@ -277,6 +290,10 @@ async function getDependencies(varId){
         return deps;
     }
 
+    // if(await isCustomCommand(varDef.docId, varDef.parsedCommand.command)){
+    //     let objVarId = getVarID(varDef.docId, varDef.parsedCommand.command);
+    //     deps.push(objVarId);
+    // }
     //if parsed command has an 'obj.methodName' form, get the obj and add in the dependencies
     let hasCustomTypeCommand = varDef.parsedCommand.command.includes(".");
     if(hasCustomTypeCommand){

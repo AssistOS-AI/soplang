@@ -44,7 +44,7 @@ async function LLM() {
         //console.warn("LLM_PROVIDERS_FOLDER environment variable is not set, using soplang/tests/llms/providers");
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = path.dirname(__filename);
-        await registerProviders(path.join(__dirname, "../tests/llms/providers"));
+        await registerProviders(path.join(__dirname, "../tests/chat/providers"));
     }
 
 

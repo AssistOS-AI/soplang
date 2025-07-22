@@ -173,16 +173,19 @@ function CommandsRegistry( workspace) {
         const typeName = inputValues[0];
         let outputVarName = parsedCommand.outputVars[0];
         const args = inputValues.slice(1);
-
-        if(await varUtil.isDefined(outputVarName)){
-            let instance = graph.getVarValue(outputVarName);
-            let initialArgs = instance.__initialArgs;
-            if(!varUtil.sameValue(initialArgs, args)){
-                if(instance.reinit !== undefined){
-                    await instance.reinit(...args);
+        let outputVarId = getVarID(currentDocId, outputVarName);
+        if(await varUtil.isDefined(outputVarId)){
+            let instance = await graph.getVarValue(outputVarId);
+            if(instance){
+                let initialArgs = instance.__initialArgs;
+                if(!varUtil.sameValue(initialArgs, args)){
+                    if(instance.reinit !== undefined){
+                        $$.debug("objectLifeCycle", `Reinitializing instance of type ${typeName} with output variable ${outputVarName}`);
+                        await instance.reinit(...args);
+                    }
                 }
+                return instance;
             }
-            return instance;
         }
 
         return customTypeRegistry.newInstance(currentDocId, typeName, outputVarName, ...args);

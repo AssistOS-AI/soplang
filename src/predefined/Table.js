@@ -23,15 +23,21 @@ function RowSchemaUtil(columnDescriptionArray) {
 
     //$$.debug("table", `RowSchemaUtil settings ${columnDescriptionArray.length} columns: ${JSON.stringify(valueColumns)} Self computed columns: ${JSON.stringify(computedColumns)}`);
 
-    this.computeValues = async function (jsonObject, docId, graph){
+    this.computeValues = async function (jsonObject, oldValues, docId, graph){
         let res = {};
 
         $$.debug("table", "RowSchemaUtil computeValues:", `'${JSON.stringify(jsonObject)}' in docId '${docId}' for table with schema '${JSON.stringify(columnDescriptionArray)}'`);
 
+        let needsToCompute = false;
         for(let key in jsonObject){
-            if(valueColumns[key] !== undefined){
+            if(valueColumns[key] !== undefined || key === "truid"){
                 res[key] = jsonObject[key];
+                needsToCompute = needsToCompute || jsonObject[key] !== oldValues?.[key];
             }
+        }
+
+        if(!needsToCompute){
+            return oldValues;
         }
 
         if(!res.truid){
@@ -57,14 +63,16 @@ function RowSchemaUtil(columnDescriptionArray) {
         return res;
     }
 }
-function Table(docId, tableVarId) {
+function Table(docId, varName) {
     let self = this;
     self.columnDescription = undefined; // Column names
     self.data = [];    // Array of objects
     self.__type = "Table";
-    this.varId = tableVarId;
-    if(!docId || !tableVarId){
-        throw new Error("Table constructor requires docId and tableVarId");
+    this.docId = docId;
+    this.varName = varName;
+    this.varId = varUtil.getVarID(docId, varName);
+    if(!docId || !varName){
+        throw new Error("Table constructor requires docId and varName");
     }
     let schemaUtil;
 
@@ -81,39 +89,12 @@ function Table(docId, tableVarId) {
             self.columnDescription = JSONSerialisation.columnDescription ;
             self.data = JSONSerialisation.data || [];
             schemaUtil = new RowSchemaUtil(self.columnDescription);
+            this.docId = JSONSerialisation.docId;
+            this.varName = JSONSerialisation.varName;
+            this.varId = JSONSerialisation.varId;
         } else {
             throw new Error("Invalid JSONSerialisation for Table");
         }
-    }
-
-    // Append rows to the table - similar to tableUtil.js
-    self.append = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-        let validJson = {};
-        try {
-            let pseudoJson = inputValues[0];
-            if (typeof pseudoJson === "string" && inputValues.length === 1) {
-                if( pseudoJson.startsWith("'sop:") || pseudoJson.startsWith('"sop:') ){
-                    validJson = $$.SOPParse(pseudoJson);
-                } else {
-                     validJson[self.columnDescription[0]] = inputValues[0];
-                }
-            } else if(typeof pseudoJson === "object"){
-                validJson = pseudoJson;
-            } else {
-                for(let i = 0; i < self.columnDescription.length; i++){
-                    let key = self.columnDescription[i];
-                    validJson[key] = inputValues[i];
-                }
-            }
-        } catch (error) {
-            console.error("Error parsing JSON self.data:", error);
-            await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Invalid JSON format: ${error.message}`);
-            return;
-        }
-        let computedRow = await schemaUtil.computeValues(validJson, currentDocId, graph);
-        self.data.push(computedRow);
-        await varUtil.setVarValue(tableVarId, self);
-        return computedRow;
     }
 
     self.internalInsert = async function (validJson, graph, position) {
@@ -123,7 +104,7 @@ function Table(docId, tableVarId) {
         if (position < 0 || position > self.data.length) {
             throw new Error(`Invalid position ${position} for inserting into table with length ${self.data.length}`);
         }
-        let computedRow = await schemaUtil.computeValues(validJson, docId, graph);
+        let computedRow = await schemaUtil.computeValues(validJson, undefined, docId, graph);
         self.data.splice(position, 0, computedRow);
         return computedRow;
     }
@@ -166,34 +147,62 @@ function Table(docId, tableVarId) {
         self.data = [];
         //$$.debug("table",">>>>>> Status of host data", self.data.length, "status of new table", newTable.data.length);
         await varUtil.setVarValue(newTableId, newTable);
-        await varUtil.setVarValue(tableVarId, self);
+        await varUtil.setVarValue(this.varId, self);
         return newTable;
     }
-
     self.upsert = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-        let inputTable = inputValues[0];
-        let truidIndex = {};
-        for(let i = 0; i < self.data.length; i++){
-            truidIndex[inputTable.data[i].truid] = i;
-        }
-
-        for(let i = 0; i < inputTable.data.length; i++){
-            let truid = inputTable.data[i].truid;
-            if(truidIndex[truid] !== undefined){
-                let row = self.data[truidIndex[truid]];
-                for(let key in inputTable.data[i]){
-                    if(key === "truid"){
-                        continue;
-                    }
-                    row[key] = await schemaUtil.computeValues(inputTable.data[i][key], currentDocId, graph);
-                }
-            } else {
-                self.data.push(await schemaUtil.computeValues(inputTable.data[i], currentDocId, graph));
+        if(inputValues[0] instanceof Table){
+            let rows = inputValues[0].data;
+            let truidIndex = {};
+            for(let i = 0; i < self.data.length; i++){
+                truidIndex[self.data[i].truid] = i;
             }
+            for(let i = 0; i < rows.length; i++){
+                let truid = rows[i].truid;
+                if(truidIndex[truid] !== undefined){
+                    let rowIndex = truidIndex[truid];
+                    let computedRow = await schemaUtil.computeValues(rows[i], self.data[i], currentDocId, graph);
+                    for(let key in computedRow){
+                        if(key === "truid"){
+                            continue;
+                        }
+                        self.data[rowIndex][key] = computedRow[key];
+                    }
+                } else {
+                    let row = await schemaUtil.computeValues(rows[i], undefined, currentDocId, graph);
+                    self.data.push(row);
+                }
+            }
+            await varUtil.setVarValue(this.varId, self);
+            return self;
         }
-        await varUtil.setVarValue(tableVarId, self);
-        await varUtil.markAsReferenceToVariable(parsedCommand.outputVars[0], tableVarId, currentDocId);
-        return self;
+        let validJson = {};
+        try {
+            if (typeof inputValues[0] === "string" && inputValues.length === 1) {
+                if(inputValues[0].startsWith("'sop:") || inputValues[0].startsWith('"sop:')){
+                    validJson = $$.SOPParse(inputValues[0]);
+                } else {
+                    validJson[self.columnDescription[0]] = inputValues[0];
+                }
+            } else if(typeof inputValues[0] === "object"){
+                validJson = inputValues[0];
+            } else {
+                for(let i = 0; i < self.columnDescription.length; i++){
+                    let key = self.columnDescription[i];
+                    validJson[key] = inputValues[i];
+                }
+            }
+        } catch (e) {
+            console.error("Error parsing inputValues:", e);
+            await buildInstance.setErrorInfo(parsedCommand.outputVars[0], `Error parsing inputValues: ${e.message}`);
+            return;
+        }
+        let foundRow = self.data.find(row => row.truid === validJson.truid);
+        if(foundRow){
+            return await self.internalUpdateRow(validJson, graph);
+        } else {
+            return await self.internalInsert(validJson, graph);
+        }
     }
 }
 

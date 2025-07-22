@@ -14,4 +14,5 @@ await workspace.buildAll();
 
 //new feature
 await workspace.runMacro("doc1", "callTable" , "$outsideTable");
+await workspace.runMacro("doc1", "callTable" , "$doc1/outsideTable");
 await $$.endTest();

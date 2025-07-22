@@ -1,5 +1,5 @@
 
-function Document(docId, graph) {
+function Document(docId, varName) {
     let self = this;
     let documentsPlugin;
     let persistence;

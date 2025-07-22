@@ -1,7 +1,6 @@
-
-const {} = import("./varUtil.js");
-const {} = import("./SOPEncoding.js")
 const customTypes = {};
+
+import {getVarID} from "./varUtil.js";
 
 import {getCache} from "./varsValuesCache.js";
 let customTypesValuesCache = getCache("customTypesValuesCache");
@@ -18,9 +17,9 @@ const restoreInstance = async (currentDocId, typeName, outputVarName, JSONSerial
     if (typeof customTypes[typeName] === "undefined") {
         throw Error(`Type ${typeName} not registered`);
     }
-
-    if(customTypesValuesCache.has(outputVarName)){
-        return customTypesValuesCache.get(outputVarName);
+    let outputVarId = getVarID(currentDocId, outputVarName);
+    if(customTypesValuesCache.has(outputVarId)){
+        return customTypesValuesCache.get(outputVarId);
     }
 
     if(!JSONSerialisation){
@@ -28,7 +27,7 @@ const restoreInstance = async (currentDocId, typeName, outputVarName, JSONSerial
     }
 
     let instance = new customTypes[typeName](currentDocId, outputVarName);
-    customTypesValuesCache.set(outputVarName, instance);
+    customTypesValuesCache.set(outputVarId, instance);
 
     try{
         $$.debug("objectLifeCycle", `restoreInstance instance of type ${typeName} with output variable ${outputVarName}`);
@@ -62,7 +61,8 @@ const newInstance = async (currentDocId,  typeName, outputVarName, ...args) => {
     let instance = new customTypes[typeName](currentDocId, outputVarName);
     $$.debug("objectLifeCycle", `Creating new instance of type ${typeName} with output variable ${outputVarName}`);
     await instance.init(...args);
-    customTypesValuesCache.set(outputVarName, instance);
+    let outputVarId = getVarID(currentDocId, outputVarName);
+    customTypesValuesCache.set(outputVarId, instance);
     instance.__type = typeName;
     instance.__initialArgs = args;
     return instance;
@@ -73,13 +73,13 @@ const lookupInstance = async (currentDocId,  typeName, outputVarName, primaryKey
         $$.recordBuildError(`Type ${typeName} not registered! The output variable will remain undefined!`);
         return undefined;
     }
-
-    if (customTypesValuesCache.has(outputVarName)) {
-        return customTypesValuesCache.get(outputVarName);
+    let outputVarId = getVarID(currentDocId, outputVarName);
+    if (customTypesValuesCache.has(outputVarId)) {
+        return customTypesValuesCache.get(outputVarId);
     }
 
     let instance = new customTypes[typeName](currentDocId, outputVarName);
-    customTypesValuesCache.set(outputVarName, instance);
+    customTypesValuesCache.set(outputVarId, instance);
 
     try{
         $$.debug("objectLifeCycle", `Lookup  instance of type ${typeName} with output variable ${outputVarName}`);

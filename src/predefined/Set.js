@@ -26,6 +26,7 @@ function SetContainer(docId){
 
     self.restore = async function(JSONSerialisation) {
         persistence = await $$.loadPlugin("DefaultPersistence");
+        $$.debug("set", `Restoring SetContainer with docId ${docId} and vars ${JSONSerialisation.vars}`);
         if(JSONSerialisation){
             self.executionStatuses = JSONSerialisation.executionStatuses;
             self.vars = JSONSerialisation.vars;

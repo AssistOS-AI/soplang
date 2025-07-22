@@ -53,16 +53,15 @@ async function Chat() {
 
     self.getChatHistory = async function (chatId) {
         let chat = await workspace.getVarValue(chatId, "chat");
-        return await chat.getHistory();
+        let historyTable = await chat.getHistory();
+        return historyTable.data;
     }
 
     self.chatInput = async function (chatId, from, message, role) {
         let timestamp = new Date().toISOString();
-        let historyTable = await workspace.runMacro(chatId, "newReply", {from, message, timestamp, role});
-        let lastRow = historyTable.data[historyTable.data.length - 1];
-        let resultReplyId = lastRow.truid;
+        let reply = await workspace.runMacro(chatId, "newReply", {from, message, timestamp, role});
         await workspace.buildOnlyForDocument(chatId);
-        return resultReplyId;
+        return reply.truid;
     }
 
     let responses = [];

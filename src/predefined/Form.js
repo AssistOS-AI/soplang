@@ -1,5 +1,6 @@
-function Form(docId, varId){
-    this.varId = varId;
+function Form(docId, varName){
+    this.docId = docId;
+    this.varName = varName;
     this.__type = "Form";
 
     this.init = async function(formData, ...args) {
@@ -9,7 +10,7 @@ function Form(docId, varId){
 
     this.restore = async function(JSONSerialisation) {
         if(JSONSerialisation){
-            this.varId = JSONSerialisation.varId;
+            this.varName = JSONSerialisation.varName;
             this.formData = JSONSerialisation.formData;
             this.args = JSONSerialisation.args;
         }

@@ -69,9 +69,7 @@ async function createStandardPersistencePlugin(){
             documentId: "string",
             chapterId: "string",
             paragraphId: "string",
-            clock: "integer",
-            valueFUnction: "string",
-            clockFUnction: "string"
+            clock: "integer"
         },
         graph:{
             id: "singleton GRAPH",
