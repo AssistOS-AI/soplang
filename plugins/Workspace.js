@@ -80,10 +80,13 @@ async function Workspace() {
     }
 
     self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+        async function addDefaultWebAssistantThemes(assistantId) {
+
+        }
         const assistant = await persistence.createWebAssistant(
             {
                 scripts: [],
-                scriptsWidgetsMap : {},
+                scriptsWidgetMap : {},
                 settings: {
                     header: "",
                     footer: "",
@@ -92,9 +95,10 @@ async function Workspace() {
                     agentId: "",
                     knowledge: "",
                     themeId: "",
-                    isPublic: false,
+                    authentication: "existingSpaceMembers",
                 }
             })
+        await Promise.all([addDefaultWebAssistantThemes(assistant.id)])
 
         return await persistence.createWorkspace({
             name: workspaceName,
