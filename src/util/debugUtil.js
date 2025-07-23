@@ -53,7 +53,7 @@ $$.debugEnabled = false;
 $$.debugFeatures = {
     special:true,
     macro:false,
-    alias:false,
+    alias:true,
     jsdef:false,
     parser:false,
     variable:false,
@@ -69,7 +69,7 @@ $$.debugFeatures = {
     commandExecution:false,
     diff:false,
     sopEncoding:false,
-    objectLifeCycle:true,
+    objectLifeCycle:false,
     varsValuesCache:false,
 }
 

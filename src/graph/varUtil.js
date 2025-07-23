@@ -290,10 +290,11 @@ async function getDependencies(varId){
         return deps;
     }
 
-    // if(await isCustomCommand(varDef.docId, varDef.parsedCommand.command)){
-    //     let objVarId = getVarID(varDef.docId, varDef.parsedCommand.command);
-    //     deps.push(objVarId);
-    // }
+    if(await isCustomCommand(varDef.docId, varDef.parsedCommand.command)){
+         let objVarId = getVarID(varDef.docId, varDef.parsedCommand.command);
+         deps.push(objVarId);
+    }
+
     //if parsed command has an 'obj.methodName' form, get the obj and add in the dependencies
     let hasCustomTypeCommand = varDef.parsedCommand.command.includes(".");
     if(hasCustomTypeCommand){
@@ -319,7 +320,7 @@ async function getDependencies(varId){
     return deps;
 }
 
-async function markAsReferenceToVariable(varId, referencedVarId, docId){
+async function markAsReferenceToVariable(varId, referencedVarId, docId, optionalMacroId){
     if(!varId.includes("/") && !await isDefined(varId)){
         varId = getVarID(docId, varId);
     }
@@ -338,8 +339,16 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId){
         }
         await $$.throwError("Variable already has a reference", varId, "to", varDef.referencedVariable , "and cannot be changed to", referencedVarId);
     }
-    $$.debug("alias", `Defining alias reference variable ${varId} for ${referencedVarId} in document ${docId}`);
-    await updateVariableWrapper(varId, {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()});
+
+    let newVarValue = {referencedVariable: referencedVarId, clock: await defaultPersistenceSingleton.getLogicalTimestamp(), updateTime : Date.now()};
+    if(optionalMacroId){
+        $$.debug("alias", `Defining macro alias reference variable ${varId} for ${referencedVarId} with macroId ${optionalMacroId}`);
+        newVarValue.macroId = optionalMacroId;
+        newVarValue.macroClock = getVarClock(optionalMacroId);
+    } else {
+        $$.debug("alias", `Defining normal alias reference variable ${varId} for ${referencedVarId} in document ${docId}`);
+    }
+    await updateVariableWrapper(varId, newVarValue);
 }
 
 async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, buildInstance){
@@ -439,6 +448,10 @@ async function getVarClock(varId){
     return varDef.clock;
 }
 
+async function resetAlias(varId){
+    await updateVariableWrapper(varId, {referencedVariable: undefined, macroId: undefined});
+}
+
 export {
     decodeSOPCode,
     getVarID,
@@ -463,5 +476,6 @@ export {
     updateWarningInfo,
     updateDebugInfo,
     sameValue,
-    deleteVariableWrapper
+    deleteVariableWrapper,
+    resetAlias
 }

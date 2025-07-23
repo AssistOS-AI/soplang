@@ -16,11 +16,14 @@ await $$.checkDocVar(doc.docId, "call", "value");
 
 const updatedCommands = `
      @concat macro a b
-        @result := $a " " $b
+        @result := $a $b
         return $result
      end
     @call concat "Hello" "World"
 `;
+
+console.log("Updating macro definition...");
+
 await documents.updateDocument(doc.id, doc.title, doc.docId, doc.category, doc.infoText, updatedCommands, doc.comments);
 await workspace.buildOnlyForDocument(doc.docId);
 await $$.checkDocVar(doc.docId, "call", "Hello World");

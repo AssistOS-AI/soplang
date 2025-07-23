@@ -32,7 +32,7 @@ function CommandsRegistry( workspace) {
             return result;
         },
         macro: async function (inputValues) {
-            // do nothing, all information already exists
+            return "MACRO: " + inputValues.join(" ");  //useful only when the macro definition gets updated to trigger re-execution of macro expansions
         },
         chainAlias: async function (inputValues) {
             // do nothing, it is treated as a special case during execution
@@ -44,7 +44,7 @@ function CommandsRegistry( workspace) {
         returnMacroValue: async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) { //meta-programmed during macro expansion
             let targetVar = parsedCommand.inputVars[0];
             let aliasVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-            //console.debug(">>>>>> Return macro value command is making an Alias " + aliasVarId + " to point to " + targetVar + " in document " + currentDocId);
+            $$.debug("alias","The special 'returnMacroValue' command is making an Alias " + aliasVarId + " to point to " + targetVar + " in document " + currentDocId);
             await varUtil.markAsReferenceToVariable(aliasVarId, targetVar, currentDocId);
             return undefined;
         }

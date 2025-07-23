@@ -20,7 +20,7 @@ function VarsGraph(commandsRegistry) {
             let targetVarName = inputValues[1];
             let targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
             let myVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-            await varUtil.markAsReferenceToVariable(myVarId, targetVarId);
+            await varUtil.markAsReferenceToVariable(myVarId, targetVarId, currentDocId);
             await buildInstance.restartBuild(myVarId);
     });
 
@@ -395,11 +395,12 @@ function VarsGraph(commandsRegistry) {
         await self.insertCode(docId, script);
 
         if(targetVarId){
-            await varUtil.markAsReferenceToVariable(targetVarId, varUtil.getVarID(docId,returnVarName));
+            let macroVarID = varUtil.getVarID(docId, intendedCommand);
+            await varUtil.markAsReferenceToVariable(targetVarId, varUtil.getVarID(docId,returnVarName),docId, macroVarID);
             await buildInstance.restartBuild(targetVarId);
         }
 
-        console.debug(`DEBUG# Expanding inline macro '${intendedCommand}' for return variable '${returnVarName}' with input vars [${parsedCommand.inputVars}]`);
+        $$.debug("macro",`Expanding inline macro '${intendedCommand}' for return variable '${returnVarName}' with input vars [${parsedCommand.inputVars}]`);
         return returnVarName;
     }
     async function isFunctionCommand(command) {
@@ -443,8 +444,18 @@ function VarsGraph(commandsRegistry) {
         let intendedCommand = parsedCommand.command;
 
         if(targetVar.referencedVariable){
+            let isSafeToReturnTheValueOfTheAlias = true;
             //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph
-            return await resolveValue(targetVar.referencedVariable);
+            if(targetVar.macroId){
+                let macroClock = await varUtil.getVarClock(targetVar.macroId);
+                $$.debug("alias", "Variable", targetVar.varId, "is the result of an macro expansion, checked macro definition and decided to be expanded again", targetVar.macroId, "with clock", macroClock, "and variable clock", targetVar.clock);
+                if(macroClock && macroClock > targetVar.clock) {
+                    isSafeToReturnTheValueOfTheAlias = false;
+                }
+            }
+            if(isSafeToReturnTheValueOfTheAlias) {
+                return await resolveValue(targetVar.referencedVariable);
+            }
         }
 
         //console.debug(">>>>Running command", intendedCommand, "for variable", targetVar.varId, "with input values", parsedCommand.inputVars, isChain(intendedCommand), commandsRegistry.commandExists(intendedCommand));
@@ -452,7 +463,6 @@ function VarsGraph(commandsRegistry) {
             await self.expandInlineMacro(targetVar.docId, targetVar.varId,  intendedCommand, parsedCommand,buildInstance);
             return undefined;
         }
-
 
         for (let i = 0; i < parsedCommand.inputVars.length; i++) {
             let value = parsedCommand.inputVars[i];
@@ -484,17 +494,18 @@ function VarsGraph(commandsRegistry) {
             return await resolveValue(targetVar.varId);
         }
 
-
-        if (intendedCommand[0] === "?") {
-            intendedCommand = intendedCommand.substring(1);
-            //all input values must be defined, cant pe null, empty string or undefined
+        if (intendedCommand.startsWith("?") || intendedCommand.endsWith("?")) {
+            if (intendedCommand.startsWith("?")) {
+                intendedCommand = intendedCommand.substring(1);
+            } else {
+                intendedCommand = intendedCommand.slice(0, -1);
+            }
             for (let i = 0; i < inputValues.length; i++) {
                 if (inputValues[i] === null || inputValues[i] === "" || inputValues[i] === undefined) {
                     return undefined;
                 }
             }
         }
-
 
         let result = await commandsRegistry.runCommand(
             intendedCommand,
@@ -530,8 +541,24 @@ function VarsGraph(commandsRegistry) {
             }
         }
 
+        let variable = await varUtil.getVariable(varId);
+        if(variable.referencedVariable){
+            if(variable.macroId){
+                let macroVar = await varUtil.getVariable(variable.macroId);
+                let variableClock = await varUtil.getVarClock(varId);
+                console.debug("alias", `Checking variable ${varId} alias as the macro clock is ${macroVar.clock} and variable clock is ${variableClock}`);
+                if(macroVar.clock > variableClock){
+                    mustRecompute = true;
+                    $$.debug("alias", `Decided to remove the alias for ${varId} as the macro clock is ${macroVar.clock} and variable clock is ${variable.clock}`);
+                    await varUtil.resetAlias(varId);
+                    await buildInstance.restartBuild(varId);
+                    return;
+                    //variable.referencedVariable = undefined;
+                }
+            }
+        }
+
         if (mustRecompute) {
-            let variable = await varUtil.getVariable(varId);
             if(variable.referencedVariable){
                 //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph
                 return await resolveValue(variable.referencedVariable);
@@ -556,8 +583,6 @@ function VarsGraph(commandsRegistry) {
             return value;
         }
     }
-
-
 
     function BuildInstance(forDocId){
         let buildJustStartedOrRestartedDuringExecution = true;
@@ -752,7 +777,7 @@ function VarsGraph(commandsRegistry) {
 
         let dump = "\n";
         for(let v in allVars){
-            dump += `\tVariable '${allVars[v].varId}':\n \t\t${$$.SOPStringify(allVars[v].value)}\n \t\tInfo: ${allVars[v].info}\n`;
+            dump += `\tVariable '${allVars[v].varId}':\n \t\tValue:${$$.SOPStringify(allVars[v].value)}\n \t\t${allVars[v].info}\n`;
         }
         return dump;
         // return dump.replace(/},/g, '},\n\t');
