@@ -25,10 +25,10 @@ function getDefaultPersistence(){
 
 
 function getVarID(docId, varName){
-    if(varName.startsWith(docId + ".")){
+    if(varName.startsWith(docId + "/")){
         $$.throwErrorSync(`Invalid varName, got ${varName}`);
     }
-    return docId + "." + varName;
+    return docId + "/" + varName;
 }
 async function deleteVariableWrapper(varId){
     customTypesValuesCache.delete(varId);
@@ -74,7 +74,7 @@ async function setVarIdForVariableWrapper(id, varId){
 }
 
 function getDocIdFromVarId(varId){
-    let splitVarId = varId.split(".");
+    let splitVarId = varId.split("/");
     if(splitVarId.length === 1){
         return undefined;
     }
@@ -85,7 +85,7 @@ function getDocIdFromVarId(varId){
 
 function getLocalVarName(docId, fullVarName){
     //reverse getVarId
-    let splitVarName = fullVarName.split(".");
+    let splitVarName = fullVarName.split("/");
     if(splitVarName.length === 1){
         return getVarID(docId, fullVarName);
     }
@@ -320,10 +320,10 @@ async function getDependencies(varId){
 }
 
 async function markAsReferenceToVariable(varId, referencedVarId, docId){
-    if(!varId.includes(".") && !await isDefined(varId)){
+    if(!varId.includes("/") && !await isDefined(varId)){
         varId = getVarID(docId, varId);
     }
-    if(!referencedVarId.includes(".")){
+    if(!referencedVarId.includes("/")){
         referencedVarId = getVarID(docId, referencedVarId);
     }
 

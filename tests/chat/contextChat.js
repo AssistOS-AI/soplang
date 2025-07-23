@@ -15,15 +15,15 @@ let script = `
     @user new ChatUserAgent $currentUser
     @chat new Chat $history $context $user $assistant
     
-    context.append system [ assistant.getSystemPrompt ] "" system
+    context.upsert system [ assistant.getSystemPrompt ] "" system
     @newReply macro reply ~history ~context ~chat ~assistant
-        @res history.append $reply
+        @res history.upsert $reply
         
         @executeSecond assistant.trimContext "Given the current discussion, determine if the information in the current context is still relevant. Current context: " $context.data ". Current discussion: " $history.data "."
         
         @analisePrompt := "Given the current discussion and a new user message, determine if the message contains any information relevant to the ongoing topic. User message: " $res ". Current discussion: " $history.data "."
         @relevantReply assistant.?analiseRelevance $res $analisePrompt $executeSecond
-        context.?append $relevantReply
+        context.?upsert $relevantReply
         chat.notify $res
         return $res
     end

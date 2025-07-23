@@ -133,7 +133,7 @@ function Table(docId, varName) {
 
     self.exwipe = async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
         let newTableId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
-        let newTable = new Table(currentDocId, newTableId);
+        let newTable = new Table(currentDocId, parsedCommand.outputVars[0]);
         await newTable.init(...self.columnDescription);
         let testRowCommand = `${currentDocId}_${inputValues[0]}`;
         for(let i = 0; i < self.data.length; i++){

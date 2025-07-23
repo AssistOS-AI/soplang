@@ -87,7 +87,7 @@ function SetContainer(docId){
     self.add = async function(inputValues, parsedCommand, currentDocId, graph) {
         for(let i = 0; i < inputValues.length; i++){
             let varId = inputValues[i];
-            if(!varId.includes(".")){
+            if(!varId.includes("/")){
                 varId = varUtil.getVarID(docId, varId);
             }
             self.vars.push(varId);
@@ -97,7 +97,7 @@ function SetContainer(docId){
     self.remove = async function(inputValues) {
         for(let i = 0; i < inputValues.length; i++){
             let varId = inputValues[i];
-            if(!varId.includes(".")){
+            if(!varId.includes("/")){
                 varId = varUtil.getVarID(docId, varId);
             }
             let index = self.vars.indexOf(varId);

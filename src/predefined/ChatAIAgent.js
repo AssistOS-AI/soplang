@@ -8,7 +8,6 @@ function ChatAIAgent(docId, varName) {
     let llmPlugin = $$.loadPlugin("LLM");
     let chatPlugin = $$.loadPlugin("Chat");
     let workspace = $$.loadPlugin("Workspace");
-    const lastRepliesNr = 10; //number of last replies to consider in the context
 
     this.init = async function(agentName) {
         persistence = await $$.loadPlugin("DefaultPersistence");

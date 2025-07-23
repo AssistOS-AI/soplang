@@ -36,7 +36,7 @@ await $$.checkDocVar("doc1", "res0_1", "Hello World 0");
 await $$.checkDocVar("doc1", "res1", "Hello New World 1");
 await $$.checkDocVar("doc1", "res2", "Hello New World 2");
 await $$.checkDocVar("doc1", "res3", undefined);
-await $$.checkDocVar("doc1", "mapState", 'doc1.EXEC_1,doc1.EXEC_2,doc1.EXEC_3');
+await $$.checkDocVar("doc1", "mapState", 'doc1/EXEC_1,doc1/EXEC_2,doc1/EXEC_3');
 
 await graph.setVarValue("doc1","hello", "Hola");
 await workspace.buildAll();

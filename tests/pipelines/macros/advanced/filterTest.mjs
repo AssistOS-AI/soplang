@@ -27,6 +27,6 @@ await workspace.insertCode("doc1", script);
 await workspace.buildAll();
 
 await $$.checkDocVar("doc1", "res0_1", "World 1");
-await $$.checkDocVar("doc1", "mapState", 'doc1.world1,doc1.world2,doc1.world4');
+await $$.checkDocVar("doc1", "mapState", 'doc1/world1,doc1/world2,doc1/world4');
 
 $$.endTest();

@@ -508,6 +508,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
 
     for(let varName in variables){
         //replace each occurrence of var name prefixed by $ @ or ~  or post fixed by "."  but keep the prefix or postfix
+        //TODO replace this with "/"?
         let regex = new RegExp(`([@\$!~])?${varName}(\\.)?`, "g");
 
         macroCode = macroCode.replace(regex, (match, prefix, postfix) => {

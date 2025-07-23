@@ -15,10 +15,10 @@ let script = `
     @user new ChatUserAgent $currentUser
     @chat new Chat $history $context $assistant $user
     
-    context.append system [ assistant.getSystemPrompt ] "" system
+    context.upsert system [ assistant.getSystemPrompt ] "" system
     @newReply macro reply ~history ~context ~chat
-        @res history.append $reply
-        context.append $res
+        @res history.upsert $reply
+        context.upsert $res
         chat.notify $res
         return $res
     end

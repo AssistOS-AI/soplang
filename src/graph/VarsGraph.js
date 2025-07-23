@@ -214,7 +214,7 @@ function VarsGraph(commandsRegistry) {
 
     this.getVarValue = async function (docId, varName) {
         let varId;
-        if (varName === undefined || varName === null || varName === "" || docId.includes(".")) {
+        if (varName === undefined || varName === null || varName === "" || docId.includes("/")) {
             varId = docId;
         } else {
             varId = varUtil.getVarID(docId, varName);
@@ -283,29 +283,29 @@ function VarsGraph(commandsRegistry) {
     this.topologicalSort = function () {
         let visited = {};
 
-        function determineLayer(varName, node) {
+        function determineLayer(varId, node) {
             // console.debug("Determining layer of", node);
-            if (visited[varName]) {
+            if (visited[varId]) {
                 return;
             }
-            visited[varName] = true;
+            visited[varId] = true;
             if (node.layer !== 0) {
                 return;
             }
             for (let i = 0; i < node.deps.length; i++) {
-                let depName = node.deps[i];
-                let dep = graph[depName];
-                if (depName === varName) {
-                    varUtil.updateErrorInfo(varName, `Circular dependency detected for variable ${depName}. Build stopped!`);
-                    $$.throwErrorSync( `Circular dependency detected for variable ${depName}. Build stopped!`);
+                let depId = node.deps[i];
+                let dep = graph[depId];
+                if (depId === varId) {
+                    varUtil.updateErrorInfo(varId, `Circular dependency detected for variable ${depId}. Build stopped!`);
+                    $$.throwErrorSync( `Circular dependency detected for variable ${depId}. Build stopped!`);
                 }
                 if (!dep) {
                     //call without await on purpose
-                    varUtil.updateErrorInfo(varName, ` Dependency '${depName}' not found for variable '${varName}'. Stopping build...`);
-                    throw new Error(`Dependency '${depName}' not found for variable '${varName}'. Stopping build...`);
+                    varUtil.updateErrorInfo(varId, ` Dependency '${depId}' not found for variable '${varId}'. Stopping build...`);
+                    throw new Error(`Dependency '${depId}' not found for variable '${varId}'. Stopping build...`);
                 }
                 else if (dep.layer === 0) {
-                    determineLayer(depName, dep);
+                    determineLayer(depId, dep);
                 }
             }
             node.layer = 1;
@@ -320,17 +320,17 @@ function VarsGraph(commandsRegistry) {
         }
 
         $$.debug("topologicalSort","Graph before topological sort", JSON.stringify(graph));
-        for (let varName in graph) {
-            let node = graph[varName];
+        for (let varId in graph) {
+            let node = graph[varId];
             if (node.deps.length === 0) {
                 node.layer = 1;
                 visited[node.id] = true;
             }
         }
 
-        for (let varName in graph) {
-            $$.debug("topologicalSort",`Determining layer of ${varName} in node:`, JSON.stringify(graph[varName]));
-            determineLayer(varName, graph[varName]);
+        for (let varId in graph) {
+            $$.debug("topologicalSort",`Determining layer of ${varId} in node:`, JSON.stringify(graph[varId]));
+            determineLayer(varId, graph[varId]);
         }
         $$.debug("topologicalSort","Graph after topological sort", graph);
     }
