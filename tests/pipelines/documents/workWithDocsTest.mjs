@@ -19,7 +19,7 @@ let script = `
     # but this is just a test. The difference is that in case of changes in dependencies other then $par21, this expression will not be re-executed
     # while the other one will be re-executed. This could be usefully in some cases or could be perceived as bug or a leaking abstraction 
     @parText             doc.getParagraphText 1 1 
-    doc.setParagraphText    1  1 $parText $par21 await await $parText
+    doc.setParagraphText    1  1 $parText $par21
     doc.setParagraphText    2  1 $par21add await $parText
     doc.setParagraphText    2  2 "additional content for chapter 2, paragraph 2"     await $parText
 `;

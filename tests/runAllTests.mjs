@@ -18,7 +18,6 @@ const tests = [
     './util/macroParseTest.js',
     './pipelines/basic/assertTest.mjs',
     './pipelines/basic/mathTest.mjs',
-    './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/basic/jsdefTest.mjs',
     './pipelines/basic/varChangeTest.mjs',
     './pipelines/basic/depsGraphHWTest.mjs',
@@ -59,6 +58,9 @@ const tests = [
     './plugins/updateMacroVarValue.mjs',
     './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
     './pipelines/tables/assignTableMethodResult.mjs',
+    './pipelines/basic/ifCommandEdgeCase.mjs',
+    './pipelines/tables/preventTableInsertAfterBuild.js',
+    //add update command definition test
 ];
 
 import fs from 'node:fs/promises';
