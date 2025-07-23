@@ -4,8 +4,8 @@ let workspace = await $$.loadPlugin("Workspace");
 
 let myTestCode = `
     @outsideTable new Table c0 c1 c2 
-    @callTable macro ~outsideTable        
-        outsideTable.append 1 2 3
+    @callTable macro table        
+        table.append 1 2 3
     end            
 `;
 

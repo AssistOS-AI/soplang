@@ -54,9 +54,9 @@ const tests = [
     './chat/basicChatAgentAnswers.js',
     './chat/basicChatUserAnswers.js',
     './chat/contextChat.js',
-    //bugs
-    './plugins/updateMacroDefinition.mjs',
+    //failing
     './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
+    './plugins/updateMacroDefinition.mjs',
     './pipelines/tables/assignTableMethodResult.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/tables/preventTableInsertAfterBuild.js',
