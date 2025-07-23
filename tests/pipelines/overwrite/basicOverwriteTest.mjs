@@ -32,7 +32,9 @@ await $$.check("doc1", "b", "B", "After first build");
 await $$.check("doc1", "x", "vx1", "After first build");
 await $$.check("doc1", "y", "vx1", "After first build");
 
-graph.setVarValue("doc1", "a", "C");
+await graph.setVarValue("doc1", "a", "C");
+await graph.printGraph();
+
 await workspace.buildAll();
 
 await $$.check("doc1", "var0", "v1" , "After second build");
@@ -44,6 +46,8 @@ await $$.check("doc1", "b", "C", "After second build");
 
 await $$.check("doc1", "x", "vx1", "After second build");
 await $$.check("doc1", "y", "vx1", "After second build");
+
+await graph.printGraph();
 
 await $$.endTest();
 

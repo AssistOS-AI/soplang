@@ -196,7 +196,7 @@ async function setVarValue(varId, newValue, options){
     }
 
     let serialisedNewValue = serialiseValue(newValue);
-    if(sameValue(varValue, serialisedNewValue)){
+    if(!varDef.defaultInitialisation && sameValue(varValue, serialisedNewValue)){
         //console.debug(">>>Variable", varId, "has the same value as before. Not updating");
         return false;
     }
@@ -227,6 +227,10 @@ async function setVarValue(varId, newValue, options){
         } else {
             varContext.debugInfo = undefined;
         }
+    }
+
+    if(varDef.defaultInitialisation){
+        varContext.defaultInitialisation = false;
     }
 
     if(newValue !== undefined && newValue.__type !== undefined){
@@ -397,6 +401,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.chapterId = _chapterId;
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;
+    varContext.defaultInitialisation = true;
     if (_parsedCommand.command === "new" || _parsedCommand.command === "lookup") {
         varContext.__type = _parsedCommand.inputVars[0];
     }

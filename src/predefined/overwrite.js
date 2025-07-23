@@ -19,7 +19,7 @@ async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
             if(diffFound){
                 await buildInstance.restartBuild(undefined);
             }
-            break;
+            return withValue;
         case "alias":
             //allow to overwrite the alias because it will actually go to overwrite the value of the actual variable
             let referencedVariable = varDef.referencedVariable;
@@ -36,7 +36,6 @@ async function doRecOverwrite(fullVarName, withValue, graph, buildInstance) {
             await varUtil.updateWarningInfo(fullVarName,`Ignoring invalid overwrite command for variable '${fullVarName}'. Only simple variables can be overwritten`);
             return;
     }
-
 }
 
  export async function overwrite (inputValues, parsedCommand, currentDocId, graph, buildInstance) {

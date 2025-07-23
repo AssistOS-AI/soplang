@@ -540,6 +540,7 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
+        $$.debug("commandExecution", `Checking if variable ${varId} must be recomputed. Current clock is ${varClock} and dependencies are ${deps}. Must recompute: ${mustRecompute}`);
 
         let variable = await varUtil.getVariable(varId);
         if(variable.referencedVariable){
