@@ -4,7 +4,7 @@ let workspace = await $$.loadPlugin("Workspace");
 
 let myTestCode = `
     @callMacro macro a     
-        $a := "otherValue"
+        @b := $a
     end
     callMacro "value"
 `;

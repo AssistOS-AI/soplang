@@ -526,11 +526,15 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
         });
     }
 
-    // replace return with @executionPrefix :=
     regex = /return/g;
-    macroCode = macroCode.replace(regex, (match) => {
-        return `@${executionPrefix} returnMacroValue`;
-    });
+    // Check if "return" exists in the string
+    if (regex.test(macroCode)) {
+        // If it exists, replace it (your original logic)
+        macroCode = macroCode.replace(regex, `@${executionPrefix} returnMacroValue`);
+    } else {
+        // If it doesn't exist, append the string to the end
+        macroCode += `\n@${executionPrefix} returnMacroValue ""`;
+    }
 
     $$.debug("macro",">>>>>Macro code:", (initialisation + macroCode).split("\n").map(line => "\t" + line).join("\n"));
     return initialisation + macroCode;
