@@ -490,7 +490,15 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
             initialisation += `@${variables[argName]} alias ${macroDocId} ${argName}\n`;
         } else {
             variables[argName] = executionPrefix + "_" + argName;
-            initialisation += `@${variables[argName]} := ${$$.SOPStringify(args[i])}\n`;
+            if(typeof args[i] === "string" && args[i].startsWith("$")){
+                if(args[i].includes("/")){
+                    initialisation += `@${variables[argName]} alias ${args[i].slice(1)}\n`;
+                } else {
+                    initialisation += `@${variables[argName]} alias ${macroDocId} ${args[i].slice(1)}\n`;
+                }
+            } else {
+                initialisation += `@${variables[argName]} := ${$$.SOPStringify(args[i])}\n`;
+            }
         }
     }
 
@@ -508,7 +516,6 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
 
     for(let varName in variables){
         //replace each occurrence of var name prefixed by $ @ or ~  or post fixed by "."  but keep the prefix or postfix
-        //TODO replace this with "/"?
         let regex = new RegExp(`([@\$!~])?${varName}(\\.)?`, "g");
 
         macroCode = macroCode.replace(regex, (match, prefix, postfix) => {

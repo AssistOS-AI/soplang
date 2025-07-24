@@ -27,7 +27,6 @@ async function Documents(){
         let doc = await persistence.getDocument(documentId);
         await graph.analiseCommandSection(doc.docId, undefined, undefined, "", doc.commands);
         await graph.analiseTextSection(doc.docId, undefined, undefined, "");
-        //TODO: delete vars from chapters and paragraphs
         return await persistence.deleteDocument(documentId);
     }
 

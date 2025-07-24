@@ -38,6 +38,7 @@ const tests = [
     './pipelines/macros/advanced/reduceTest.mjs',
     './pipelines/macros/advanced/filterTest.mjs',
     './pipelines/macros/advanced/filterWithMacroTest.mjs',
+    './pipelines/macros/advanced/callMacroWithoutReturn.js',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
     './pipelines/documents/workWithDocsTest.mjs',
     './pipelines/documents/parseDocCommands.js',

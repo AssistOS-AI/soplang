@@ -16,9 +16,15 @@ function VarsGraph(commandsRegistry) {
         graph = graphObj.state;
     }
     commandsRegistry.registerCommand("alias", async function (inputValues, parsedCommand, currentDocId, graph, buildInstance) {
-            let targetDocumentId = inputValues[0];
-            let targetVarName = inputValues[1];
-            let targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
+            //can be called with "docId/varName" or "docId varName"
+            let targetVarId;
+            if(inputValues.length === 1){
+                targetVarId = inputValues[0];
+            } else {
+                let targetDocumentId = inputValues[0];
+                let targetVarName = inputValues[1];
+                targetVarId = varUtil.getVarID(targetDocumentId, targetVarName);
+            }
             let myVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
             await varUtil.markAsReferenceToVariable(myVarId, targetVarId, currentDocId);
             await buildInstance.restartBuild(myVarId);

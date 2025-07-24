@@ -47,12 +47,14 @@ function decodeString(str) {
     in format "'sop:type:encoded string'"
  */
 $$.SOPStringify = function (obj) {
-    if(typeof obj === "string"){
-        if(obj.startsWith('"$') || obj.startsWith('"~') || obj[0] === "$" || obj[0] === "~"){
-            $$.debug("sopEncoding", "------------------->   Avoiding to encode strings that looks like variable names", obj, obj.startsWith('"$') );
-            return obj;
-        }
-    }
+    //TODO delete this if later
+
+    // if(typeof obj === "string"){
+    //     if(obj.startsWith('"$') || obj.startsWith('"~') || obj[0] === "$" || obj[0] === "~"){
+    //         $$.debug("sopEncoding", "------------------->   Avoiding to encode strings that looks like variable names", obj, obj.startsWith('"$') );
+    //         return obj;
+    //     }
+    // }
     let res = `'sop:${getType(obj)}:${encodeString(JSON.stringify(obj))}'`;
     $$.debug("sopEncoding",`Encoding object with type ${getType(obj)} to string:`, res);
     if(res === `'sop:string:"[object Object]"'`){
