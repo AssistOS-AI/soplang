@@ -131,7 +131,7 @@ async function getVarValue(varId){
         try{
             instance = await restoreInstance(varDef.docId, varDef.__type, varDef.varName, varDef.value);
         } catch(err){
-            await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value will be set to undefined`, err);
+            await updateErrorInfo(varId, `Error restoring instance of type ${varDef.__type}. The value of "${varDef.varName}" will be set to undefined`, err);
         }
         return instance;
     }
