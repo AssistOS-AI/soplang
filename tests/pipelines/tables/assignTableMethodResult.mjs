@@ -1,5 +1,5 @@
 import {} from "../../deps/clean.mjs";
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 
 let script = `
     @table new Table from message

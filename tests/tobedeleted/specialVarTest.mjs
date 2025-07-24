@@ -1,6 +1,6 @@
 import {} from "../deps/clean.mjs";
 await $$.clean();
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 
 let graph = workspace.getGraph();
 

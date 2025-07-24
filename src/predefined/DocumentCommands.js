@@ -6,8 +6,8 @@ function Document(docId, varName) {
     self.__type = "Document";
 
     this.init = async function(docId, docInstance) {
-        persistence = await $$.loadPlugin("DefaultPersistence");
-        documentsPlugin = await $$.loadPlugin("Documents");
+        persistence = $$.loadPlugin("DefaultPersistence");
+        documentsPlugin = $$.loadPlugin("Documents");
         self.docId = docId;
         if(docInstance){
             self.docInstance = docInstance;
@@ -17,8 +17,8 @@ function Document(docId, varName) {
     }
 
     this.restore = async function(JSONSerialisation) {
-        persistence = await $$.loadPlugin("DefaultPersistence");
-        documentsPlugin = await $$.loadPlugin("Documents");
+        persistence = $$.loadPlugin("DefaultPersistence");
+        documentsPlugin = $$.loadPlugin("Documents");
         if(JSONSerialisation){
             self.docId = JSONSerialisation.docId;
         }

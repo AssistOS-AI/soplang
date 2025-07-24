@@ -1,7 +1,7 @@
 async function ChatScript() {
     const self = {};
 
-    const persistence = await $$.loadPlugin("DefaultPersistence");
+    const persistence = $$.loadPlugin("DefaultPersistence");
 
     await persistence.configureTypes({
         chatScript: {

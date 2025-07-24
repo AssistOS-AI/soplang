@@ -1,6 +1,6 @@
 import {} from "../../../deps/clean.mjs";
 
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 
 let myTestCode = `
     @callMacro macro a     

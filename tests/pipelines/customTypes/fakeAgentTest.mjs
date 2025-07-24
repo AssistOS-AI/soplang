@@ -1,7 +1,7 @@
 import {} from "../../deps/clean.mjs";
 import assert from "assert";
-let workspace = await $$.loadPlugin("Workspace");
-let persistence = await $$.loadPlugin("DefaultPersistence");
+let workspace = $$.loadPlugin("Workspace");
+let persistence = $$.loadPlugin("DefaultPersistence");
 let graph = workspace.getGraph();
 
 await persistence.configureTypes({

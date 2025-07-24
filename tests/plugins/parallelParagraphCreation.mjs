@@ -1,5 +1,5 @@
 import {} from "../deps/clean.mjs";
-let documents = await $$.loadPlugin("Documents");
+let documents = $$.loadPlugin("Documents");
 async function createParagraphs(chapterId) {
     let paragraphs = [];
     for (let i = 0; i < 10; i++) {

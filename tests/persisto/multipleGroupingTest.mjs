@@ -1,5 +1,5 @@
 import {} from "../deps/clean.mjs";
-let persistence = await $$.loadPlugin("DefaultPersistence");
+let persistence = $$.loadPlugin("DefaultPersistence");
 
 await persistence.configureTypes({
     NFT:{

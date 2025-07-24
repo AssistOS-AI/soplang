@@ -4,8 +4,8 @@ const customTypeRegistry = import("../src/graph/customTypeRegistry.js");
 
 async function Documents(){
     let self = {};
-    let persistence = await $$.loadPlugin("DefaultPersistence");
-    let workspace = await $$.loadPlugin("Workspace");
+    let persistence = $$.loadPlugin("DefaultPersistence");
+    let workspace = $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
 
     self.createDocument = async function (docId, documentCategory, title) {

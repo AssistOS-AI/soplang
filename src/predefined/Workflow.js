@@ -12,7 +12,7 @@ function Workflow(docId, varName){
     this.answers = [];
 
     this.init = async function(agentName) {
-        persistence = await $$.loadPlugin("DefaultPersistence");
+        persistence = $$.loadPlugin("DefaultPersistence");
         self.agentName = agentName;
         agentInstance = await persistence.createAgent({name: agentName, forms: []});
     }
@@ -101,25 +101,25 @@ function Workflow(docId, varName){
         return await this.getNextQuestion();
     }
     this.getTextResponse = async function(inputValues, parsedCommand, currentDocId, graph){
-        const llm = await $$.loadPlugin("LLM");
+        const llm = $$.loadPlugin("LLM");
         const [provider, model, prompt,options={}] = inputValues;
         return await llm.getTextResponse(provider, model, prompt, options);
 
     }
     this.getChatCompletionResponse = async function(inputValues, parsedCommand, currentDocId, graph) {
-        const llm = await $$.loadPlugin("LLM");
+        const llm = $$.loadPlugin("LLM");
         const [provider, model, messages,options={}] = inputValues;
         return await llm.getChatCompletionResponse(provider, model, messages, options);
     }
 
     this.restore = async function(JSONSerialisation) {
-        persistence = await $$.loadPlugin("DefaultPersistence");
+        persistence = $$.loadPlugin("DefaultPersistence");
         if(JSONSerialisation){
             self.agentName = JSONSerialisation.agentName;
             agentInstance = await persistence.getAgent(self.agentName);
             this.forms = agentInstance.forms;
         }
-        workspace = await $$.loadPlugin("Workspace");
+        workspace = $$.loadPlugin("Workspace");
     }
 }
 

@@ -1,7 +1,7 @@
 import {} from "../../deps/clean.mjs";
 import assert from "assert";
-let workspace = await $$.loadPlugin("Workspace");
-let documents = await $$.loadPlugin("Documents");
+let workspace = $$.loadPlugin("Workspace");
+let documents = $$.loadPlugin("Documents");
 let graph = workspace.getGraph();
 
 let allOk = true;

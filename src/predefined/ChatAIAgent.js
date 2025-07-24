@@ -10,7 +10,7 @@ function ChatAIAgent(docId, varName) {
     let workspace = $$.loadPlugin("Workspace");
 
     this.init = async function(agentName) {
-        persistence = await $$.loadPlugin("DefaultPersistence");
+        persistence = $$.loadPlugin("DefaultPersistence");
         this.agentName = agentName;
         agentConfig = await persistence.getAgent(agentName);
         this.description = agentConfig.description || "";

@@ -1,6 +1,6 @@
 async function Table() {
     let self = {};
-    let workspace = await $$.loadPlugin("Workspace");
+    let workspace = $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
 
     self.insert = async function (docId, varName, row, position) {

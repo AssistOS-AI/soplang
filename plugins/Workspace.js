@@ -15,9 +15,9 @@ const customTypeRegistry = await import("../src/graph/customTypeRegistry.js");
 
 async function Workspace() {
     let self = {};
-    let persistence = await $$.loadPlugin("DefaultPersistence");
-    let Email = await $$.loadPlugin("EmailPlugin");
-    let WorkspaceUser = await $$.loadPlugin("WorkspaceUser");
+    let persistence = $$.loadPlugin("DefaultPersistence");
+    let Email = $$.loadPlugin("EmailPlugin");
+    let WorkspaceUser = $$.loadPlugin("WorkspaceUser");
 
     let commandsRegistry = await createRegistry(self);
     let graph = await createVarsGraph(commandsRegistry);

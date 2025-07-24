@@ -30,7 +30,7 @@ $$.check = async function (docId, varName, expectedValue, prefixText) {
     if (prefixText === undefined) {
         prefixText = "";
     }
-    let workspace = await $$.loadPlugin("Workspace");
+    let workspace = $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
     let value = await graph.getVarValue(docId, varName);
 
@@ -77,7 +77,7 @@ $$.failTest = function(){
 }
 
 $$.exit = async function () {
-    let workspace = await $$.loadPlugin("Workspace");
+    let workspace = $$.loadPlugin("Workspace");
     await workspace.shutDown();
     console.log("All tests passed:", $$.allOk ? "true" : "false");
     process.exit($$.allOk ? 0 : 1);

@@ -1,5 +1,5 @@
 import {} from "../deps/clean.mjs";
-let documents = await $$.loadPlugin("Documents");
+let documents = $$.loadPlugin("Documents");
 
 const doc = await documents.createDocument("docId", "category", "title");
 const commands = `

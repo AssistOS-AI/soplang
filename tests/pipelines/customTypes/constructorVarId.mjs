@@ -1,6 +1,6 @@
 import {} from "../../deps/clean.mjs";
 import assert from "assert";
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 
 let initialVarId;
 //the purpose of the test is to ensure thhat a p[roper varName and not a varId is passed to the constructor of a custom type

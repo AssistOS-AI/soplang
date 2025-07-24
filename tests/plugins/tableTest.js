@@ -1,6 +1,6 @@
 import {} from "../deps/clean.mjs";
-let workspace = await $$.loadPlugin("Workspace");
-let table = await $$.loadPlugin("Table");
+let workspace = $$.loadPlugin("Workspace");
+let table = $$.loadPlugin("Table");
 
 let script = `
     @t1 new Table "c1" "c2" "c3" "c4: math c2 * c3" 

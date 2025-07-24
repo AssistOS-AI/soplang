@@ -1,6 +1,6 @@
 import {} from "../../../deps/clean.mjs";
 import assert from "assert";
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 let graph = workspace.getGraph();
 
 let script = `  

@@ -1,6 +1,6 @@
 import {} from "../deps/clean.mjs";
-let documents = await $$.loadPlugin("Documents");
-let workspace = await $$.loadPlugin("Workspace");
+let documents = $$.loadPlugin("Documents");
+let workspace = $$.loadPlugin("Workspace");
 let graph = workspace.getGraph();
 const doc = await documents.createDocument("docId", "category", "title");
 const commands = `

@@ -1,6 +1,6 @@
 async function WorkspaceUser(){
     let self = {};
-    let persistence = await $$.loadPlugin("DefaultPersistence");
+    let persistence = $$.loadPlugin("DefaultPersistence");
 
     self.createUser = async function (email, displayName, role) {
         return await persistence.createUser({

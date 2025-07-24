@@ -4,9 +4,9 @@ import {promises as fsPromises} from "fs";
 async function Agent() {
     let self = {};
 
-    let persistence = await $$.loadPlugin("DefaultPersistence")
-    const chatPlugin = await $$.loadPlugin("Chat");
-    const llmPlugin = await $$.loadPlugin("LLM");
+    let persistence = $$.loadPlugin("DefaultPersistence")
+    const chatPlugin = $$.loadPlugin("Chat");
+    const llmPlugin = $$.loadPlugin("LLM");
 
     await persistence.configureTypes({
             agent: {

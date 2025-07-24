@@ -1,6 +1,6 @@
 import {} from "../deps/clean.mjs";
 let varUtils = await import("../../src/graph/varUtil.js")
-let workspace = await $$.loadPlugin("Workspace");
+let workspace = $$.loadPlugin("Workspace");
 let script = `
     @currentUser := "Michael"
     @favCar form currentUser

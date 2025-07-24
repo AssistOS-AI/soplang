@@ -41,7 +41,7 @@ function RowSchemaUtil(columnDescriptionArray) {
         }
 
         if(!res.truid){
-            let persistence = await $$.loadPlugin("DefaultPersistence");
+            let persistence = $$.loadPlugin("DefaultPersistence");
             res.truid = TABLE_ROW_UID + "_" + await persistence.getNextNumber(TABLE_ROW_UID);
         }
 

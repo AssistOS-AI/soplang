@@ -196,7 +196,7 @@ function VarsGraph(commandsRegistry) {
         await defineVarsFromCode(inDocId, "_", "_", macroCode);
         await self.buildOnlyForDocument(inDocId);
         let value = await self.getVarValue(inDocId, inDocId);
-        let documentsPlugin = await $$.loadPlugin("Documents");
+        let documentsPlugin = $$.loadPlugin("Documents");
         await documentsPlugin.deleteDocument(inDocId);
         return value;
     }
