@@ -39,8 +39,8 @@ function Chat(docId, varName) {
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
-                this.getDynamicContext().then(chatContext => {
-                    agent.acknowledge(reply.from, reply.message, chatContext);
+                this.getContext().then(history => {
+                    agent.acknowledge(reply.from, reply.message, history.data);
                 });
             });
         }
@@ -50,8 +50,14 @@ function Chat(docId, varName) {
     this.updateReply = async function (truid, from, message, role) {
         let timestamp = new Date().toISOString();
         let tableValue = await getVarValue(this.historyVarId);
+        let contextTable = await getVarValue(this.contextVarId);
         let graph = workspace.getGraph();
         await tableValue.internalUpdateRow({from, message, timestamp, truid}, graph);
+        try {
+            await contextTable.internalUpdateRow({from, message, timestamp, truid}, graph);
+        } catch (e){
+            console.error(`Failed to update reply in context table: ${e.message}`);
+        }
         chatPlugin.notifySubscribers(this.docId, {from, message, timestamp, role, truid});
         return truid;
     }

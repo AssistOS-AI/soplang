@@ -1,16 +1,10 @@
 import { fork } from 'child_process';
 import path from 'path';
+import { runTestsSequentially as runPersistoTests } from '../Persisto/tests/runAllTests.mjs';
 let failedTests = [];
 let missingPaths = [];
 
 const tests = [
-    '../Persisto/tests/getEveryIndexValue.mjs',
-    '../Persisto/tests/typesPersistence.mjs',
-    '../Persisto/tests/getObjectsRange.mjs',
-    '../Persisto/tests/getObjectByOtherObjectId.mjs',
-    '../Persisto/tests/groupingAfterObjectCreation.mjs',
-    '../Persisto/tests/changeGroupingValue.mjs',
-    '../Persisto/tests/changeIndexValue.mjs',
     './persisto/multipleGroupingTest.mjs',
     './util/SOPStringifyTest.mjs',
     './util/commandLineParserTest.js',
@@ -71,7 +65,7 @@ async function fileExists(filePath) {
     try {
         await fs.access(filePath, constants.F_OK);
         return true;
-    } catch (error) {
+    } catch {
         return false;
     }
 }
@@ -82,6 +76,7 @@ function identAndCleanStdErr(output) {
     cleanedLines = cleanedLines.filter(line => line !== "");
     return cleanedLines.join("\n");
 }
+
 async function runTestsSequentially(tests) {
     let passed = 0, failed = 0;
 
@@ -92,8 +87,9 @@ async function runTestsSequentially(tests) {
             //use fs to check if the file exists
             if (!await fileExists(absolutePath)) {
                 missingPaths.push(testPath);
+                continue;
             }
-        } catch (error) {
+        } catch {
             missingPaths.push(testPath);
             continue;
         }
@@ -122,18 +118,39 @@ async function runTestsSequentially(tests) {
         }
     }
 
-    console.log(`\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Summary:`);
-    if (failed > 0) {
+    return { passed, failed };
+}
+
+async function runAllTests() {
+    console.log('🚀 Starting All Tests...\n');
+    
+    console.log('📦 Running Persisto Tests...');
+    const persistoResult = await runPersistoTests();
+    
+    // Merge Persisto results
+    failedTests.push(...persistoResult.failedTests);
+    missingPaths.push(...persistoResult.missingPaths);
+    
+    // Run SOPLang tests
+    console.log('\n🔧 Running SOPLang Tests...');
+    const soplangResult = await runTestsSequentially(tests);
+    
+    // Calculate totals
+    const totalPassed = persistoResult.passed + soplangResult.passed;
+    const totalFailed = persistoResult.failed + soplangResult.failed;
+
+    console.log(`\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Final Summary:`);
+    if (totalFailed > 0) {
         console.log(`\tFailed tests:`);
         failedTests.forEach(test => console.log(`\t- ${test.testPath} \n${identAndCleanStdErr(test.stdErrResult)}`));
     }
     if (missingPaths.length) {
-        console.log("\tFollowing paths does not exist:", missingPaths);
+        console.log("\tFollowing paths do not exist:", missingPaths);
     }
-    console.log(`\t🏁 Finished: ${passed} passed, ${failed} failed.`);
-    process.exit(failed > 0 ? 1 : 0);
+    console.log(`\t🏁 Overall Finished: ${totalPassed} passed, ${totalFailed} failed.`);
+    process.exit(totalFailed > 0 ? 1 : 0);
 }
 
-await runTestsSequentially(tests);
+await runAllTests();
 
 process.exit(0);
