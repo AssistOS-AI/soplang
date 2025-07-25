@@ -77,6 +77,8 @@ async function Chat() {
     }
     self.stopListeningForMessages = async function (chatId) {
         soundpubsub.unsubscribe(chatId);
+        let response = responses.find(item => item.chatId === chatId);
+        response.observableResponse.end();
         responses = responses.filter(item => item.chatId !== chatId);
     }
     return self;
