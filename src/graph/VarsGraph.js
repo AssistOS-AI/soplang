@@ -44,16 +44,16 @@ function VarsGraph(commandsRegistry) {
             return;
         }
         let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
-        $$.debug("variable", "============> Parsed code", ...lines);
+        $$.debug("variables", "============> Parsed code", ...lines);
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
             let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
             if(!parsedCommand){
-                $$.debug("variable", `============> Skipping line ${i} in code block, because it is not a valid command`);
+                $$.debug("variables", `============> Skipping line ${i} in code block, because it is not a valid command`);
                 continue;
             }
             await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
-            $$.debug("variable",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
+            $$.debug("variables",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
         }
     }
     async function parseCommand(chapterId, paragraphId, line, i){
@@ -128,7 +128,7 @@ function VarsGraph(commandsRegistry) {
         const removedVars = oldCommandsParsed.filter(cmd => !newNames.has(cmd.outputVars[0]));
         for( let removedVar of removedVars){
             await deleteVariable(removedVar.outputVars[0], docId);
-            $$.debug("variable", `============> Removed variable ${removedVar.outputVars[0]} from document ${docId}`);
+            $$.debug("variables", `============> Removed variable ${removedVar.outputVars[0]} from document ${docId}`);
         }
         await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
     }
@@ -354,9 +354,13 @@ function VarsGraph(commandsRegistry) {
         }
 
         if(varContext.parsedCommand.command === "chainAlias"){
-            //console.debug("Chain alias", varContext.parsedCommand.inputVars);
+            $$.debug("chainAlias", `Chain Alias evaluation command ${varContext.parsedCommand.inputVars}`);
             try{
                 let obj = await self.getVarValue(varContext.parsedCommand.inputVars[2]);
+                if(!obj || typeof obj !== "object"){
+                    $$.debug("chainAlias", `Chain Alias evaluation failed for ${varContext.parsedCommand.inputVars[2]} as it is not an object or is undefined`);
+                    return undefined;
+                }
                 return obj[varContext.parsedCommand.inputVars[1]];
             } catch(e){
                 await varUtil.updateErrorInfo(varContext.varId, `Failed to resolve chain alias ${varContext.parsedCommand.inputVars[1]} in ${varContext.parsedCommand.inputVars[2]}`);

@@ -30,10 +30,11 @@ const restoreInstance = async (currentDocId, typeName, outputVarName, JSONSerial
     customTypesValuesCache.set(outputVarId, instance);
 
     try{
-        $$.debug("objectLifeCycle", `restoreInstance instance of type ${typeName} with output variable ${outputVarName}`);
         await instance.restore(JSONSerialisation);
+        $$.debug("objectLifeCycle", `restoreInstance instance of type ${typeName} with output variable ${outputVarName}`);
     }
     catch(e){
+        $$.debug("objectLifeCycle", `Exception restoring instance of type '${typeName}' with output variable '${outputVarName}': '${e}'`);
         throw Error(`Exception restoring instance of type ${typeName} with output variable ${outputVarName}: ${e.message}`);
     }
     instance.__type = typeName;
@@ -59,12 +60,12 @@ const newInstance = async (currentDocId,  typeName, outputVarName, ...args) => {
         throw Error(`Type ${typeName} not registered`);
     }
     let instance = new customTypes[typeName](currentDocId, outputVarName);
-    $$.debug("objectLifeCycle", `Creating new instance of type ${typeName} with output variable ${outputVarName}`);
     await instance.init(...args);
     let outputVarId = getVarID(currentDocId, outputVarName);
     customTypesValuesCache.set(outputVarId, instance);
     instance.__type = typeName;
     instance.__initialArgs = args;
+    $$.debug("objectLifeCycle", `Creating new instance of type ${typeName} with output variable ${outputVarName}`);
     return instance;
 }
 

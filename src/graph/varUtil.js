@@ -40,6 +40,7 @@ async function updateVariableWrapper(varId, varContext){
     customTypesValuesCache.delete(varId);
     varDefCache.delete(varId);
     let persistence = getDefaultPersistence();
+    $$.debug("varValues", `>>>Updating variable ${varId} with updated fields: '${JSON.stringify(varContext)}'`);
     return await persistence.updateVariable(varId, varContext);
 }
 
@@ -184,15 +185,16 @@ async function setVarValue(varId, newValue, options){
     }
     if(varDef.parsedCommand.command === "chainAlias"){
         let targetVarId = varDef.parsedCommand.inputVars[2];
-        $$.debug("chainAlias",">>>Updating chainAlias:", targetVarId);
+        $$.debug("chainAlias",`>>>Updating chainAlias: '${targetVarId}' with value '${newValue}'`);
+        /* //this code is kind of working in case that we want to have left value for chain aliases, for now we don't consider useful and kind of dangerous. Custom types mut define modifiers as functions
         let obj = await getVariableWrapper(targetVarId);
-
         if(!obj){
             await $$.throwError(`Variable ${targetVarId} not found!`);
         }
-        obj[varDef.parsedCommand.inputVars[1]] = newValue;
-        await updateVariableWrapper(targetVarId, {value: serialiseValue(obj), clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
-        return await updateVariableWrapper(varDef.varId, {value: undefined, clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
+        obj.value[varDef.parsedCommand.inputVars[1]] = newValue;
+        await updateVariableWrapper(targetVarId, {value: serialiseValue(obj.value), clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
+         */
+        return await updateVariableWrapper(varDef.varId, {value: newValue, clock: await defaultPersistenceSingleton.getLogicalTimestamp()});
     }
 
     let serialisedNewValue = serialiseValue(newValue);
@@ -237,6 +239,7 @@ async function setVarValue(varId, newValue, options){
         varContext.__type = newValue.__type;
     }
     await updateVariableWrapper(varId, varContext);
+
     return true;
 }
 

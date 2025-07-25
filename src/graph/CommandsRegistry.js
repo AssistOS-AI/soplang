@@ -242,7 +242,7 @@ function CommandsRegistry( workspace) {
             if(value === undefined){
                 let fullVarName = varUtil.getVarID(currentDocId, varName);
                 let varDef = await varUtil.getVariable(fullVarName);
-                $$.debug("commandExecution",">>>>>> Debug info for variable", varName, "is", varDef);
+                $$.debug("commandExecution",`>>>>>> Debug info for variable '${varName}: ${JSON.stringify(varDef)}`);
                 if(!isConditionalMemberCommand) {
                     await varUtil.updateErrorInfo(outputVarId, `Command  '${methodCommand}'  not executed because object variable "${fullVarName} " is undefined. Defaulting to undefined`);
                 }

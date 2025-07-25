@@ -85,13 +85,15 @@ function Table(docId, varName) {
     }
 
     self.restore = async function (JSONSerialisation) {
-        if (JSONSerialisation && self.columnDescription !== JSONSerialisation.columnDescription) {
-            self.columnDescription = JSONSerialisation.columnDescription ;
-            self.data = JSONSerialisation.data || [];
-            schemaUtil = new RowSchemaUtil(self.columnDescription);
-            this.docId = JSONSerialisation.docId;
-            this.varName = JSONSerialisation.varName;
-            this.varId = JSONSerialisation.varId;
+        if (JSONSerialisation) {
+            if(self.columnDescription === undefined ){
+                self.columnDescription = JSONSerialisation.columnDescription ;
+                self.data = JSONSerialisation.data || [];
+                schemaUtil = new RowSchemaUtil(self.columnDescription);
+                this.docId = JSONSerialisation.docId;
+                this.varName = JSONSerialisation.varName;
+                this.varId = JSONSerialisation.varId;
+            }
         } else {
             throw new Error("Invalid JSONSerialisation for Table");
         }
@@ -187,7 +189,8 @@ function Table(docId, varName) {
             } else if(typeof inputValues[0] === "object"){
                 validJson = inputValues[0];
             } else {
-                for(let i = 0; i < self.columnDescription.length; i++){
+                let columnNo = self.columnDescription ? self.columnDescription.length : 0;
+                for(let i = 0; i < columnNo; i++){
                     let key = self.columnDescription[i];
                     validJson[key] = inputValues[i];
                 }

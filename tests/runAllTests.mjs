@@ -45,13 +45,14 @@ const tests = [
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
     './plugins/deleteDocumentCommandsFromBlock.mjs',
+    './plugins/updateMacroDefinition.mjs',
     './chat/formTest.mjs',
     './chat/basicChatAgentAnswers.js',
     './chat/basicChatUserAnswers.js',
     './chat/contextChat.js',
+
     //failing
     './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
-    './plugins/updateMacroDefinition.mjs',
     './pipelines/tables/assignTableMethodResult.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/tables/preventTableInsertAfterBuild.js',

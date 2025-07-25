@@ -51,12 +51,17 @@ $$.dumpObject = function (obj) {
 $$.debugEnabled = false;
 
 $$.debugFeatures = {
+    //frequent debug features
     special:true,
+    commandExecution:false,
+    objectLifeCycle:false,
+    variables:false,
+    varValues:false,
+    //less frequent debug features
     macro:false,
     alias:true,
     jsdef:false,
     parser:false,
-    variable:false,
     topologicalSort:false,
     assign:false,
     table:false,
@@ -66,11 +71,10 @@ $$.debugFeatures = {
     overwrite:false,
     set:false,
     best:false,
-    commandExecution:false,
     diff:false,
     sopEncoding:false,
-    objectLifeCycle:false,
     varsValuesCache:false,
+    chainAlias:true
 }
 
 $$.debug = function (scope, ...args) {
