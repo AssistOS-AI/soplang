@@ -7,6 +7,7 @@
 /ExtensiblePersistence/
 /package-lock.json
 /Persisto/tests/logs/
+/Persisto/tests/audit/
 /Persisto/tests/work_space_data/
 /tests/pipelines/work_space_data/
 /tests/pipelines/logs/
