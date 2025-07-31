@@ -338,7 +338,7 @@ function VarsGraph(commandsRegistry) {
             $$.debug("topologicalSort",`Determining layer of ${varId} in node:`, JSON.stringify(graph[varId]));
             determineLayer(varId, graph[varId]);
         }
-        $$.debug("topologicalSort","Graph after topological sort", graph);
+        $$.debug("topologicalSort","Graph after topological sort", JSON.stringify(graph));
     }
 
 
@@ -526,6 +526,7 @@ function VarsGraph(commandsRegistry) {
         );
 
         if(debugActivatedForCommand){
+            $$.debug("varDebug", `Command ${intendedCommand} executed with input values "${JSON.stringify(inputValues)}" and result: "${result}"`);
             await varUtil.updateDebugInfo(targetVar.varId, `#DEBUG '${targetVar.varId}' is '${result}' #### Command ${parsedCommand.command}[${inputValues}]`);
         }
         return result;
@@ -557,7 +558,7 @@ function VarsGraph(commandsRegistry) {
             if(variable.macroId){
                 let macroVar = await varUtil.getVariable(variable.macroId);
                 let variableClock = await varUtil.getVarClock(varId);
-                console.debug("alias", `Checking variable ${varId} alias as the macro clock is ${macroVar.clock} and variable clock is ${variableClock}`);
+                $$.debug("macro", `Checking variable ${varId} alias as the macro clock is ${macroVar.clock} and variable clock is ${variableClock}`);
                 if(macroVar.clock > variableClock){
                     mustRecompute = true;
                     $$.debug("alias", `Decided to remove the alias for ${varId} as the macro clock is ${macroVar.clock} and variable clock is ${variable.clock}`);

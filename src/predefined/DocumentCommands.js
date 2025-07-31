@@ -26,6 +26,7 @@ function Document(docId, varName) {
 
     this.setTitle = async function(inputValues, parsedCommand, currentDocId, graph) {
         await persistence.updateDocument(self.docId, {title:inputValues[0]});
+        return inputValues[0];
     }
 
     this.setInfoText = async function(inputValues, parsedCommand, currentDocId, graph) {
