@@ -362,6 +362,30 @@ async function Workspace() {
         async function addDefaultWidgets() {
             const defaultWidgets = [
                 {
+                    name: "Control Room Load Room",
+                    description: "Widget to load a specific chat room.",
+                    widget: "assistOS/select-chat",
+                    chatSize: "50",
+                    role: "load",
+                    generalSettings: "",
+                    data: "",
+                    html: "",
+                    css: "",
+                    js: ""
+                },
+                {
+                    name: "Control Room New Room",
+                    description: "A widget to create a chat room",
+                    widget: "assistOS/create-chat",
+                    chatSize: "50",
+                    role: "new",
+                    generalSettings: "",
+                    data: "",
+                    html: "",
+                    css: "",
+                    js: ""
+                },
+                {
                     name: "AssistOS About Us Page",
                     description: "A dedicated page to inform users about your organization.",
                     widget: "assistOS/about-us",
@@ -491,9 +515,12 @@ async function Workspace() {
                     js: `// Test JS for Privacy Widget console.log('Privacy widget placeholder loaded.');`
                 }
             ];
+            const promises = [];
+
             for (const widget of defaultWidgets) {
-                await persistence.createPage(widget);
+                promises.push(persistence.createPage(widget));
             }
+            return await Promise.all(promises);
         }
 
         async function addDefaultChatScript() {
@@ -517,11 +544,34 @@ async function Workspace() {
             return await ChatScript.createChatScript(name, scriptCode, description);
         }
 
+        async function addDefaultControlRoomScript() {
+            const name = "DefaultControlRoomScript";
+            const description = "Default control room script for web assistants";
+            const scriptCode = "@history new Table from message timestamp role\n" +
+                "@context new Table from message timestamp role\n" +
+                "@currentUser := $arg1\n" +
+                "@agentName := $arg2\n" +
+                "@assistant new ChatAIAgent $agentName\n" +
+                "@user new ChatUserAgent $currentUser\n" +
+                "@chat new Chat $history $context $user $assistant\n" +
+                "\n" +
+                "context.upsert system [ assistant.getSystemPrompt ] \"\" system\n" +
+                "@newReply macro reply ~history ~context ~chat ~assistant\n" +
+                "    @res history.upsert $reply\n" +
+                "    context.upsert $res\n" +
+                "    chat.notify $res\n" +
+                "    return $res\n" +
+                "end"
+            return await ChatScript.createChatScript(name, scriptCode, description);
+        }
+
         const script = await addDefaultChatScript();
+        const controlRoomScript = await addDefaultControlRoomScript();
+
         const assistant = await persistence.createWebAssistant(
             {
-                chats: [],
-                scripts: [script.id],
+                chats: {},
+                scripts: [script.id, controlRoomScript.id],
                 scriptsWidgetMap: {},
                 settings: {
                     header: "",
@@ -534,7 +584,12 @@ async function Workspace() {
                     authentication: "existingSpaceMembers",
                 }
             })
-        await Promise.all([addDefaultWebAssistantThemes(), addDefaultWidgets()]);
+
+        const widgets = await addDefaultWidgets();
+
+        const webAssistant = await persistence.getWebAssistant(assistant.id);
+        webAssistant.scriptsWidgetMap[controlRoomScript.id] = [widgets[0].id, widgets[1].id];
+        await addDefaultWebAssistantThemes()
 
         return await persistence.createWorkspace({
             name: workspaceName,
