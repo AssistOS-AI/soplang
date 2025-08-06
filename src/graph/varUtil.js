@@ -351,7 +351,7 @@ async function markAsReferenceToVariable(varId, referencedVarId, docId, optional
     if(optionalMacroId){
         $$.debug("alias", `Defining macro alias reference variable ${varId} for ${referencedVarId} with macroId ${optionalMacroId}`);
         newVarValue.macroId = optionalMacroId;
-        newVarValue.macroClock = getVarClock(optionalMacroId);
+        newVarValue.macroClock = await getVarClock(optionalMacroId);
     } else {
         $$.debug("alias", `Defining normal alias reference variable ${varId} for ${referencedVarId} in document ${docId}`);
     }
