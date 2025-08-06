@@ -98,5 +98,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ['Documents', "workspace", "DefaultPersistence", "ChatScript"]
+    return ['Documents', "Workspace", "DefaultPersistence", "ChatScript"]
 }
