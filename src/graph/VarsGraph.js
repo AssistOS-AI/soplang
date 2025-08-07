@@ -756,35 +756,14 @@ function VarsGraph(commandsRegistry) {
         let variables = await defaultPersistence.getEveryVariable();
         for (let i = 0; i < variables.length; i++) {
             let varId = variables[i];
-            let varInfo = await varUtil.getVariable(varId);
-            if (!varInfo) {
-                console.warn("Failed to retrieve variable '" + varId + "'during dump");
-                continue;
+            let varInfo = await self.varDump(varId);
+            if(varInfo){
+                allVars.push({
+                    varId : varId,
+                    value:  varInfo.printValue,
+                    info: varInfo.info
+                });
             }
-            if (varInfo.parsedCommand.command === "def") {
-                continue;
-            }
-
-            let deps = await varUtil.getDependencies(varId);
-            deps = !deps ? "" : deps.join(",");
-
-            let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Dependencies: [${deps}]`;
-
-            if(varInfo.referencedVariable){
-                info += `, Referenced variable: ${varInfo.referencedVariable}`;
-            }
-            let printValue = "undefined";
-            if(varInfo.referencedVariable){
-                printValue = "alias to " + varInfo.referencedVariable;
-            } else {
-                printValue = await varUtil.getVarValue(varId)
-            }
-
-            allVars.push({
-                varId : varInfo.varId,
-                value:  printValue,
-                info: info
-            });
         }
 
         let dump = "\n";
@@ -821,6 +800,32 @@ function VarsGraph(commandsRegistry) {
         console.log("\t---------------- VARIABLES ---------------------");
         console.log("\t", await self.varsDump());
         console.log("--------------------- END GRAPH PRINT ---------------------");
+    }
+    self.varDump = async function(varId){
+        let varInfo = await varUtil.getVariable(varId);
+        if (!varInfo) {
+            console.warn("Failed to retrieve variable '" + varId + "'during dump");
+            return;
+        }
+        if (varInfo.parsedCommand.command === "def") {
+            return;
+        }
+
+        let deps = await varUtil.getDependencies(varId);
+        deps = !deps ? "" : deps.join(",");
+
+        let info = `Clock: ${varInfo.clock}, Command: '${varInfo.parsedCommand.command}', Definition: '${varInfo.parsedCommand.inputVars.join(" ")}', Dependencies: [${deps}]`;
+
+        if(varInfo.referencedVariable){
+            info += `, Referenced variable: ${varInfo.referencedVariable}`;
+        }
+        let printValue = "undefined";
+        if(varInfo.referencedVariable){
+            printValue = "alias to " + varInfo.referencedVariable;
+        } else {
+            printValue = await varUtil.getVarValue(varId)
+        }
+        return {printValue, info};
     }
 
 }

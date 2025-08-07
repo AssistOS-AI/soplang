@@ -4,13 +4,8 @@ import assert from "assert";
 await $$.clean();
 let workspace = $$.loadPlugin("Workspace");
 let documents = $$.loadPlugin("Documents");
-let UserPlugin = $$.loadPlugin("WorkspaceUsers");
+
 let graph = workspace.getGraph();
-let allOk = true;
-
-let owner = await UserPlugin.createUser("user1@email.com", "User 1 1", "owner");
-await workspace.createWorkspace("Test Workspace", owner.id);
-
 
 let testDoc ={
     "doc1": {
