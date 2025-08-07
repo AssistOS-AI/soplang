@@ -5,8 +5,7 @@ async function Agent() {
     let self = {};
 
     let persistence = $$.loadPlugin("DefaultPersistence")
-    const chatPlugin = $$.loadPlugin("Chat");
-    const llmPlugin = $$.loadPlugin("LLM");
+    const chatRoom = $$.loadPlugin("ChatRoom");
 
     await persistence.configureTypes({
             agent: {
@@ -126,7 +125,7 @@ async function Agent() {
             await self.updateAgent(existingAgent.id, agentData);
             overwritten = true;
         } else {
-            const chatId = await chatPlugin.createChat(agentData.name);
+            const chatId = await chatRoom.createChat(agentData.name);
             let agent = await self.createAgent(agentData.name, agentData.description, chatId);
             await self.updateAgent(agent.id, agentData);
             agentId = agent.id;
@@ -156,5 +155,5 @@ export function getAllow() {
 }
 
 export function getDependencies() {
-    return ["Chat", 'LLM', 'DefaultPersistence'];
+    return ["ChatRoom", 'LLM', 'DefaultPersistence'];
 }

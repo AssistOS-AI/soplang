@@ -6,7 +6,7 @@ function ChatAIAgent(docId, varName) {
     this.docId = docId;
     let persistence = $$.loadPlugin("DefaultPersistence");
     let llmPlugin = $$.loadPlugin("LLM");
-    let chatPlugin = $$.loadPlugin("Chat");
+    let chatRoom = $$.loadPlugin("ChatRoom");
     let workspace = $$.loadPlugin("Workspace");
 
     this.init = async function(agentName) {
@@ -86,7 +86,7 @@ function ChatAIAgent(docId, varName) {
         if(from === this.agentName) {
             return;
         }
-        let truid = await chatPlugin.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
+        let truid = await chatRoom.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let chatConfig = agentConfig.llms["chat"];
         let response;
         try {

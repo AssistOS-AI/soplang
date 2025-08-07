@@ -21,7 +21,7 @@ await $$.registerPlugin("Documents", "../plugins/Documents.js");
 await $$.registerPlugin("Table", "../plugins/Table.js");
 await $$.registerPlugin("LLM", "../plugins/LLM.js");
 await $$.registerPlugin("ChatScript", "../plugins/ChatScript.js");
-await $$.registerPlugin("Chat", "../plugins/Chat.js");
+await $$.registerPlugin("ChatRoom", "../plugins/ChatRoom.js");
 
 import {compareObjects} from "../../src/util/soplangUtil.js";
 

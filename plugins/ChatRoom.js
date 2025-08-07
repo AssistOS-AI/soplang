@@ -2,7 +2,7 @@ import {createRequire} from 'module';
 
 const require = createRequire(import.meta.url);
 const soundpubsub = require("soundpubsub").soundPubSub;
-async function Chat() {
+async function ChatRoom() {
     const self = {}
 
     const documentsPlugin =  $$.loadPlugin('Documents');
@@ -87,7 +87,7 @@ async function Chat() {
 let singletonInstance
 
 export async function getInstance() {
-    if (!singletonInstance) singletonInstance = await Chat()
+    if (!singletonInstance) singletonInstance = await ChatRoom()
     return singletonInstance
 }
 
