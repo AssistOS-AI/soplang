@@ -7,13 +7,15 @@ async function ChatScript() {
         chatScript: {
             name: "string",
             code: "string",
-            description: "string"
+            description: "string",
+            widget: "page",
+            role: "string"
         },
     })
 
     await persistence.createIndex("chatScript", "name");
 
-    self.getChatScripts= async function () {
+    self.getChatScripts = async function () {
         return await persistence.getEveryChatScriptObject();
     }
     self.getChatScriptNames = async function () {
@@ -22,8 +24,8 @@ async function ChatScript() {
     self.getChatScript = async function (scriptId) {
         return await persistence.getChatScript(scriptId);
     }
-    self.createChatScript = async function (name, code, description) {
-        return await persistence.createChatScript({name, code, description});
+    self.createChatScript = async function (name, code, description, widget, role) {
+        return await persistence.createChatScript({name, code, description, widget, role});
     }
     self.updateChatScript = async function (scriptId, chatScript) {
         return await persistence.updateChatScript(scriptId, chatScript);
