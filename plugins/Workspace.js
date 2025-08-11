@@ -117,6 +117,9 @@ async function Workspace() {
     }
 
     self.createWorkspace = async function (workspaceName, ownerId, spaceGlobalId) {
+        //TODO too many responsabilities, no need to add default scripts here, already done in space creation
+        //move hardcoded widgets to a file different from the code
+        //call webassistant logic from apihub at space creation
         async function addDefaultWebAssistantThemes() {
             const defaultThemes = [
                 {
@@ -588,6 +591,7 @@ async function Workspace() {
         const widgets = await addDefaultWidgets();
 
         const webAssistant = await persistence.getWebAssistant(assistant.id);
+        //TODO unify webassistant and assistos chat
         webAssistant.scriptsWidgetMap[controlRoomScript.id] = [widgets[0].id, widgets[1].id];
         await addDefaultWebAssistantThemes()
 

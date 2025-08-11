@@ -1,7 +1,7 @@
 import {} from "../deps/clean.mjs";
 import assert from "assert";
 
-let chatPlugin = $$.loadPlugin("Chat");
+let chatPlugin = $$.loadPlugin("ChatRoom");
 let agentPlugin = $$.loadPlugin("Agent");
 await agentPlugin.createAgent("Assistant");
 await agentPlugin.selectLLM("Assistant", "chat", "fakeModel", "FakeProvider");

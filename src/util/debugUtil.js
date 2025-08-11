@@ -63,7 +63,7 @@ $$.debugFeatures = {
     alias:false,
     jsdef:false,
     parser:false,
-    topologicalSort:true,
+    topologicalSort:false,
     assign:false,
     table:false,
     math:false,

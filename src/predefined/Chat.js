@@ -5,7 +5,7 @@ function Chat(docId, varName) {
     this.docId = docId;
     this.varName = varName;
     let workspace = $$.loadPlugin("Workspace");
-    let chatPlugin = $$.loadPlugin("Chat");
+    let chatRoom = $$.loadPlugin("ChatRoom");
 
     this.init = async function (...args) {
         let history = args[0];
@@ -35,7 +35,7 @@ function Chat(docId, varName) {
 
     this.notify = function (inputValues) {
         let reply = inputValues[0];
-        chatPlugin.notifySubscribers(this.docId, reply);
+        chatRoom.notifySubscribers(this.docId, reply);
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
@@ -58,7 +58,7 @@ function Chat(docId, varName) {
         } catch (e){
             console.error(`Failed to update reply in context table: ${e.message}`);
         }
-        chatPlugin.notifySubscribers(this.docId, {from, message, timestamp, role, truid});
+        chatRoom.notifySubscribers(this.docId, {from, message, timestamp, role, truid});
         return truid;
     }
     this.getHistory = async function () {
@@ -71,7 +71,7 @@ function Chat(docId, varName) {
         const lastRepliesNr = 10; //number of last replies to consider in the context
         let contextTable = await getVarValue(this.contextVarId);
         let dynamicContext = contextTable.data;
-        let chatHistory = await chatPlugin.getChatHistory(this.docId);
+        let chatHistory = await chatRoom.getChatHistory(this.docId);
         dynamicContext = dynamicContext.concat(chatHistory.slice(-lastRepliesNr));
         return dynamicContext;
     };

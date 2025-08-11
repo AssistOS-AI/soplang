@@ -3,6 +3,7 @@ import path from "path";
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
+import constants from "../src/util/constants.js"
 async function LLM() {
     const self = {};
     self.providers = {};
@@ -81,7 +82,7 @@ async function LLM() {
 
     self.getChatCompletionResponse = async (providerName, model, chatHistory, options = {}) => {
         const Provider = await self.getProvider(providerName)
-        return await Provider.getChatCompletionResponse(model, chatHistory, options);
+        return await Provider.getChatCompletionResponse(model, chatHistory, options, constants);
     }
 
     self.getChatCompletionStreamingResponse = async (providerName, model, chatHistory, options = {}, onDataChunk) => {
