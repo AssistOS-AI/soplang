@@ -91,10 +91,6 @@ async function createStandardPersistencePlugin(){
 
     await persistence.createIndex("graph", "alias");
 
-    await persistence.createIndex("theme", "name");
-    await persistence.createIndex("page", "name");
-    await persistence.createIndex("menuItem", "name");
-
     try{
         console.debug("Checking if GRAPH exists!");
         if(! await persistence.hasGraph("GRAPH")){
