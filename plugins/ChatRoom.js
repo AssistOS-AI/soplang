@@ -25,7 +25,11 @@ async function ChatRoom() {
         if (!contextChapter) throw new Error('Context chapter not found')
         return Promise.all(contextChapter.paragraphs.map(paragraph => documentsPlugin.getParagraph(paragraph)))
     }
-
+    self.getWidgetsForChatRoomInstance = async function(chatId){
+        let scriptName = await workspace.getVarValue(chatId, "chatScriptName");
+        let script = await chatScriptPlugin.getChatScript(scriptName);
+        return script.widgets;
+    }
     self.createChat = async function (docId, scriptId, args) {
         const document = await documentsPlugin.createDocument(docId, 'chat', docId);
         let initialisation = `@arg0 := ${document.docId} \n`;
@@ -36,6 +40,7 @@ async function ChatRoom() {
         } else {
             initialisation += ("@arg1 := " + args + "\n");
         }
+        initialisation += `chatScriptName := ${scriptId} \n`
         const script = await chatScriptPlugin.getChatScript(scriptId);
         const code = initialisation + script.code;
         await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
