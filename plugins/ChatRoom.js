@@ -40,7 +40,7 @@ async function ChatRoom() {
         } else {
             initialisation += ("@arg1 := " + args + "\n");
         }
-        initialisation += `chatScriptName := ${scriptId} \n`
+        initialisation += `@chatScriptName := ${scriptId} \n`
         const script = await chatScriptPlugin.getChatScript(scriptId);
         const code = initialisation + script.code;
         await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);

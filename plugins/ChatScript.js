@@ -19,11 +19,11 @@ async function ChatScript() {
     self.getChatScripts = async function () {
         return await persistence.getEveryChatScriptObject();
     }
-    self.getChatScriptsByRole = async function (role) {
-        return await persistence.getChatScriptsByRole(role);
-    }
-    self.getChatScriptNames = async function () {
+
+    self.getChatScriptNamesByRole = async function () {
         return await persistence.getEveryChatScriptName();
+        // let scripts = await persistence.getChatScriptsByRole(role);
+        // return scripts.map(script => script.name);
     }
     self.getChatScript = async function (scriptId) {
         return await persistence.getChatScript(scriptId);
