@@ -63,7 +63,7 @@ async function Agent() {
     }
 
     self.createDefaultAgent = async function() {
-        let agentPath = '../apihub-components/globalServerlessAPI/AssistantAgent.json';
+        let agentPath = '../apihub-components/globalServerlessAPI/defaults/AssistantAgent.json';
         let agent = JSON.parse(await fsPromises.readFile(agentPath));
         return await self.createAgent(agent.name, agent.description, agent.chatPrompt)
     }

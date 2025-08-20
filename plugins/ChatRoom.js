@@ -25,10 +25,10 @@ async function ChatRoom() {
         if (!contextChapter) throw new Error('Context chapter not found')
         return Promise.all(contextChapter.paragraphs.map(paragraph => documentsPlugin.getParagraph(paragraph)))
     }
-    self.getWidgetsForChatRoomInstance = async function(chatId){
+    self.getComponentsForChatRoomInstance = async function(chatId){
         let scriptName = await workspace.getVarValue(chatId, "chatScriptName");
         let script = await chatScriptPlugin.getChatScript(scriptName);
-        return script.widgets;
+        return script.components;
     }
     self.createChat = async function (docId, scriptId, args) {
         const document = await documentsPlugin.createDocument(docId, 'chat', docId);

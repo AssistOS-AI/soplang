@@ -8,7 +8,7 @@ async function ChatScript() {
             name: "string",
             code: "string",
             description: "string",
-            widgets: "array",
+            components: "array",
             role: "string"
         },
     })
@@ -28,8 +28,8 @@ async function ChatScript() {
     self.getChatScript = async function (scriptId) {
         return await persistence.getChatScript(scriptId);
     }
-    self.createChatScript = async function (name, code, description, widgets, role) {
-        return await persistence.createChatScript({name, code, description, widgets, role});
+    self.createChatScript = async function (name, code, description, components, role) {
+        return await persistence.createChatScript({name, code, description, components, role});
     }
     self.updateChatScript = async function (scriptId, chatScript) {
         return await persistence.updateChatScript(scriptId, chatScript);
