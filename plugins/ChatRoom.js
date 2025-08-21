@@ -1,4 +1,5 @@
 import {createRequire} from 'module';
+import crypto from "crypto";
 
 const require = createRequire(import.meta.url);
 const soundpubsub = require("soundpubsub").soundPubSub;
@@ -8,6 +9,14 @@ async function ChatRoom() {
     const documentsPlugin =  $$.loadPlugin('Documents');
     const workspace = $$.loadPlugin('Workspace');
     const chatScriptPlugin = $$.loadPlugin('ChatScript');
+    const persistence = $$.loadPlugin("DefaultPersistence");
+    await persistence.configureTypes({
+        chatUser: {
+            email: "string",
+            chats: "array"
+        }
+    })
+    await persistence.createIndex("chatUser", "email");
 
     self.getChat = async function (chatId) {
         return await documentsPlugin.dumpDocument(chatId)
@@ -30,7 +39,35 @@ async function ChatRoom() {
         let script = await chatScriptPlugin.getChatScript(scriptName);
         return script.components;
     }
-    self.createChat = async function (docId, scriptId, args) {
+
+    self.createDefaultChat = async function(userEmail){
+        let webAssistantPlugin = $$.loadPlugin("WebAssistant");
+        let webAssistant = await webAssistantPlugin.getWebAssistant();
+        let docId = webAssistant.agentName + "_Chat_" + crypto.randomBytes(4).toString('hex');
+        await self.createChat(userEmail,  docId, "DefaultScript", ["User", webAssistant.agentName]);
+        return docId;
+    }
+
+    self.createChat = async (email, docId, scriptName, args) => {
+        const chatObj = await createChatDocument(docId, scriptName, args);
+        if(await persistence.hasChatUser(email)){
+            let chatUser = await persistence.getChatUser(email);
+            chatUser.chats.push(chatObj.docId);
+            await persistence.updateChatUser(email, chatUser);
+        } else {
+            await persistence.createChatUser({chats: [chatObj.docId], email:email});
+        }
+        return chatObj.docId;
+    };
+
+    self.getUserChats = async (email) => {
+        if(!await persistence.hasChatUser(email)){
+            return [];
+        }
+        let chatUser = await persistence.getChatUser(email);
+        return chatUser.chats;
+    }
+     async function createChatDocument(docId, scriptId, args) {
         const document = await documentsPlugin.createDocument(docId, 'chat', docId);
         let initialisation = `@arg0 := ${document.docId} \n`;
         if (Array.isArray(args)) {
@@ -44,9 +81,11 @@ async function ChatRoom() {
         const script = await chatScriptPlugin.getChatScript(scriptId);
         const code = initialisation + script.code;
         await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
-        await documentsPlugin.createChapter(document.id, 'Messages', '');
-        await workspace.buildOnlyForDocument(docId);
-
+        await documentsPlugin.createChapter(document.id, 'Chapter 1', '');
+        let buildSuccess = await workspace.buildOnlyForDocument(docId);
+        if(!buildSuccess){
+            throw new Error(`Failed to build document ${docId} with code ${code} and errors: ${JSON.stringify($$.getBuildErrors())}`)
+        }
         let chat = await workspace.getVarValue(docId, "chat");
         await chat.start();
         return chat;

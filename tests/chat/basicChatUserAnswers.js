@@ -41,7 +41,7 @@ slowResponse.onProgress((response) => {
     responses.push(response);
 });
 
-await chatPlugin.createChat(docId, chatScript.id, ["John", "Assistant"]);
+await chatPlugin.createChat("user@user.com", docId, chatScript.id, ["John", "Assistant"]);
 
 await chatPlugin.chatInput(docId, "John", "Hello agent", "human");
 

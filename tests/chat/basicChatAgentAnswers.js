@@ -28,7 +28,7 @@ let chatScriptPlugin = $$.loadPlugin("ChatScript");
 let chatScript = await chatScriptPlugin.createChatScript("script", script);
 //script needs to have @chat variable
 let docId = "TestChat"
-await chatPlugin.createChat(docId, chatScript.id, ["John", "Assistant"]);
+await chatPlugin.createChat("user@user.com", docId, chatScript.id, ["John", "Assistant"]);
 
 let slowResponse = chatPlugin.listenForMessages(docId);
 let expectedChatResponses = [
