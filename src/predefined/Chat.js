@@ -65,7 +65,10 @@ function Chat(docId, varName) {
         return await getVarValue(this.historyVarId);
     }
     this.getContext = async function () {
-        return await getVarValue(this.contextVarId);
+        let context = await getVarValue(this.contextVarId);
+        let UIContext = await workspace.getVarValue(this.docId, "UIContext");
+        context.data.push({from:"system", message: UIContext, timestamp: new Date().toISOString(), truid: "system", role: "system"});
+        return context;
     }
     this.getDynamicContext = async function () {
         const lastRepliesNr = 10; //number of last replies to consider in the context

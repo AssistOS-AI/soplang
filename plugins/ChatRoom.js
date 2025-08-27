@@ -125,6 +125,9 @@ async function ChatRoom() {
         response.observableResponse.end();
         responses = responses.filter(item => item.chatId !== chatId);
     }
+    self.setChatUIContext = async function(chatId, context){
+        await workspace.setVarValue(chatId, "UIContext", context);
+    }
     return self;
 }
 
