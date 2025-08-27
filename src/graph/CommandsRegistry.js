@@ -1,5 +1,5 @@
 import {ifCommand} from "../predefined/ifCommand.js";
-import {getVarID} from "./varUtil.js";
+import {decodeSOPCode, getVarID} from "./varUtil.js";
 
 const customTypeRegistry = await import("./customTypeRegistry.js");
 let varUtil = await import("./varUtil.js");
@@ -207,6 +207,10 @@ function CommandsRegistry( workspace) {
             return undefined;
         }
         return instance;
+    }
+
+    commands.prompt = async function(inputValues, parsedCommand, currentDocId, graph){
+        return decodeSOPCode(inputValues[1]);
     }
 
 

@@ -389,7 +389,7 @@ function extractMacroOrJSDefOnASingleLine(input) {
         const startLine = lines[startIndex];
         const trimmedStartLine = startLine.trim();
         // Regex: looks for @scriptName (captured) followed by 'script' and optional arguments
-        const match = trimmedStartLine.match(/^@(\S+)\s+(macro|jsdef|form)(?:\s+(.*))?$/);
+        const match = trimmedStartLine.match(/^@(\S+)\s+(macro|jsdef|form|prompt)(?:\s+(.*))?$/);
 
         let blockName = false;
         if (!match) {
