@@ -128,6 +128,9 @@ async function ChatRoom() {
     self.setChatUIContext = async function(chatId, context){
         await workspace.setVarValue(chatId, "UIContext", context);
     }
+    self.addContext = async function(chatId, context){
+        await workspace.runMacro(chatId, "addContext", context);
+    }
     return self;
 }
 
