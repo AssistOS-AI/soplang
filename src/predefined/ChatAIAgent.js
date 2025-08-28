@@ -1,6 +1,5 @@
 import constants from "../util/constants.js"
 function ChatAIAgent(docId, varName) {
-    let agentConfig;
     this.__type = "ChatAIAgent";
     this.varName = varName;
     this.docId = docId;
@@ -12,14 +11,14 @@ function ChatAIAgent(docId, varName) {
     this.init = async function(agentName) {
         persistence = $$.loadPlugin("DefaultPersistence");
         this.agentName = agentName;
-        agentConfig = await persistence.getAgent(agentName);
+        let agentConfig = await persistence.getAgent(agentName);
         this.description = agentConfig.description || "";
     }
 
     this.restore = async function(JSONSerialisation) {
         if(JSONSerialisation){
             this.agentName = JSONSerialisation.agentName;
-            agentConfig = await persistence.getAgent(this.agentName);
+            let agentConfig = await persistence.getAgent(this.agentName);
             this.description = agentConfig.description || "";
         }
     }
@@ -87,7 +86,9 @@ function ChatAIAgent(docId, varName) {
             return;
         }
         let truid = await chatRoom.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
+        let agentConfig = await persistence.getAgent(this.agentName);
         let chatConfig = agentConfig.llms["chat"];
+
         let response;
         try {
             response = await llmPlugin.getChatCompletionResponse(chatConfig.providerName, chatConfig.modelName, chatContext);
