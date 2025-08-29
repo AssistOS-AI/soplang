@@ -1,4 +1,6 @@
 import constants from "../util/constants.js"
+import {getVarValue} from "../graph/varUtil.js";
+
 function ChatAIAgent(docId, varName) {
     this.__type = "ChatAIAgent";
     this.varName = varName;
@@ -28,6 +30,7 @@ function ChatAIAgent(docId, varName) {
     this.analiseRelevance = async function(inputValues) {
         let reply = inputValues[0];
         let prompt = inputValues[1];
+        let agentConfig = await persistence.getAgent(this.agentName);
         let chatConfig = agentConfig.llms["chat"];
         try {
             let fullPrompt = `${prompt} Your response should be a JSON object with the following structure: { "relevant": true/false, "context": "extracted context", "relevance": number from 1 to 10 }. If the message is relevant, extract the context from it and how relevant it is. If not, set relevant to false and context to an empty string.`
@@ -55,7 +58,8 @@ function ChatAIAgent(docId, varName) {
     this.trimContext = async function(inputValues) {
         let prompt = inputValues[0];
         let chat = await workspace.getVarValue(this.docId, "chat");
-        let contextTable = await chat.getContext();
+        let contextTable = await getVarValue(chat.contextVarId);
+        let agentConfig = await persistence.getAgent(this.agentName);
         let chatConfig = agentConfig.llms["chat"];
         let completePrompt = `${prompt} Give a new relevance score from 1 to 10 for each piece of context. 
         If the context is not relevant, set relevance to 0. Your response should be an array of numbers, each corresponding to the relevance of the context in the same order.`;
@@ -85,7 +89,13 @@ function ChatAIAgent(docId, varName) {
         if(from === this.agentName) {
             return;
         }
-        let truid = await chatRoom.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
+        let chat = await workspace.getVarValue(this.docId, "chat");
+        let processingReply = {from: this.agentName, message:constants.AGENT_PROCESSING_MESSAGE, timestamp: new Date().toISOString(), role: constants.ROLES.AI}
+        let historyVar = await getVarValue(chat.historyVarId);
+        //insert in history but not in context
+        let reply = await historyVar.upsert([processingReply])
+        await chat.notify([reply]);
+        // let truid = await chatRoom.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let agentConfig = await persistence.getAgent(this.agentName);
         let chatConfig = agentConfig.llms["chat"];
 
@@ -95,8 +105,9 @@ function ChatAIAgent(docId, varName) {
         } catch (e){
             response = e.message;
         }
-        let chat = await workspace.getVarValue(this.docId, "chat");
-        await chat.updateReply(truid, this.agentName, response, constants.ROLES.AI);
+        //chat = await workspace.getVarValue(this.docId, "chat");
+        await chatRoom.chatInput(this.docId, this.agentName, response, constants.ROLES.AI, reply.truid);
+        //await chat.updateReply(truid, this.agentName, response, constants.ROLES.AI);
     }
 
     /*

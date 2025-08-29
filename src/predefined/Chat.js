@@ -39,8 +39,8 @@ function Chat(docId, varName) {
         let graph = workspace.getGraph();
         for(let respondent of this.agentVarIds) {
             graph.getVarValue(respondent).then(agent =>{
-                this.getContext().then(history => {
-                    agent.acknowledge(reply.from, reply.message, history.data);
+                this.getContext().then(context => {
+                    agent.acknowledge(reply.from, reply.message, context);
                 });
             });
         }
@@ -67,8 +67,11 @@ function Chat(docId, varName) {
     this.getContext = async function () {
         let context = await getVarValue(this.contextVarId);
         let UIContext = await workspace.getVarValue(this.docId, "UIContext");
-        context.data.push({from:"system", message: UIContext, timestamp: new Date().toISOString(), truid: "system", role: "system"});
-        return context;
+        let contextClone = structuredClone(context.data);
+        if(UIContext){
+            contextClone.push({from:"system", message: UIContext, timestamp: new Date().toISOString(), truid: "system", role: "system"});
+        }
+        return contextClone;
     }
     this.getDynamicContext = async function () {
         const lastRepliesNr = 10; //number of last replies to consider in the context
