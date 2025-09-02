@@ -48,8 +48,8 @@ async function ChatRoom() {
         return docId;
     }
 
-    self.createChat = async (email, docId, scriptName, args) => {
-        const chatObj = await createChatDocument(docId, scriptName, args);
+    self.createChat = async (email, docId, appName, scriptName, args) => {
+        const chatObj = await createChatDocument(docId, appName, scriptName, args);
         if(await persistence.hasChatUser(email)){
             let chatUser = await persistence.getChatUser(email);
             chatUser.chats.push(chatObj.docId);
@@ -67,19 +67,17 @@ async function ChatRoom() {
         let chatUser = await persistence.getChatUser(email);
         return chatUser.chats;
     }
-     async function createChatDocument(docId, scriptId, args) {
+     async function createChatDocument(docId, appName, scriptName, args) {
         const document = await documentsPlugin.createDocument(docId, 'chat', docId);
-        let initialisation = `@arg0 := ${document.docId} \n`;
+        let code = `@arg0 := ${document.docId} \n`;
         if (Array.isArray(args)) {
             for (let i = 0; i < args.length; i++) {
-                initialisation += ("@arg" + (i + 1) + " := " + args[i] + "\n");
+                code += ("@arg" + (i + 1) + " := " + args[i] + "\n");
             }
         } else {
-            initialisation += ("@arg1 := " + args + "\n");
+            code += ("@arg1 := " + args + "\n");
         }
-        initialisation += `@chatScriptName := ${scriptId} \n`
-        const script = await chatScriptPlugin.getChatScript(scriptId);
-        const code = initialisation + script.code;
+        code += `@source import ${appName} ${scriptName} \n`
         await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await documentsPlugin.createChapter(document.id, 'Chapter 1', '');
         let buildSuccess = await workspace.buildOnlyForDocument(docId);

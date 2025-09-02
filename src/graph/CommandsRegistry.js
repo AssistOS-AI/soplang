@@ -6,7 +6,7 @@ let varUtil = await import("./varUtil.js");
 
 function CommandsRegistry( workspace) {
     let commands = {
-        assign: async function (inputValues ) {
+        assign: async function (inputValues, parsedCommand ) {
             let result;
             $$.debug("assign", "Assign command input values:", inputValues);
             if(inputValues.length === 0){
@@ -211,6 +211,34 @@ function CommandsRegistry( workspace) {
 
     commands.prompt = async function(inputValues, parsedCommand, currentDocId, graph){
         return decodeSOPCode(inputValues[1]);
+    }
+    commands.import = async function(inputValues, parsedCommand, currentDocId, graph, buildInstance){
+        let appName = inputValues[0];
+        if(!appName){
+            $$.throwErrorSync(`Invalid import command missing first parameter "appName"`);
+        }
+        let chatScriptName = inputValues[1];
+        if(!chatScriptName){
+            $$.throwErrorSync(`Invalid import command missing second parameter "scriptName"`);
+        }
+
+        let codeManager = $$.loadPlugin("CodeManager");
+
+        let script = await codeManager.getChatScript(appName, chatScriptName);
+        let parsedCommands = await varUtil.parseCommands("_", "_", script);
+        let restartBuild = false;
+        //TODO how to detect deleted vars?
+        for(let parsedCommand of parsedCommands){
+            let varName = parsedCommand.outputVars[0];
+            let changed = await graph.defineVariable(varName, currentDocId, "_", "_" , parsedCommand);
+            if(changed){
+                restartBuild = true;
+            }
+        }
+
+        if(restartBuild){
+            await buildInstance.restartBuild();
+        }
     }
 
 

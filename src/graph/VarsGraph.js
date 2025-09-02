@@ -47,7 +47,7 @@ function VarsGraph(commandsRegistry) {
         $$.debug("variables", "============> Parsed code", ...lines);
         //console.debug(">>>>>Defining variables from code:", lines);
         for (let i = 0; i < lines.length; i++) {
-            let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
+            let parsedCommand = await varUtil.parseCommand(chapterId, paragraphId, lines[i], i);
             if(!parsedCommand){
                 $$.debug("variables", `============> Skipping line ${i} in code block, because it is not a valid command`);
                 continue;
@@ -55,34 +55,6 @@ function VarsGraph(commandsRegistry) {
             await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
             $$.debug("variables",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
         }
-    }
-    async function parseCommand(chapterId, paragraphId, line, i){
-        line = varUtil.renameSpecialVars(chapterId, paragraphId, line);
-        let parsedCommand = null;
-        try {
-            parsedCommand = varUtil.parseCommandLine(line);
-        } catch (e) {
-            console.error("Error parsing command!" + `Line ${line}  will be ignored`);
-            return;
-        }
-
-        //console.debug("!!!!!!!! Parsed command", parsedCommand);
-        if (parsedCommand.outputVars.length === 0) {
-            parsedCommand.outputVars = [varUtil.makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
-        }
-        return parsedCommand;
-    }
-    async function parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine){
-        let parsedCommands = [];
-        let lines = varUtil.parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
-        //console.debug(">>>>>Defining variables from code:", lines);
-        for (let i = 0; i < lines.length; i++) {
-            let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
-            if(parsedCommand){
-                parsedCommands.push(parsedCommand);
-            }
-        }
-        return parsedCommands;
     }
 
     this.getDocCommandsParsed = async function (docId) {
@@ -122,9 +94,9 @@ function VarsGraph(commandsRegistry) {
         return commands;
     }
     this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "") {
-        let newCommandsParsed = await parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
+        let newCommandsParsed = await varUtil.parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
         const newNames = new Set(newCommandsParsed.map(cmd => cmd.outputVars[0]));
-        let oldCommandsParsed = await parseCommands(chapterId, paragraphId, oldCommands);
+        let oldCommandsParsed = await varUtil.parseCommands(chapterId, paragraphId, oldCommands);
         const removedVars = oldCommandsParsed.filter(cmd => !newNames.has(cmd.outputVars[0]));
         for( let removedVar of removedVars){
             await deleteVariable(removedVar.outputVars[0], docId);
@@ -260,8 +232,8 @@ function VarsGraph(commandsRegistry) {
         }
 
         //console.debug(">>>>>Defining variable", varName, "in", docId, "with output", parsedCommand.outputVars[0], "and input vars", parsedCommand.inputVars , "and var types", parsedCommand.varTypes);
-
-        if (await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand)) {
+        let changed = await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand);
+        if(changed) {
             let varId = varUtil.getVarID(docId, varName);
             graph[varId] = {
                 layer: 0,
@@ -269,6 +241,7 @@ function VarsGraph(commandsRegistry) {
             };
             await defaultPersistence.updateGraph("GRAPH", {state: graph});
         }
+        return changed;
     }
     async function deleteVariable(varName, docId) {
         if (!docId) {
@@ -569,7 +542,9 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
-
+        if(variable.parsedCommand.command === "import"){
+            mustRecompute = true;
+        }
         if (mustRecompute) {
             if(variable.referencedVariable){
                 //prevent reinsertion of the code for the script, the code will be anyway checked by the dependency graph

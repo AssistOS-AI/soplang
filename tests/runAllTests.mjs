@@ -34,6 +34,7 @@ const tests = [
     './pipelines/macros/advanced/filterTest.mjs',
     './pipelines/macros/advanced/filterWithMacroTest.mjs',
     './pipelines/macros/advanced/callMacroWithoutReturn.js',
+    './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
     './pipelines/documents/assignValueFromDocumentSubcommand.js', //to be refactored
     './pipelines/documents/workWithDocsTest.mjs',
     './pipelines/documents/parseDocCommands.js',
@@ -42,6 +43,7 @@ const tests = [
     './pipelines/set/containersTest.mjs',
     './pipelines/tables/tableProcessingTest.mjs',
     './pipelines/tables/upsertTest.js',
+    './pipelines/tables/assignTableMethodResult.mjs',
     './plugins/documentSmokeTest.mjs',
     './plugins/parallelParagraphCreation.mjs',
     './plugins/overwriteDocCommands.mjs',
@@ -51,10 +53,9 @@ const tests = [
     './chat/basicChatAgentAnswers.js',
     './chat/basicChatUserAnswers.js',
     './chat/contextChat.js',
+    './chat/importScriptTest.js',
 
     //failing
-    './pipelines/macros/newFeature/callMacroWithReferencedVar.mjs',
-    './pipelines/tables/assignTableMethodResult.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/tables/preventTableInsertAfterBuild.js',
     //add update command definition test

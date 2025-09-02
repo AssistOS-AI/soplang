@@ -9,7 +9,7 @@ import {
     sameValue} from "../util/soplangUtil.js";
 
 import {getCache} from "./varsValuesCache.js";
-
+import { isDeepStrictEqual } from 'util';
 let varDefCache = getCache("varDefCache");
 let customTypesValuesCache = getCache("customTypesValuesCache");
 
@@ -88,7 +88,8 @@ function getLocalVarName(docId, fullVarName){
     //reverse getVarId
     let splitVarName = fullVarName.split("/");
     if(splitVarName.length === 1){
-        return getVarID(docId, fullVarName);
+        return fullVarName;
+        //return getVarID(docId, fullVarName);
     }
     if(splitVarName.length === 2){
         if(splitVarName[0] === docId){
@@ -386,15 +387,29 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     if(!await hasVariableWrapper(varId)){
         let obj = await createVariableWrapper({varId: varId});
         await setVarIdForVariableWrapper(obj.id, varId);
-    }
-
-    function diffObjects(existing, updated){
-        for(let key in updated){
-            if(existing[key] !== updated[key]){
-                return true;
+    } else {
+        let varContext = await getVariableWrapper(varId);
+        existingVarContext = {
+            varId: varContext.varId,
+            varName: varContext.varName,
+            docId: varContext.docId,
+            chapterId: varContext.chapterId,
+            paragraphId: varContext.paragraphId,
+            parsedCommand: structuredClone(varContext.parsedCommand),
+            defaultInitialisation: varContext.defaultInitialisation
+        }
+        if (existingVarContext.parsedCommand.command === "new" || existingVarContext.parsedCommand.command === "lookup") {
+            existingVarContext.__type = _parsedCommand.inputVars[0];
+        }
+        if(existingVarContext.parsedCommand){
+            existingVarContext.parsedCommand.inputVars = existingVarContext.parsedCommand.inputVars ? Array.from(varContext.parsedCommand.inputVars) : [];
+            for(let i = 0; i < existingVarContext.parsedCommand.inputVars.length; i++){
+                let inputVar = existingVarContext.parsedCommand.inputVars[i];
+                if(existingVarContext.parsedCommand.varTypes[i] === "var"){
+                    existingVarContext.parsedCommand.inputVars[i] = getLocalVarName(_docId, inputVar);
+                }
             }
         }
-        return false;
     }
 
     let varContext = {};
@@ -408,8 +423,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     if (_parsedCommand.command === "new" || _parsedCommand.command === "lookup") {
         varContext.__type = _parsedCommand.inputVars[0];
     }
-
-    if(diffObjects(existingVarContext, varContext)){
+    if(!isDeepStrictEqual(existingVarContext, varContext)){
         //console.debug(">>>Updating variable", _varName, "in", _docId, "with command", _parsedCommand.command, "and input vars", _parsedCommand.inputVars , "and var types", _parsedCommand.varTypes);
         varContext.clock = undefined;
         varContext.updateTime = Date.now();
@@ -459,7 +473,34 @@ async function getVarClock(varId){
 async function resetAlias(varId){
     await updateVariableWrapper(varId, {referencedVariable: undefined, macroId: undefined});
 }
+async function parseCommand(chapterId, paragraphId, line, i){
+    line = renameSpecialVars(chapterId, paragraphId, line);
+    let parsedCommand = null;
+    try {
+        parsedCommand = parseCommandLine(line);
+    } catch (e) {
+        console.error("Error parsing command!" + `Line ${line}  will be ignored`);
+        return;
+    }
 
+    //console.debug("!!!!!!!! Parsed command", parsedCommand);
+    if (parsedCommand.outputVars.length === 0) {
+        parsedCommand.outputVars = [makeNameForSpecialVars(chapterId, paragraphId, "tmp" + i)];
+    }
+    return parsedCommand;
+}
+async function parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine){
+    let parsedCommands = [];
+    let lines = parseCommandBlock(chapterId, paragraphId, commandTextSeparatedByNewLine);
+    //console.debug(">>>>>Defining variables from code:", lines);
+    for (let i = 0; i < lines.length; i++) {
+        let parsedCommand = await parseCommand(chapterId, paragraphId, lines[i], i);
+        if(parsedCommand){
+            parsedCommands.push(parsedCommand);
+        }
+    }
+    return parsedCommands;
+}
 export {
     decodeSOPCode,
     getVarID,
@@ -485,5 +526,7 @@ export {
     updateDebugInfo,
     sameValue,
     deleteVariableWrapper,
-    resetAlias
+    resetAlias,
+    parseCommands,
+    parseCommand
 }

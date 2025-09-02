@@ -1,5 +1,7 @@
 import {} from "../deps/clean.mjs";
 import assert from "assert"
+import path from "path";
+import fsPromises from "fs/promises";
 
 let chatPlugin = $$.loadPlugin("ChatRoom");
 let agentPlugin = $$.loadPlugin("Agent");
@@ -14,6 +16,7 @@ let script = `
     @assistant new ChatAIAgent $agentName
     @user new ChatUserAgent $currentUser
     @chat new Chat $history $context $user $assistant
+    @UIContext := ""
     
     context.upsert system [ assistant.getSystemPrompt ] "" system
     @newReply macro reply ~history ~context ~chat ~assistant
@@ -24,11 +27,16 @@ let script = `
     end
 `;
 
-let chatScriptPlugin = $$.loadPlugin("ChatScript");
-let chatScript = await chatScriptPlugin.createChatScript("script", script);
+process.env.SERVERLESS_ROOT_FOLDER = process["env"].PERSISTENCE_FOLDER;
+let scriptsPath = path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications/TestApp/chat-scripts");
+await fsPromises.mkdir(scriptsPath, { recursive: true });
+
+let codeManager = $$.loadPlugin("CodeManager");
+await codeManager.saveChatScript("TestApp","TestScript", script);
+
 //script needs to have @chat variable
 let docId = "TestChat"
-await chatPlugin.createChat("user@user.com", docId, chatScript.id, ["John", "Assistant"]);
+await chatPlugin.createChat("user@user.com", docId, "TestApp", "TestScript", ["John", "Assistant"]);
 
 let slowResponse = chatPlugin.listenForMessages(docId);
 let expectedChatResponses = [
