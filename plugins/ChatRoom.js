@@ -8,7 +8,6 @@ async function ChatRoom() {
 
     const documentsPlugin =  $$.loadPlugin('Documents');
     const workspace = $$.loadPlugin('Workspace');
-    const chatScriptPlugin = $$.loadPlugin('ChatScript');
     const persistence = $$.loadPlugin("DefaultPersistence");
     await persistence.configureTypes({
         chatUser: {
@@ -35,16 +34,15 @@ async function ChatRoom() {
         return Promise.all(contextChapter.paragraphs.map(paragraph => documentsPlugin.getParagraph(paragraph)))
     }
     self.getComponentsForChatRoomInstance = async function(chatId){
-        let scriptName = await workspace.getVarValue(chatId, "chatScriptName");
-        let script = await chatScriptPlugin.getChatScript(scriptName);
-        return script.components;
+        let components = await workspace.getVarValue(chatId, "components");
+        return components || [];
     }
 
     self.createDefaultChat = async function(userEmail){
         let webAssistantPlugin = $$.loadPlugin("WebAssistant");
         let webAssistant = await webAssistantPlugin.getWebAssistant();
         let docId = webAssistant.agentName + "_Chat_" + crypto.randomBytes(4).toString('hex');
-        await self.createChat(userEmail,  docId, "DefaultScript", ["User", webAssistant.agentName]);
+        await self.createChat(userEmail,  docId, "AchillesIDE","DefaultChatScript", ["User", webAssistant.agentName]);
         return docId;
     }
 

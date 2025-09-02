@@ -159,6 +159,9 @@ async function CodeManager() {
             if(name.endsWith(".css")){
                 name = name.slice(0, -4);
             }
+            if(name.endsWith(".sop")){
+                name = name.slice(0, -4);
+            }
             items.push(name);
         }
         return items;
@@ -263,10 +266,6 @@ async function CodeManager() {
         await fsPromises.copyFile(themePath, path.join(entryComponentPath, `${manifest.entryPoint}.css`));
     }
     self.getChatScript = async function(appName, scriptName) {
-        if(appName === "Space"){
-            let defaultScriptPath = path.join(__dirname, `../../globalServerlessAPI/defaults/chat-scripts/${scriptName}.sop`);
-            return await fsPromises.readFile(defaultScriptPath, "utf8");
-        }
         let appPath = getAppPath(appName);
         let scriptPath =  path.join(appPath, constants.APP_FOLDERS.CHAT_SCRIPTS, `${scriptName}.sop`);
         try {
@@ -290,6 +289,7 @@ async function CodeManager() {
             }
             let scriptNames = await fsPromises.readdir(chatScriptsPath);
             for(let scriptName of scriptNames){
+                scriptName = scriptName.slice(0, -4);
                 scripts.push({scriptName, appName});
             }
         }
