@@ -178,6 +178,10 @@ async function CodeManager() {
     self.listThemesForApp = async function(appName){
         return await listAppItems(appName, constants.APP_FOLDERS.THEMES);
     }
+    self.listChatScriptsForApp = async function(appName){
+        return await listAppItems(appName, constants.APP_FOLDERS.CHAT_SCRIPTS);
+    }
+
     self.getTheme = async function(appName, themeName){
         let themePath = path.join(getAppPath(appName), constants.APP_FOLDERS.THEMES, `${themeName}.css`);
         try {
