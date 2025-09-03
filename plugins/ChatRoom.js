@@ -1,5 +1,7 @@
 import {createRequire} from 'module';
 import crypto from "crypto";
+import constants from "../src/util/constants.js";
+import {getVarValue, setVarValue} from "../src/graph/varUtil.js";
 
 const require = createRequire(import.meta.url);
 const soundpubsub = require("soundpubsub").soundPubSub;
@@ -96,11 +98,30 @@ async function ChatRoom() {
         let historyTable = await chat.getHistory();
         return historyTable.data;
     }
-
+    self.resetChatRoom = async function(chatId){
+        let chat = await workspace.getVarValue(chatId, "chat");
+        let historyTable = await chat.getHistory();
+        historyTable.data = [];
+        await setVarValue(chat.historyVarId, historyTable);
+        let contextTable = await chat.getContextTable();
+        contextTable.data = [];
+        await setVarValue(chat.contextVarId, contextTable);
+        await self.setChatUIContext(chatId, "");
+    }
     self.chatInput = async function (chatId, from, message, role, truid) {
+        let buildSuccess = await workspace.buildOnlyForDocument(chatId);
+        if(!buildSuccess){
+            let message = `Failed to build document ${chatId}, errors: ${JSON.stringify($$.getBuildErrors())}`;
+            let chat = await workspace.getVarValue(chatId, "chat");
+            let buildFailedReply = {from: constants.ROLES.SYSTEM, message: message, timestamp: new Date().toISOString(), role: constants.ROLES.SYSTEM}
+            let historyVar = await getVarValue(chat.historyVarId);
+            //insert in history but not in context
+            let reply = await historyVar.upsert([buildFailedReply])
+            await chat.notify([reply]);
+            return;
+        }
         let timestamp = new Date().toISOString();
         let reply = await workspace.runMacro(chatId, "newReply", {from, message, timestamp, role, truid});
-        await workspace.buildOnlyForDocument(chatId);
         return reply.truid;
     }
 

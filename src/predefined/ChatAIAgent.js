@@ -86,7 +86,7 @@ function ChatAIAgent(docId, varName) {
     }
 
     this.acknowledge = async function(from, message, chatContext) {
-        if(from === this.agentName) {
+        if(from === this.agentName || from === constants.ROLES.SYSTEM) {
             return;
         }
         let chat = await workspace.getVarValue(this.docId, "chat");
@@ -95,7 +95,6 @@ function ChatAIAgent(docId, varName) {
         //insert in history but not in context
         let reply = await historyVar.upsert([processingReply])
         await chat.notify([reply]);
-        // let truid = await chatRoom.chatInput(this.docId, this.agentName, constants.AGENT_PROCESSING_MESSAGE, constants.ROLES.AI)
         let agentConfig = await persistence.getAgent(this.agentName);
         let chatConfig = agentConfig.llms["chat"];
 
@@ -105,9 +104,7 @@ function ChatAIAgent(docId, varName) {
         } catch (e){
             response = e.message;
         }
-        //chat = await workspace.getVarValue(this.docId, "chat");
         await chatRoom.chatInput(this.docId, this.agentName, response, constants.ROLES.AI, reply.truid);
-        //await chat.updateReply(truid, this.agentName, response, constants.ROLES.AI);
     }
 
     /*

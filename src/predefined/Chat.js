@@ -46,23 +46,11 @@ function Chat(docId, varName) {
         }
     }
 
-    //called internally only by agent
-    this.updateReply = async function (truid, from, message, role) {
-        let timestamp = new Date().toISOString();
-        let tableValue = await getVarValue(this.historyVarId);
-        let contextTable = await getVarValue(this.contextVarId);
-        let graph = workspace.getGraph();
-        await tableValue.internalUpdateRow({from, message, timestamp, truid}, graph);
-        try {
-            await contextTable.internalUpdateRow({from, message, timestamp, truid}, graph);
-        } catch (e){
-            console.error(`Failed to update reply in context table: ${e.message}`);
-        }
-        chatRoom.notifySubscribers(this.docId, {from, message, timestamp, role, truid});
-        return truid;
-    }
     this.getHistory = async function () {
         return await getVarValue(this.historyVarId);
+    }
+    this.getContextTable = async function(){
+        return await getVarValue(this.contextVarId);
     }
     this.getContext = async function () {
         let context = await getVarValue(this.contextVarId);
