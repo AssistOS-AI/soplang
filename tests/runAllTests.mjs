@@ -54,6 +54,7 @@ const tests = [
     './chat/basicChatUserAnswers.js',
     './chat/contextChat.js',
     './chat/importScriptTest.js',
+    './chat/changeScriptInChatExecution.js',
 
     //failing
     './pipelines/basic/parseSOPObject.mjs',

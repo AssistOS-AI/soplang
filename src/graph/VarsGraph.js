@@ -94,12 +94,13 @@ function VarsGraph(commandsRegistry) {
         return commands;
     }
     this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "") {
+        //TODO this doesnt work for vars that are created dynamically as a result of build/parse
         let newCommandsParsed = await varUtil.parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
         const newNames = new Set(newCommandsParsed.map(cmd => cmd.outputVars[0]));
         let oldCommandsParsed = await varUtil.parseCommands(chapterId, paragraphId, oldCommands);
         const removedVars = oldCommandsParsed.filter(cmd => !newNames.has(cmd.outputVars[0]));
         for( let removedVar of removedVars){
-            await deleteVariable(removedVar.outputVars[0], docId);
+            await this.deleteVariable(docId, removedVar.outputVars[0]);
             $$.debug("variables", `============> Removed variable ${removedVar.outputVars[0]} from document ${docId}`);
         }
         await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
@@ -243,7 +244,7 @@ function VarsGraph(commandsRegistry) {
         }
         return changed;
     }
-    async function deleteVariable(varName, docId) {
+    this.deleteVariable = async function(docId, varName) {
         if (!docId) {
             await $$.throwError("Document ID is mandatory");
         }

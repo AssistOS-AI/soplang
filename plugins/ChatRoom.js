@@ -100,7 +100,7 @@ async function ChatRoom() {
     self.chatInput = async function (chatId, from, message, role, truid) {
         let timestamp = new Date().toISOString();
         let reply = await workspace.runMacro(chatId, "newReply", {from, message, timestamp, role, truid});
-        //await workspace.buildOnlyForDocument(chatId);
+        await workspace.buildOnlyForDocument(chatId);
         return reply.truid;
     }
 
