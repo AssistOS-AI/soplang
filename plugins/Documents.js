@@ -25,8 +25,10 @@ async function Documents(){
 
     self.deleteDocument = async function (documentId) {
         let doc = await persistence.getDocument(documentId);
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, "", doc.commands);
-        await graph.analiseTextSection(doc.docId, undefined, undefined, "");
+        let allVars = await persistence.getVariablesObjectsByDocId(doc.docId);
+        for(let variable of allVars){
+            await graph.deleteVariable(doc.docId, variable.varName);
+        }
         return await persistence.deleteDocument(documentId);
     }
 
