@@ -50,7 +50,11 @@ async function CodeManager() {
         await fsPromises.mkdir(entryComponentPath, {recursive: true});
         await fsPromises.writeFile(path.join(entryComponentPath, `${landingPageName}.html`), constants.LANDING_HTML);
         //await fsPromises.writeFile(path.join(entryComponentPath, `${landingPageName}.css`), "");
-        await fsPromises.writeFile(path.join(entryComponentPath, `${landingPageName}.js`), constants.LANDING_PRESENTER);
+
+        let landingPresenter = constants.LANDING_PRESENTER;
+        landingPresenter = landingPresenter.replace("$$appName", appName);
+        landingPresenter = landingPresenter.replace("$$landingPageName", landingPageName);
+        await fsPromises.writeFile(path.join(entryComponentPath, `${landingPageName}.js`), landingPresenter);
         let defaultThemePath = path.join(__dirname, `../../globalServerlessAPI/defaults/default-theme.css`);
         await fsPromises.copyFile(defaultThemePath, path.join(appPath, constants.APP_FOLDERS.THEMES, "default-theme.css"));
         await fsPromises.copyFile(defaultThemePath, path.join(entryComponentPath, `${landingPageName}.css`));
