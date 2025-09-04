@@ -84,6 +84,13 @@ async function ChatRoom() {
         if(!buildSuccess){
             throw new Error(`Failed to build document ${docId} with code ${code} and errors: ${JSON.stringify($$.getBuildErrors())}`)
         }
+        try {
+            let systemPrompt = await workspace.getVarValue(docId, "systemPrompt");
+            await workspace.runMacro(docId, "addContext", undefined, systemPrompt);
+        } catch (e) {
+            console.log(e);
+        }
+
         let chat = await workspace.getVarValue(docId, "chat");
         await chat.start();
         return chat;
@@ -107,6 +114,12 @@ async function ChatRoom() {
         contextTable.data = [];
         await setVarValue(chat.contextVarId, contextTable);
         await self.setChatUIContext(chatId, "");
+        try {
+            let systemPrompt = await workspace.getVarValue(chatId, "systemPrompt");
+            await workspace.runMacro(chatId, "addContext", undefined, systemPrompt);
+        } catch (e) {
+            console.log(e);
+        }
     }
     self.chatInput = async function (chatId, from, message, role, truid) {
         let buildSuccess = await workspace.buildOnlyForDocument(chatId);
@@ -146,7 +159,7 @@ async function ChatRoom() {
         await workspace.setVarValue(chatId, "UIContext", context);
     }
     self.addContext = async function(chatId, context){
-        await workspace.runMacro(chatId, "addContext", context);
+        await workspace.runMacro(chatId, "addContext", undefined, context);
     }
     return self;
 }
