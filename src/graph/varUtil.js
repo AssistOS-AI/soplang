@@ -396,7 +396,6 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
             chapterId: varContext.chapterId,
             paragraphId: varContext.paragraphId,
             parsedCommand: structuredClone(varContext.parsedCommand),
-            defaultInitialisation: varContext.defaultInitialisation
         }
         if (existingVarContext.parsedCommand.command === "new" || existingVarContext.parsedCommand.command === "lookup") {
             existingVarContext.__type = _parsedCommand.inputVars[0];
@@ -419,7 +418,6 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.chapterId = _chapterId;
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;
-    varContext.defaultInitialisation = true;
     if (_parsedCommand.command === "new" || _parsedCommand.command === "lookup") {
         varContext.__type = _parsedCommand.inputVars[0];
     }
@@ -431,7 +429,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
         return false; //nothing changed
     }
 
-
+    varContext.defaultInitialisation = true;
     if(_parsedCommand.outputVars.length > 1){
         await deleteVariableWrapper(varId);
         $$.throwErrorSync("Command", _parsedCommand.command, "has more than one output variable. This is not supported!" + _parsedCommand.outputVars);
