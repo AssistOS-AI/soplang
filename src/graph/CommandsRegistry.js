@@ -327,6 +327,8 @@ function CommandsRegistry( workspace) {
         commands[commandName] = commandFunction;
     }
 
+    this.addCommand = this.registerCommand;
+
     this.commandExists = function (commandName) {
         return commands[commandName] !== undefined;
     }
