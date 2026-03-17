@@ -56,9 +56,12 @@ async function Workspace() {
     }
 
     self.registerCommand = function (commandName, commandFunction) {
-        commandsRegistry.addCommand(commandName, commandFunction);
+        commandsRegistry.registerCommand(commandName, commandFunction);
     }
-    self.getCustomTypes = async function () {
+    self.listCommands = function (){
+        return commandsRegistry.getCommands();
+    }
+    self.getCustomTypes = function () {
         return customTypeRegistry.getTypes();
     }
     self.getCommands = async function () {
