@@ -21,7 +21,8 @@ await $$.registerPlugin("Documents", "../plugins/Documents.js");
 await $$.registerPlugin("Table", "../plugins/Table.js");
 await $$.registerPlugin("LLM", "../plugins/LLM.js");
 await $$.registerPlugin("ChatRoom", "../plugins/ChatRoom.js");
-await $$.registerPlugin("CodeManager", "../plugins/CodeManager.js");
+const codeManagerUrl = new URL("./mocks/CodeManager.js", import.meta.url);
+await $$.registerPlugin("CodeManager", codeManagerUrl.href);
 
 import {compareObjects} from "../../src/util/soplangUtil.js";
 

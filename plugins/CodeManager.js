@@ -6,14 +6,24 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const constants = require("../../globalServerlessAPI/constants.js");
-const git = require("../../apihub-component-utils/git");
+
+let loadedDeps;
+function getDeps() {
+    if (!loadedDeps) {
+        loadedDeps = {
+            constants: require("../../globalServerlessAPI/constants.js"),
+            git: require("../../apihub-component-utils/git")
+        };
+    }
+    return loadedDeps;
+}
 async function CodeManager() {
     const self = {};
     function getAppPath(appName){
         return path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications", appName);
     }
     self.createApp = async function (appName) {
+        const { constants, git } = getDeps();
         if(!process.env.ORGANISATION_NAME){
             throw new Error("ORGANISATION_NAME is not set!");
         }
@@ -62,6 +72,7 @@ async function CodeManager() {
         return appName;
     }
     self.deleteApp = async function (appName) {
+        const { git } = getDeps();
         let apps = require("../../globalServerlessAPI/applications.json");
         let app = apps.find(app => app.name === appName);
         if (app) {
@@ -71,6 +82,7 @@ async function CodeManager() {
     }
 
     self.getApps = async function(){
+        const { constants } = getDeps();
         let apps = [];
         let appsPath = path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications");
         let apssDirs = await fsPromises.readdir(appsPath);
@@ -84,6 +96,7 @@ async function CodeManager() {
         return apps;
     }
     self.getComponent = async function (appName, componentName) {
+        const { constants } = getDeps();
         let componentPath = path.join(getAppPath(appName), constants.APP_FOLDERS.WEB_COMPONENTS, componentName);
         try {
             await fsPromises.access(componentPath);
@@ -96,6 +109,7 @@ async function CodeManager() {
         return {html, css, js};
     }
     self.saveComponent = async function (appName, componentName, html, css, js, newName) {
+        const { constants } = getDeps();
         let componentPath = path.join(getAppPath(appName), constants.APP_FOLDERS.WEB_COMPONENTS, componentName);
         if(newName){
             let newHTMLPath = path.join(getAppPath(appName), constants.APP_FOLDERS.WEB_COMPONENTS, componentName, `${newName}.html`);
@@ -120,11 +134,13 @@ async function CodeManager() {
         await fsPromises.writeFile(path.join(componentPath, `${componentName}.js`), js);
     }
     self.deleteComponent = async function (appName, componentName) {
+        const { constants } = getDeps();
         let componentPath = path.join(getAppPath(appName), constants.APP_FOLDERS.WEB_COMPONENTS, componentName);
         await fsPromises.rm(componentPath, {recursive: true});
         //TODO delete ref from chatScript also
     };
     self.listComponents = async function(){
+        const { constants } = getDeps();
         let appsPath = path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications");
         let appsDirs = await fsPromises.readdir(appsPath);
         let components = [];
@@ -171,22 +187,28 @@ async function CodeManager() {
         return items;
     }
     self.listComponentsForApp = async function(appName){
+        const { constants } = getDeps();
         return await listAppItems(appName, constants.APP_FOLDERS.WEB_COMPONENTS);
     }
     self.listBackendPluginsForApp = async function(appName){
+        const { constants } = getDeps();
         return await listAppItems(appName, constants.APP_FOLDERS.BACKEND_PLUGINS);
     }
     self.listDocumentPluginsForApp = async function(appName){
+        const { constants } = getDeps();
         return await listAppItems(appName, constants.APP_FOLDERS.DOCUMENT_PLUGINS);
     }
     self.listThemesForApp = async function(appName){
+        const { constants } = getDeps();
         return await listAppItems(appName, constants.APP_FOLDERS.THEMES);
     }
     self.listChatScriptsForApp = async function(appName){
+        const { constants } = getDeps();
         return await listAppItems(appName, constants.APP_FOLDERS.CHAT_SCRIPTS);
     }
 
     self.getTheme = async function(appName, themeName){
+        const { constants } = getDeps();
         let themePath = path.join(getAppPath(appName), constants.APP_FOLDERS.THEMES, `${themeName}.css`);
         try {
             await fsPromises.access(themePath);
@@ -196,6 +218,7 @@ async function CodeManager() {
         return await fsPromises.readFile(themePath, "utf8");
     }
     self.saveTheme = async function(appName, themeName, content, newName){
+        const { constants } = getDeps();
         let themePath = path.join(getAppPath(appName), constants.APP_FOLDERS.THEMES, `${themeName}.css`);
         if(newName){
             let newThemePath = path.join(getAppPath(appName), constants.APP_FOLDERS.THEMES, `${newName}.css`);
@@ -205,6 +228,7 @@ async function CodeManager() {
         await fsPromises.writeFile(themePath, content);
     }
     self.deleteTheme = async function(appName, themeName){
+        const { constants } = getDeps();
         let themePath = path.join(getAppPath(appName), constants.APP_FOLDERS.THEMES, `${themeName}.css`);
         await fsPromises.rm(themePath);
     }
@@ -222,6 +246,7 @@ async function CodeManager() {
         await fsPromises.writeFile(manifestPath, JSON.stringify(manifest, null, 4));
     }
     self.getBackendPlugin = async function(appName, pluginName){
+        const { constants } = getDeps();
         let pluginPath = path.join(getAppPath(appName), appName, constants.APP_FOLDERS.BACKEND_PLUGINS, `${pluginName}.js`);
         try {
             await fsPromises.access(pluginPath);
@@ -232,6 +257,7 @@ async function CodeManager() {
 
     }
     self.saveBackendPlugin = async function(appName, pluginName, content, newName){
+        const { constants } = getDeps();
         let pluginPath = path.join(getAppPath(appName), constants.APP_FOLDERS.BACKEND_PLUGINS, `${pluginName}.js`);
         if(newName){
             let newPluginPath = path.join(getAppPath(appName), constants.APP_FOLDERS.BACKEND_PLUGINS, `${newName}.js`);
@@ -241,25 +267,30 @@ async function CodeManager() {
         await fsPromises.writeFile(pluginPath, content);
     }
     self.deleteBackendPlugin = async function(appName, pluginName){
+        const { constants } = getDeps();
         let pluginPath = path.join(getAppPath(appName), constants.APP_FOLDERS.BACKEND_PLUGINS, `${pluginName}.js`);
         await fsPromises.rm(pluginPath);
     }
     self.getAppRepoStatus = async function(appName){
+        const { git } = getDeps();
         let appPath = getAppPath(appName);
         let status = await git.getRepoStatus(appPath);
         return status;
     }
     self.commitAndPush = async function(appName, commitMessage){
+        const { git } = getDeps();
         let appPath = getAppPath(appName);
         let status = await git.commitAndPush(appPath, commitMessage);
         return status;
     }
     self.pullApp = async function(appName){
+        const { git } = getDeps();
         let appPath = getAppPath(appName);
         let status = await git.pull(appPath);
         return status;
     }
     self.changeAppTheme = async function(appName, theme){
+        const { constants } = getDeps();
         let appPath = getAppPath(appName);
         let themePath = path.join(appPath, constants.APP_FOLDERS.THEMES, `${theme}.css`);
         let manifestPath = path.join(appPath, "manifest.json");
@@ -274,6 +305,7 @@ async function CodeManager() {
         await fsPromises.copyFile(themePath, path.join(entryComponentPath, `${manifest.entryPoint}.css`));
     }
     self.getChatScript = async function(appName, scriptName) {
+        const { constants } = getDeps();
         let appPath = getAppPath(appName);
         let scriptPath =  path.join(appPath, constants.APP_FOLDERS.CHAT_SCRIPTS, `${scriptName}.sop`);
         try {
@@ -284,6 +316,7 @@ async function CodeManager() {
         return await fsPromises.readFile(scriptPath, "utf8");
     }
     self.listChatScripts = async function() {
+        const { constants } = getDeps();
         let appsPath = path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications");
         let appsDirs = await fsPromises.readdir(appsPath);
         let scripts = [];
@@ -304,6 +337,7 @@ async function CodeManager() {
         return scripts;
     }
     self.saveChatScript = async function(appName, scriptName, content, newName){
+        const { constants } = getDeps();
         let appPath = getAppPath(appName);
         let scriptPath = path.join(appPath, constants.APP_FOLDERS.CHAT_SCRIPTS, `${scriptName}.sop`);
         if(newName){
@@ -314,6 +348,7 @@ async function CodeManager() {
         await fsPromises.writeFile(scriptPath, content);
     }
     self.deleteChatScript = async function(appName, scriptName){
+        const { constants } = getDeps();
         let appPath = getAppPath(appName);
         let scriptPath = path.join(appPath, constants.APP_FOLDERS.CHAT_SCRIPTS, `${scriptName}.sop`);
         await fsPromises.rm(scriptPath);

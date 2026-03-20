@@ -366,6 +366,9 @@ const createRegistry = async function (workspace) {
     registry.registerCommand("math", math);
     registry.registerCommand("assert", assert);
 
+    let {file} = await import("../predefined/fileCommand.js");
+    registry.registerCommand("file", file);
+
     return registry;
 }
 export {

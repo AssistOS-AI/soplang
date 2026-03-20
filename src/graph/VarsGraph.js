@@ -543,7 +543,7 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
-        if(variable.parsedCommand.command === "import"){
+        if(variable.parsedCommand.command === "import" || variable.parsedCommand.command === "file"){
             mustRecompute = true;
         }
         if (mustRecompute) {

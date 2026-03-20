@@ -19,6 +19,7 @@ const tests = [
     './pipelines/basic/conditionalsTest.mjs',
     './pipelines/basic/implicitConditionalsTest.mjs',
     './pipelines/basic/promptCommand.mjs',
+    './pipelines/basic/fileCommandTest.mjs',
     './pipelines/customTypes/fakeAgentTest.mjs',
     './pipelines/customTypes/assignFromSubCommandTest.js',
     './pipelines/customTypes/reinitBehaviorTest.mjs',
