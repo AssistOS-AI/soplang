@@ -114,6 +114,53 @@ allOk |=compareObjects(parseCommandLine("tableFrom @tableName $inputTable newTab
     varTypes: ["var", "text", "embeddedCommand", "text", "embeddedCommand"]
 });
 
+// multiline backtick tests — full flow: collapseBacktickTokens then parseCommandLine
+// (util already imported at top of file)
+let { collapseBacktickTokens } = util;
+
+function parseBacktickLine(line) {
+    return parseCommandLine(collapseBacktickTokens(line));
+}
+
+// backtick as last param — complex content: spaces, quotes, special chars, @, $, numbers
+allOk |= compareObjects(parseBacktickLine("assign @result `line one\nline two with 'quotes' and \"double\"\n@not-a-var $not-a-var 42 !#%`"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["line one\nline two with 'quotes' and \"double\"\n@not-a-var $not-a-var 42 !#%"],
+    varTypes: ["text"]
+});
+
+// backtick as first param (not last)
+allOk |= compareObjects(parseBacktickLine("assign @result `first\nsecond\nthird` normalParam 'quoted param'"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["first\nsecond\nthird", "normalParam", "quoted param"],
+    varTypes: ["text", "text", "text"]
+});
+
+// backtick in the middle
+allOk |= compareObjects(parseBacktickLine("cmd @out before `multi\nline\ncontent with [brackets] and more` $varAfter"), {
+    command: "cmd",
+    outputVars: ["out"],
+    inputVars: ["before", "multi\nline\ncontent with [brackets] and more", "varAfter"],
+    varTypes: ["text", "text", "var"]
+});
+
+// escaped backtick inside backtick content
+allOk |= compareObjects(parseBacktickLine("assign @result `line with \\` escaped backtick\nand newline`"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["line with ` escaped backtick\nand newline"],
+    varTypes: ["text"]
+});
+
+// multiple backtick params
+allOk |= compareObjects(parseBacktickLine("cmd @out `first\nparam` `second\nparam`"), {
+    command: "cmd",
+    outputVars: ["out"],
+    inputVars: ["first\nparam", "second\nparam"],
+    varTypes: ["text", "text"]
+});
 
 console.log("All tests passed:", allOk? "true" : "false");
 console.assert(allOk !== true, "Some tests failed");

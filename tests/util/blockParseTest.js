@@ -32,4 +32,42 @@ $$.checkValue(parsedBlock, [
     'overwrite %nob1.name "Second Name of all NOBs"'
 ]);
 
+// multiline backtick block test — parseCommandBlock returns raw lines (encoded), decode happens at parse time
+let multilineBlock = `
+@result assign \`line1
+line2
+line3\` "after"
+`;
+let parsedMultiline = util.parseCommandBlock(undefined, undefined, multilineBlock);
+console.log("multiline parsed:", parsedMultiline);
+// content is encoded at block level; getNextToken decodes when the command is actually parsed
+$$.checkValue(parsedMultiline, [
+    "@result assign 'line1%0Aline2%0Aline3' \"after\""
+]);
+
+// verify getNextToken decodes correctly end-to-end via parseCommandLine
+let parsedCmd = util.parseCommandLine("assign @result 'line1%0Aline2%0Aline3' \"after\"");
+$$.checkValue(parsedCmd.inputVars, ["line1\nline2\nline3", "after"]);
+
+// backtick as last param — complex content with special chars
+let blockLast = `@result assign "before" \`complex content
+with 'single' and "double" quotes
+@not-a-var $not-a-var [brackets] 42 !#\``;
+let parsedLast = util.parseCommandBlock(undefined, undefined, blockLast);
+let cmdLast = util.parseCommandLine(parsedLast[0]);
+$$.checkValue(cmdLast.inputVars, ["before", "complex content\nwith 'single' and \"double\" quotes\n@not-a-var $not-a-var [brackets] 42 !#"]);
+
+// backtick as first param (not last)
+let blockFirst = `@result assign \`first line
+second line\` normalParam 'quoted'`;
+let parsedFirst = util.parseCommandBlock(undefined, undefined, blockFirst);
+let cmdFirst = util.parseCommandLine(parsedFirst[0]);
+$$.checkValue(cmdFirst.inputVars, ["first line\nsecond line", "normalParam", "quoted"]);
+
+// escaped backtick inside content
+let blockEscape = `@result assign \`line with \\\` escaped\nand more\``;
+let parsedEscape = util.parseCommandBlock(undefined, undefined, blockEscape);
+let cmdEscape = util.parseCommandLine(parsedEscape[0]);
+$$.checkValue(cmdEscape.inputVars, ["line with ` escaped\nand more"]);
+
 await $$.exit();

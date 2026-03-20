@@ -18,4 +18,24 @@ $$.checkValue(parsedBlock, [
     ]
 );
 
+// macro call with multiline backtick param — backtick is collapsed before macro block parsing
+let blockWithMultilineCall = `
+@testMacro macro item
+    @res := $item
+    return $res
+end
+
+@result testMacro \`first line
+second line
+third line\`
+`;
+let parsedWithMultiline = util.parseCommandBlock(undefined, undefined, blockWithMultilineCall);
+$$.checkValue(parsedWithMultiline, [
+    "@testMacro macro 'item' '%40res := %24item%0Areturn %24res'",
+    "@result testMacro 'first line%0Asecond line%0Athird line'"
+]);
+// verify the param is decoded correctly when the call line is parsed
+let macroCallCmd = util.parseCommandLine(parsedWithMultiline[1]);
+$$.checkValue(macroCallCmd.inputVars, ["first line\nsecond line\nthird line"]);
+
 await $$.exit();

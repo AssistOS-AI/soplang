@@ -61,7 +61,7 @@ function getNextToken(str, position){
         if(unexpectedEnd) {
             return makeResult(result, position, "unexpectedEnd");
         }
-        return makeResult(result, position, "text");
+        return makeResult(decodeSOPCode(result), position, "text");
     }
 
     if(currentChar === "["){
@@ -312,6 +312,43 @@ function breakComplexLineInSimpleLines(input, makeVarName) {
 }
 
 /**
+ * Collapses backtick-delimited multiline tokens into single-line encoded tokens.
+ * Backtick content may span multiple lines; use \` to escape a literal backtick inside.
+ * The content is encoded with encodeSOPCode and wrapped in single quotes so the
+ * existing token parser handles it transparently.
+ *
+ * @param {string} input Raw SOP source (may contain newlines).
+ * @returns {string} Source with backtick blocks collapsed to single-line 'encoded' tokens.
+ */
+function collapseBacktickTokens(input) {
+    let result = '';
+    let i = 0;
+    while (i < input.length) {
+        if (input[i] === '`') {
+            let content = '';
+            i++; // skip opening backtick
+            while (i < input.length) {
+                if (input[i] === '\\' && input[i + 1] === '`') {
+                    content += '`';
+                    i += 2;
+                } else if (input[i] === '`') {
+                    i++; // skip closing backtick
+                    break;
+                } else {
+                    content += input[i];
+                    i++;
+                }
+            }
+            result += "'" + encodeSOPCode(content) + "'";
+        } else {
+            result += input[i];
+            i++;
+        }
+    }
+    return result;
+}
+
+/**
  * Encodes specific characters in a string using percent-encoding (%xx).
  * Characters encoded: \n, ', ", [, ], %
  * Other characters remain unchanged.
@@ -367,6 +404,8 @@ function extractMacroOrJSDefOnASingleLine(input) {
         console.error("Input must be a string.");
         return "";
     }
+
+    input = collapseBacktickTokens(input);
 
     const lines = input.split('\n');
     const outputLines = []; // Array to collect the processed lines
@@ -687,6 +726,7 @@ export {
     extractMacroOrJSDefOnASingleLine,
     expandMacro,
     decodeSOPCode,
+    collapseBacktickTokens,
     sameValue,
     compareObjects,
     parseCommandsForUI
