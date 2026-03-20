@@ -289,8 +289,18 @@ function breakComplexLineInSimpleLines(input, makeVarName) {
     let match;
     let matches = [];
 
+    // build a set of character positions that are inside quoted strings ('...' or "...")
+    const insideString = new Set();
+    let inStr = false, strChar = '';
+    for (let i = 0; i < input.length; i++) {
+        const c = input[i];
+        if (!inStr && (c === "'" || c === '"')) { inStr = true; strChar = c; }
+        else if (inStr && c === strChar) { inStr = false; }
+        else if (inStr) { insideString.add(i); }
+    }
+
     while ((match = regex.exec(input)) !== null) {
-        //console.debug("Found match:", match);
+        if (insideString.has(match.index)) continue;
         matches.push({
             fullMatch: match[0],
             innerContent: match[1].trim(),
@@ -555,7 +565,7 @@ function expandMacro(macroDocId, executionPrefix, parsedCommand, ...args) {
 
     for(let varName in variables){
         //replace each occurrence of var name prefixed by $ @ or ~  or post fixed by "."  but keep the prefix or postfix
-        let regex = new RegExp(`([@\$!~])?${varName}(\\.)?`, "g");
+        let regex = new RegExp(`([@\\$!~])?${varName}(?![a-zA-Z0-9_])(\\.)?`, "g");
 
         macroCode = macroCode.replace(regex, (match, prefix, postfix) => {
             if (prefix || postfix) {

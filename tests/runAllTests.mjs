@@ -56,9 +56,9 @@ const tests = [
     './chat/contextChat.js',
     './chat/importScriptTest.js',
     './chat/changeScriptInChatExecution.js',
+    './pipelines/basic/parseSOPObject.mjs',
 
     //failing
-    './pipelines/basic/parseSOPObject.mjs',
     './pipelines/basic/ifCommandEdgeCase.mjs',
     './pipelines/tables/preventTableInsertAfterBuild.js',
     //add update command definition test
