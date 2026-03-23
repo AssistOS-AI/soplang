@@ -7,11 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "preinstall": "rm -rf Persisto && git clone https://github.com/OpenDSU/Persisto.git && cd Persisto && npm install"
   },
-  "private": true,
   "type": "module",
-  "devDependencies": {
-    "globals": "^16.0.0"
-  },
   "dependencies": {
     "soundpubsub": "github:opendsu/soundpubsub"
   }
