@@ -28,6 +28,22 @@ await workspace.buildAll();
 let clockAfterSame = await getVarClock(varId);
 $$.checkValue(clockAfterSame, clockBefore, "Clock should not change when file content is unchanged");
 
+// Test: modify file A content on disk, verify variable picks up the change
+let originalContent = await fsPromises.readFile(pathA, "utf8");
+let modifiedContent = originalContent + "\nModified for test.";
+await fsPromises.writeFile(pathA, modifiedContent, "utf8");
+try {
+    await workspace.buildAll();
+    await $$.checkDocVar(docId, "content", modifiedContent);
+    let clockAfterModify = await getVarClock(varId);
+    if (clockAfterModify === clockBefore) {
+        console.error("Clock should change when file content is modified on disk");
+        $$.failTest();
+    }
+} finally {
+    await fsPromises.writeFile(pathA, originalContent, "utf8");
+}
+
 await workspace.insertCode(docId, `@content file "${pathB}"`);
 await workspace.buildOnlyForDocument(docId);
 
