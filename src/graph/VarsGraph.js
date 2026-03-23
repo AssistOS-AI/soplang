@@ -260,10 +260,10 @@ function VarsGraph(commandsRegistry) {
         await varUtil.deleteVariableWrapper(varId);
     }
 
-    this.topologicalSort = function () {
+    this.topologicalSort = async function () {
         let visited = {};
 
-        function determineLayer(varId, node) {
+        async function determineLayer(varId, node) {
             // console.debug("Determining layer of", node);
             if (visited[varId]) {
                 return;
@@ -276,16 +276,15 @@ function VarsGraph(commandsRegistry) {
                 let depId = node.deps[i];
                 let dep = graph[depId];
                 if (depId === varId) {
-                    varUtil.updateErrorInfo(varId, `Circular dependency detected for variable ${depId}. Build stopped!`);
+                    await varUtil.updateErrorInfo(varId, `Circular dependency detected for variable ${depId}. Build stopped!`);
                     $$.throwErrorSync( `Circular dependency detected for variable ${depId}. Build stopped!`);
                 }
                 if (!dep) {
-                    //call without await on purpose
-                    varUtil.updateErrorInfo(varId, ` Dependency '${depId}' not found for variable '${varId}'. Stopping build...`);
+                    await varUtil.updateErrorInfo(varId, ` Dependency '${depId}' not found for variable '${varId}'. Stopping build...`);
                     throw new Error(`Dependency '${depId}' not found for variable '${varId}'. Stopping build...`);
                 }
                 else if (dep.layer === 0) {
-                    determineLayer(depId, dep);
+                    await determineLayer(depId, dep);
                 }
             }
             node.layer = 1;
@@ -310,7 +309,7 @@ function VarsGraph(commandsRegistry) {
 
         for (let varId in graph) {
             $$.debug("topologicalSort",`Determining layer of ${varId} in node:`, JSON.stringify(graph[varId]));
-            determineLayer(varId, graph[varId]);
+            await determineLayer(varId, graph[varId]);
         }
         $$.debug("topologicalSort","Graph after topological sort", JSON.stringify(graph));
     }
@@ -632,7 +631,7 @@ function VarsGraph(commandsRegistry) {
 
             if(buildJustStartedOrRestartedDuringExecution){
                 buildJustStartedOrRestartedDuringExecution = false;
-                self.topologicalSort();
+                await self.topologicalSort();
                 currentLayer = 0;
                 currentPositionInLayer = 0;
                 layers = getLayers();
