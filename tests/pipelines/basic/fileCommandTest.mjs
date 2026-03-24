@@ -18,7 +18,8 @@ let script = `
 let docId = await workspace.runCode(script);
 await workspace.buildAll();
 
-let expectedA = await fsPromises.readFile(pathA, "utf8");
+let statA = await fsPromises.stat(pathA);
+let expectedA = { mtimeMs: statA.mtimeMs, ctimeMs: statA.ctimeMs };
 await $$.checkDocVar(docId, "content", expectedA);
 
 let varId = getVarID(docId, "content");
@@ -34,7 +35,9 @@ let modifiedContent = originalContent + "\nModified for test.";
 await fsPromises.writeFile(pathA, modifiedContent, "utf8");
 try {
     await workspace.buildAll();
-    await $$.checkDocVar(docId, "content", modifiedContent);
+    let statAfterModify = await fsPromises.stat(pathA);
+    let expectedAfterModify = { mtimeMs: statAfterModify.mtimeMs, ctimeMs: statAfterModify.ctimeMs };
+    await $$.checkDocVar(docId, "content", expectedAfterModify);
     let clockAfterModify = await getVarClock(varId);
     if (clockAfterModify === clockBefore) {
         console.error("Clock should change when file content is modified on disk");
@@ -47,7 +50,8 @@ try {
 await workspace.insertCode(docId, `@content file "${pathB}"`);
 await workspace.buildOnlyForDocument(docId);
 
-let expectedB = await fsPromises.readFile(pathB, "utf8");
+let statB = await fsPromises.stat(pathB);
+let expectedB = { mtimeMs: statB.mtimeMs, ctimeMs: statB.ctimeMs };
 await $$.checkDocVar(docId, "content", expectedB);
 let clockAfterChange = await getVarClock(varId);
 if (clockAfterChange === clockBefore) {

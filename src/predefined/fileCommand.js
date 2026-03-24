@@ -2,8 +2,6 @@ import { promises as fs } from "fs";
 import path from "path";
 let varUtil = await import("../graph/varUtil.js");
 
-const mtimeCache = new Map();
-
 export async function file(inputValues, parsedCommand, currentDocId) {
     let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
     if (!inputValues || inputValues.length !== 1) {
@@ -20,14 +18,14 @@ export async function file(inputValues, parsedCommand, currentDocId) {
     try {
         let stat = await fs.stat(resolvedPath);
         let currentMtime = stat.mtimeMs;
-        if (mtimeCache.get(outputVarId) === currentMtime) {
-            return await varUtil.getVarValue(outputVarId);
+        let currentCtime = stat.ctimeMs;
+        let existingValue = await varUtil.getVarValue(outputVarId);
+        if (existingValue && existingValue.mtimeMs === currentMtime && existingValue.ctimeMs === currentCtime) {
+            return existingValue;
         }
-        let content = await fs.readFile(resolvedPath, "utf8");
-        mtimeCache.set(outputVarId, currentMtime);
-        return content;
+        return { mtimeMs: currentMtime, ctimeMs: currentCtime };
     } catch (error) {
-        await varUtil.updateErrorInfo(outputVarId, `Failed to read file '${resolvedPath}': ${error.message}`);
+        await varUtil.updateErrorInfo(outputVarId, `Failed to stat file '${resolvedPath}': ${error.message}`);
         return undefined;
     }
 }
