@@ -15,7 +15,6 @@ try {
     // Expected for circular dependency
 }
 
-await graph.getVarValue("doc1", "a");
 
 const varInfo = await getVariable(getVarID("doc1", "a"));
 const hasErrorInfo = Boolean(varInfo && varInfo.errorInfo);
