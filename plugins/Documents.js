@@ -8,10 +8,14 @@ async function Documents(){
     let workspace = $$.loadPlugin("Workspace");
     let graph = workspace.getGraph();
 
-    self.createDocument = async function (docId, documentCategory, title) {
+    self.createDocument = async function (docId, documentCategory, title, docPath) {
+        if(!docPath){
+            docPath = process.cwd();
+        }
         return await persistence.createDocument({
             title: title,
             docId: docId,
+            docPath: docPath,
             category: documentCategory,
             infoText: "",
             comments: {
@@ -32,20 +36,22 @@ async function Documents(){
         return await persistence.deleteDocument(documentId);
     }
 
-    self.updateDocument = async (documentId, title, docId, category, infoText, commands, comments) => {
+    self.updateDocument = async (documentId, title, docId, category, infoText, commands, comments, docPath) => {
         if (!title) throw new Error("Field 'title' is required, received: " + title);
         if (!docId) throw new Error("Field 'docId' is required, received: " + docId);
         if (!category) throw new Error("Field 'category' is required, received: " + category);
         if (infoText == null) throw new Error("Field 'infoText' is required, received: " + infoText);
         if (commands == null) throw new Error("Field 'commands' is required, received: " + commands);
         let doc = await persistence.getDocument(documentId);
+        let resolvedDocPath = docPath || doc.docPath;
 
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands, doc.commands);
-        await graph.analiseTextSection(doc.docId, undefined, undefined, infoText);
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, commands, doc.commands, resolvedDocPath);
+        await graph.analiseTextSection(doc.docId, undefined, undefined, infoText, resolvedDocPath);
 
         return await persistence.updateDocument(documentId, {
             title: title,
             docId: docId,
+            docPath: resolvedDocPath,
             category: category,
             infoText: infoText,
             commands: commands,
@@ -109,11 +115,12 @@ async function Documents(){
             throw new Error("Document already has content");
         }
 
-        await graph.analiseCommandSection(doc.docId, undefined, undefined, template.commands, doc.commands);
+        const resolvedDocPath = template.docPath || doc.docPath;
+        await graph.analiseCommandSection(doc.docId, undefined, undefined, template.commands, doc.commands, resolvedDocPath);
         await graph.analiseDocumentTile(doc.docId, template.title);
-        await graph.analiseTextSection(doc.docId, undefined, undefined, template.infoText);
+        await graph.analiseTextSection(doc.docId, undefined, undefined, template.infoText, resolvedDocPath);
 
-        await persistence.updateDocument(documentId, {title: template.title, category: template.category, infoText: template.infoText, commands: template.commands, comments: template.comments});
+        await persistence.updateDocument(documentId, {title: template.title, category: template.category, infoText: template.infoText, commands: template.commands, comments: template.comments, docPath: resolvedDocPath});
         if(template.chapters){
             for(let chapter of template.chapters){
                 console.debug(">>>> Creating chapter", chapter, "with paragraphs ", chapter.paragraphs);
@@ -150,7 +157,7 @@ async function Documents(){
             paragraphs: []
         });
 
-        await graph.analiseCommandSection(document.docId, chapter.id, undefined, commands);
+        await graph.analiseCommandSection(document.docId, chapter.id, undefined, commands, "", document.docPath);
         await graph.analiseChapterTile(document.docId, chapter.id,  chapterTitle);
 
         let chapters = document.chapters;
@@ -183,8 +190,10 @@ async function Documents(){
             },
         });
 
-        await graph.analiseCommandSection(chapter.docId, chapter.id, par.id, commands);
-        await graph.analiseTextSection(chapter.docId, chapter.id, par.id, paragraphText);
+        let document = await persistence.getDocument(chapter.docId);
+        let resolvedDocPath = document.docPath;
+        await graph.analiseCommandSection(chapter.docId, chapter.id, par.id, commands, "", resolvedDocPath);
+        await graph.analiseTextSection(chapter.docId, chapter.id, par.id, paragraphText, resolvedDocPath);
 
         let paragraphs = chapter.paragraphs;
         if(position === undefined || position === null){
@@ -263,7 +272,9 @@ async function Documents(){
         if (commands == null) throw new Error(`Field 'commands' is required but received: ${commands}`);
 
         let chapter = await persistence.getChapter(chapterId);
-        await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands, chapter.commands);
+        let document = await persistence.getDocument(chapter.docId);
+        let resolvedDocPath = document.docPath;
+        await graph.analiseCommandSection(chapter.docId, chapterId, undefined, commands, chapter.commands, resolvedDocPath);
         await graph.analiseChapterTile(chapter.docId, chapterId,  chapterTitle);
 
         return await persistence.updateChapter(chapterId,{
@@ -291,8 +302,10 @@ async function Documents(){
 
         let chapter = await persistence.getChapter(chapterId);
         let paragraph = await persistence.getParagraph(paragraphId);
-        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands, paragraph.commands);
-        await graph.analiseTextSection(chapter.docId, chapterId, paragraphId, paragraphText);
+        let document = await persistence.getDocument(chapter.docId);
+        let resolvedDocPath = document.docPath;
+        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, commands, paragraph.commands, resolvedDocPath);
+        await graph.analiseTextSection(chapter.docId, chapterId, paragraphId, paragraphText, resolvedDocPath);
         return await persistence.updateParagraph(paragraphId,{
             text: paragraphText,
             commands,

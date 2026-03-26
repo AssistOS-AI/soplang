@@ -223,14 +223,14 @@ function CommandsRegistry( workspace) {
         }
 
         let codeManager = $$.loadPlugin("CodeManager");
-
         let script = await codeManager.getChatScript(appName, chatScriptName);
+        let docPath = await codeManager.getChatScriptPath(appName, chatScriptName);
         let parsedCommands = await varUtil.parseCommands("_", "_", script);
         let restartBuild = false;
         //TODO how to detect deleted vars?
         for(let parsedCommand of parsedCommands){
             let varName = parsedCommand.outputVars[0];
-            let changed = await graph.defineVariable(varName, currentDocId, "_", "_" , parsedCommand);
+            let changed = await graph.defineVariable(varName, currentDocId, "_", "_" , parsedCommand, docPath);
             if(changed){
                 restartBuild = true;
             }

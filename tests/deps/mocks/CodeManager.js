@@ -39,6 +39,21 @@ async function CodeManager() {
         }
     };
 
+    self.getChatScriptPath = async function (appName, scriptName) {
+        let scriptsPath = getScriptsPath(appName);
+        let scriptPath = path.join(scriptsPath, `${scriptName}.sop`);
+        try {
+            await fsPromises.access(scriptPath);
+            return scriptPath;
+        } catch (error) {
+            let cached = scriptsCache.get(getScriptKey(appName, scriptName));
+            if (cached !== undefined) {
+                return scriptPath;
+            }
+            throw new Error(`Chat ${scriptName} does not exist`);
+        }
+    };
+
     self.saveChatScript = async function (appName, scriptName, content, newName) {
         if (newName) {
             scriptName = newName;

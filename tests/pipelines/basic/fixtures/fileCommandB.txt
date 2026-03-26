@@ -1,6 +1,0 @@
-SOPLang supports macros and jsdef for advanced composition.
-Commands can read text, evaluate expressions, and interact
-with plugins to build complex pipelines.
-
-Changing the input should update the variable only when the
-computed string differs, avoiding unnecessary recalculation.

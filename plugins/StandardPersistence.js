@@ -48,6 +48,7 @@ async function createStandardPersistencePlugin(){
             id: "random",
             title: "string",
             docId: "string",
+            docPath: "string",
             category: "string",
             infoText: "string",
             commands: "string",
@@ -67,6 +68,7 @@ async function createStandardPersistencePlugin(){
             value: "any",
             _parsedCommand: "string",
             documentId: "string",
+            docPath: "string",
             chapterId: "string",
             paragraphId: "string",
             clock: "integer"

@@ -1,7 +1,0 @@
-SOPLang is a variable- and command-oriented interpreter.
-Each line defines a variable, and the build computes values
-based on dependencies and the command type.
-
-The system optimizes recomputation: if the resulting value
-has not changed, the variable is not updated and no recalculation
-is propagated.

@@ -315,6 +315,17 @@ async function CodeManager() {
         }
         return await fsPromises.readFile(scriptPath, "utf8");
     }
+    self.getChatScriptPath = async function(appName, scriptName) {
+        const { constants } = getDeps();
+        let appPath = getAppPath(appName);
+        let scriptPath =  path.join(appPath, constants.APP_FOLDERS.CHAT_SCRIPTS, `${scriptName}.sop`);
+        try {
+            await fsPromises.access(scriptPath);
+        }catch (e){
+            throw new Error(`Chat ${scriptName} does not exist`);
+        }
+        return scriptPath;
+    }
     self.listChatScripts = async function() {
         const { constants } = getDeps();
         let appsPath = path.join(process.env.SERVERLESS_ROOT_FOLDER, "applications");

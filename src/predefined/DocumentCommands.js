@@ -12,7 +12,7 @@ function Document(docId, varName) {
         if(docInstance){
             self.docInstance = docInstance;
         } else {
-            self.docInstance = await persistence.createDocument({docId:self.docId, chapters: []});
+            self.docInstance = await persistence.createDocument({docId:self.docId, chapters: [], docPath: process.cwd()});
         }
     }
 

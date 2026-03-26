@@ -14,7 +14,12 @@ export async function file(inputValues, parsedCommand, currentDocId) {
         return undefined;
     }
 
-    let resolvedPath = path.isAbsolute(rawPath) ? rawPath : path.resolve(process.cwd(), rawPath);
+    let varDef = await varUtil.getVariable(outputVarId);
+    let baseDir = process.cwd();
+    if(varDef && varDef.docPath){
+        baseDir = path.dirname(varDef.docPath);
+    }
+    let resolvedPath = path.isAbsolute(rawPath) ? rawPath : path.resolve(baseDir, rawPath);
     try {
         let stat = await fs.stat(resolvedPath);
         let currentMtime = stat.mtimeMs;

@@ -377,7 +377,7 @@ async function markAsMutableReferenceToVariable(varId, referencedVarId, graph, b
 
 
 
-async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _parsedCommand) {
+async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _parsedCommand, _docPath) {
     if (!_docId) {
         throw new Error("Document ID is required");
     }
@@ -393,6 +393,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
             varId: varContext.varId,
             varName: varContext.varName,
             docId: varContext.docId,
+            docPath: varContext.docPath,
             chapterId: varContext.chapterId,
             paragraphId: varContext.paragraphId,
             parsedCommand: structuredClone(varContext.parsedCommand),
@@ -415,6 +416,7 @@ async function updateVarDefinition(_varName, _docId, _chapterId, _paragraphId, _
     varContext.varId = varId;
     varContext.varName = _varName;
     varContext.docId = _docId;
+    varContext.docPath = _docPath;
     varContext.chapterId = _chapterId;
     varContext.paragraphId = _paragraphId;
     varContext.parsedCommand = _parsedCommand;

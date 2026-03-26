@@ -39,7 +39,7 @@ function VarsGraph(commandsRegistry) {
     }
 
 
-    async function defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine) {
+    async function defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine, docPath) {
         if (commandTextSeparatedByNewLine === "" || commandTextSeparatedByNewLine === null || commandTextSeparatedByNewLine === undefined) {
             return;
         }
@@ -52,7 +52,7 @@ function VarsGraph(commandsRegistry) {
                 $$.debug("variables", `============> Skipping line ${i} in code block, because it is not a valid command`);
                 continue;
             }
-            await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand);
+            await self.defineVariable(varUtil.makeNameForSpecialVars(chapterId, paragraphId, parsedCommand.outputVars[0]), docId, chapterId, paragraphId, parsedCommand, docPath);
             $$.debug("variables",  `============> Defining variable" ${parsedCommand.outputVars[0]} with command ${JSON.stringify(parsedCommand)}`);
         }
     }
@@ -93,7 +93,7 @@ function VarsGraph(commandsRegistry) {
         }
         return commands;
     }
-    this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "") {
+    this.analiseCommandSection = async function (docId, chapterId, paragraphId, commandTextSeparatedByNewLine, oldCommands = "", docPath) {
         //TODO this doesnt work for vars that are created dynamically as a result of build/parse
         let newCommandsParsed = await varUtil.parseCommands(chapterId, paragraphId, commandTextSeparatedByNewLine);
         const newNames = new Set(newCommandsParsed.map(cmd => cmd.outputVars[0]));
@@ -103,12 +103,12 @@ function VarsGraph(commandsRegistry) {
             await this.deleteVariable(docId, removedVar.outputVars[0]);
             $$.debug("variables", `============> Removed variable ${removedVar.outputVars[0]} from document ${docId}`);
         }
-        await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine);
+        await defineVarsFromCode(docId, chapterId, paragraphId, commandTextSeparatedByNewLine, docPath);
     }
 
 
-    this.insertCode = async function (inDocId, code) {
-        await defineVarsFromCode(inDocId, "_", "_", code);
+    this.insertCode = async function (inDocId, code, docPath) {
+        await defineVarsFromCode(inDocId, "_", "_", code, docPath);
     }
 
     this.runCode = async function (code, ...args) {
@@ -117,12 +117,14 @@ function VarsGraph(commandsRegistry) {
         }
         const CODE_EXECUTION = "CODEX";
         let inDocId = CODE_EXECUTION + "_" + await defaultPersistence.getNextNumber(CODE_EXECUTION);
+        let docPath = process.cwd();
         await defaultPersistence.createDocument({
             docId: inDocId,
             title: inDocId,
             chapters: [],
             category: CODE_EXECUTION,
-            commands: code
+            commands: code,
+            docPath
         });
         let initialisation = "@arg0 := " + inDocId + "\n";
         if (Array.isArray(args)) {
@@ -133,7 +135,7 @@ function VarsGraph(commandsRegistry) {
             initialisation += ("@arg1 := " + args + "\n");
         }
         code = initialisation + code;
-        await defineVarsFromCode(inDocId, "_", "_", code);
+        await defineVarsFromCode(inDocId, "_", "_", code, docPath);
         let buildResult = await self.buildOnlyForDocument(inDocId);
         if(!buildResult){
             await $$.throwError(`Failed to build document ${inDocId} with code ${code} and errors: ${JSON.stringify($$.getBuildErrors())}`);
@@ -157,16 +159,18 @@ function VarsGraph(commandsRegistry) {
         const MACRO_RUN = "MRUN";
         let inDocId = MACRO_RUN + "_" + await defaultPersistence.getNextNumber(MACRO_RUN);
         macroCode = sopLangUtil.expandMacro(docId, inDocId, scriptVar.parsedCommand, ...args);
+        let docPath = scriptVar.docPath;
 
         await defaultPersistence.createDocument({
             docId: inDocId,
             title: inDocId,
             category: MACRO_RUN,
             commands: macroCode,
-            chapters: []
+            chapters: [],
+            docPath
         });
 
-        await defineVarsFromCode(inDocId, "_", "_", macroCode);
+        await defineVarsFromCode(inDocId, "_", "_", macroCode, docPath);
         await self.buildOnlyForDocument(inDocId);
         let value = await self.getVarValue(inDocId, inDocId);
         let documentsPlugin = $$.loadPlugin("Documents");
@@ -174,10 +178,10 @@ function VarsGraph(commandsRegistry) {
         return value;
     }
 
-    this.analiseTextSection = async function (docId, chapterId, paragraphId, text) {
+    this.analiseTextSection = async function (docId, chapterId, paragraphId, text, docPath) {
         let specialTextVarName = varUtil.makeNameForSpecialVars(chapterId, paragraphId, "text");
         await self.defineVariable(specialTextVarName, docId, chapterId, paragraphId,
-            {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes: ["text"]}, text);
+            {command: "assign", inputVars: [text], outputVars: [specialTextVarName], varTypes: ["text"]}, docPath);
 
         let embeddedVars = varUtil.parseTextVars(text);
         if (embeddedVars) {
@@ -185,7 +189,7 @@ function VarsGraph(commandsRegistry) {
                 let varName = embeddedVars[i].variable;
                 let varValue = embeddedVars[i].value;
                 await self.defineVariable(varName, docId, chapterId, paragraphId,
-                    {command: "assign", inputVars: [varValue], outputVars: [varName], varTypes: ["text"]}, varValue);
+                    {command: "assign", inputVars: [varValue], outputVars: [varName], varTypes: ["text"]}, docPath);
             }
         }
     }
@@ -212,7 +216,7 @@ function VarsGraph(commandsRegistry) {
     }
 
 
-    this.defineVariable = async function (varName, docId, chapterId, paragraphId, parsedCommand) {
+    this.defineVariable = async function (varName, docId, chapterId, paragraphId, parsedCommand, docPath) {
         if (typeof parsedCommand === "string") {
             parsedCommand = varUtil.parseCommandLine(parsedCommand);
         }
@@ -233,7 +237,7 @@ function VarsGraph(commandsRegistry) {
         }
 
         //console.debug(">>>>>Defining variable", varName, "in", docId, "with output", parsedCommand.outputVars[0], "and input vars", parsedCommand.inputVars , "and var types", parsedCommand.varTypes);
-        let changed = await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand);
+        let changed = await varUtil.updateVarDefinition(varName, docId, chapterId, paragraphId, parsedCommand, docPath);
         if(changed) {
             let varId = varUtil.getVarID(docId, varName);
             graph[varId] = {
@@ -375,7 +379,7 @@ function VarsGraph(commandsRegistry) {
 
         let script = sopLangUtil.expandMacro(docId, returnVarName, scriptVar.parsedCommand, ...scriptArguments);
         //console.debug(">>> Expanded macro is:", script, " For parsedCommand:", parsedCommand);
-        await self.insertCode(docId, script);
+        await self.insertCode(docId, script, scriptVar.docPath);
 
         if(targetVarId){
             let macroVarID = varUtil.getVarID(docId, intendedCommand);
