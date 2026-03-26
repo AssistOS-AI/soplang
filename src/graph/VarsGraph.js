@@ -586,6 +586,7 @@ function VarsGraph(commandsRegistry) {
 
         this.setErrorInfo = async function (varId, errorMessage) {
             messages[varId] =  errorMessage;
+            await varUtil.updateErrorInfo(varId, errorMessage);
         }
 
         this.restartBuild = async function (varId) {
