@@ -243,7 +243,7 @@ function CommandsRegistry( workspace) {
 
 
 
-    this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId , buildInstance) {
+    this.runCommand =  async function (commandName, inputValues, parsedCommand, currentDocId , buildInstance, docPath) {
         let splitCommand = commandName.split(".");
         let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
         if(splitCommand.length > 2){
@@ -297,7 +297,7 @@ function CommandsRegistry( workspace) {
                 }
             }
 
-            let result = await commandFunction.call(value, decodedInputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
+            let result = await commandFunction.call(value, decodedInputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance, docPath);
             //save the status of the variable just in case that the function had a side effect on its state
             //console.debug(">>>>>>> Saving value of variable", splitCommand[0]);
             if(result === "[object Object]"){
@@ -316,7 +316,7 @@ function CommandsRegistry( workspace) {
             return;
         }
        // console.debug(">>>>>>> Running command", commandName);
-        let res = await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance);
+        let res = await commandFunction(inputValues, parsedCommand, currentDocId, workspace.getGraph(), buildInstance, docPath);
         if(res === "[object Object]"){
             $$.recordBuildError(`Evil value [object Object] obtained from command ${commandName}. Most probably it is a bug in the code`);
         }

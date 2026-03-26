@@ -499,7 +499,8 @@ function VarsGraph(commandsRegistry) {
             inputValues,
             parsedCommand,
             targetVar.docId,
-            buildInstance
+            buildInstance,
+            targetVar.docPath
         );
 
         if(debugActivatedForCommand){

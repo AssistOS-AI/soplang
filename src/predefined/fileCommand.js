@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 let varUtil = await import("../graph/varUtil.js");
 
-export async function file(inputValues, parsedCommand, currentDocId) {
+export async function file(inputValues, parsedCommand, currentDocId, graph, buildInstance, docPath) {
     let outputVarId = varUtil.getVarID(currentDocId, parsedCommand.outputVars[0]);
     if (!inputValues || inputValues.length !== 1) {
         await varUtil.updateErrorInfo(outputVarId, "Invalid file command. Expected exactly 1 argument: file path");
@@ -14,11 +14,7 @@ export async function file(inputValues, parsedCommand, currentDocId) {
         return undefined;
     }
 
-    let varDef = await varUtil.getVariable(outputVarId);
-    let baseDir = process.cwd();
-    if(varDef && varDef.docPath){
-        baseDir = path.dirname(varDef.docPath);
-    }
+    let baseDir = docPath ? path.dirname(docPath) : process.cwd();
     let resolvedPath = path.isAbsolute(rawPath) ? rawPath : path.resolve(baseDir, rawPath);
     try {
         let stat = await fs.stat(resolvedPath);
