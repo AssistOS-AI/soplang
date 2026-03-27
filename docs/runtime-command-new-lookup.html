@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>new and lookup · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"new and lookup"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog" open>
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html" aria-current="page">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>new and lookup</h1>
+                    <p><code>new</code> creates Complex Type instances. <code>lookup</code> retrieves existing persistent instances when the type implements a lookup contract.</p>
+                </section>
+
+                <section>
+                    <h2>Syntax</h2>
+                    <pre><code class="language-sop">@t1 new Table "c1" "c2" "c3"
+@doc new Document "doc1"
+@workflowAgent new Workflow "Assistant"</code></pre>
+                    <pre><code class="language-sop">@agent2 lookup FakeAgent Einstein</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@agent1 new FakeAgent 007Agent
+@agent2 lookup FakeAgent Einstein
+@resp1 agent1.ask "What is your name?"
+@resp2 agent2.ask "What is your name?"</code></pre>
+                    <p>This pattern is validated in <code>tests/pipelines/customTypes/fakeAgentTest.mjs</code>. <code>lookup</code> requires at least type and primary key. If lookup fails, output remains undefined and error info is attached.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>When <code>new</code> executes, the runtime checks whether the output variable already points to an existing instance. If no instance exists, the runtime creates one through the custom type registry and calls initialization with the provided arguments. If an instance already exists and the input arguments changed, the runtime prefers <code>reinit(...args)</code> when the type exposes it, which preserves object identity while updating internal state. This behavior is validated in <code>tests/pipelines/customTypes/reinitBehaviorTest.mjs</code>.</p>
+                    <p>When <code>lookup</code> executes, the runtime asks the registry to resolve an existing instance by primary key, and it binds the resolved object to the output variable when lookup succeeds. After either <code>new</code> or <code>lookup</code>, interaction continues through member methods:</p>
+                    <pre><code class="language-sop">@nob1 new NamedObject "NOB1"
+@waitSetNameResult nob1.setName "NOB1_1"
+@currentName := $nob1.name</code></pre>
+                    <p>Method invocation semantics are part of command execution and can also be conditionally guarded (<code>object.?method</code>).</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Behavior Notes</h2>
+                    <p>The <code>new</code> command delegates object creation and restoration to the custom type registry, and it binds instance lifecycle to the output variable so downstream dependencies remain stable. The <code>lookup</code> command delegates resolution to type-specific lookup adapters, which makes persistent integration explicit and type-controlled. If lookup fails, the runtime keeps the output undefined and writes error metadata instead of silently creating a substitute object.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

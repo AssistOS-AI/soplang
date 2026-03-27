@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Chat Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html" aria-current="page">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Chat Type</h1>
+                    <p>The <code>Chat</code> type orchestrates conversation context across history, dynamic context tables, and agent participants. It integrates with the <code>ChatRoom</code> plugin and supports multi-agent acknowledgement flows.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@historyTable new Table "from" "message" "timestamp" "role"
+@contextTable new Table "from" "message" "timestamp" "role"
+@assistantAgent new ChatAIAgent "assistant"
+@chat new Chat historyTable contextTable assistantAgent</code></pre>
+                    <p>Arguments are: history variable, context variable, followed by one or more agent variables. The first agent is used as interrogator when <code>chat.start</code> is called.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@chat new Chat historyTable contextTable assistantAgent
+chat.start "User asks a question"
+@ctx chat.getDynamicContext
+@hist chat.getHistory</code></pre>
+                    <p>This pattern shows startup plus context and history retrieval. The full behavior is implemented in <code>src/predefined/Chat.js</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The chat lifecycle starts when <code>start</code> forwards an initial message to the interrogator agent, which is usually the first registered participant. During execution, the <code>notify</code> method publishes responses to subscribers and forwards acknowledgement payloads to registered agents so internal state remains synchronized across participants. The methods <code>getHistory</code> and <code>getContextTable</code> expose the backing storage variables, while <code>getContext</code> and <code>getDynamicContext</code> compute conversational context snapshots that combine static context rows, optional UI context, and recent history entries.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <p>The <code>Chat</code> type is the runtime glue between context storage, chat-room notifications, and agent acknowledgement callbacks, enabling multi-agent conversational orchestration in one object.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

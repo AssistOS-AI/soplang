@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expressions and Conditionals · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Math & Conditionals"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html" aria-current="page">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Asserts, Math, if, Sub-Commands, and ?</h1>
+                    <p>
+                        SOP Lang includes a set of expression-oriented primitives that define boolean or numeric variables directly, and conditional constructs that preserve the reactive properties of the language.
+                    </p>
+                </section>
+
+                <section>
+                    <h2>assert Expressions</h2>
+                    <p>In SOP Lang, the <code>assert</code> command defines a variable that holds the boolean result of an expression. Its syntax is <code>@booleanVariable assert boolean_expression</code>.</p>
+                    <pre><code class="language-sop">@temperature := 22
+@isGoodWeather assert $temperature &gt; 20
+
+# If @temperature changes to 15, @isGoodWeather updates to false.</code></pre>
+                    <p>The primary necessity for a command that evaluates directly to true or false lies in establishing a clear foundation for conditional operations. By using <code>assert</code> to create named boolean variables, condition logic is separated from decision logic.</p>
+                    <p>Complex conditions follow JavaScript operator semantics. In the current parser constraints, spacing around parentheses is recommended for robust tokenisation. As these expressions are evaluated through JavaScript semantics, robust sanitisation of input values remains a runtime concern.</p>
+                    <pre><code class="language-sop">@tmpC := 23
+@isSunny := true
+@isWeekend := false
+@goodForPicnic assert ( ( $tmpC &gt; 20 &amp;&amp; $tmpC &lt; 28 ) || $isWeekend ) &amp;&amp; ( $isSunny == true )</code></pre>
+                </section>
+
+                <section>
+                    <h2>math Expressions</h2>
+                    <p>In SOP Lang, the <code>math</code> command defines a variable that holds the numeric result of a mathematical expression. Its syntax is <code>@numericVariable math numerical_expression</code>.</p>
+                    <pre><code class="language-sop">@length := 10
+@width := 5
+@area math $length * $width
+
+# @area => 50</code></pre>
+                    <p>Like <code>assert</code>, this command is reactive and recalculates when dependencies change. SOP Lang's <code>math</code> command supports standard JavaScript mathematical operators and parenthesised grouping.</p>
+                    <pre><code class="language-sop">@itemPrice := 75
+@quantity := 2
+@discountPercentage := 10
+@taxRate := 0.08
+
+@subTotal math $itemPrice * $quantity
+@discountAmount math $subTotal * ( $discountPercentage / 100 )
+@priceAfterDiscount math $subTotal - $discountAmount
+@taxAmount math $priceAfterDiscount * $taxRate
+@totalCost math $priceAfterDiscount + $taxAmount</code></pre>
+                    <p>If any prerequisite variable changes, all dependent math variables are recomputed automatically in graph order.</p>
+                </section>
+
+                <section>
+                    <h2>Conditional Execution with if</h2>
+                    <pre><code class="language-sop">@userAge := 22
+@isAdult assert $userAge &gt;= 18
+@accessMessage if $isAdult then "Welcome! Full access granted." else "Access restricted."
+@accessCode if $isAdult then 1000 else 4001
+@systemStatus if true then "System Active" else "System Offline"</code></pre>
+                    <p>The syntax for <code>if</code> is <code>@output if condition then valueIfTrue else valueIfFalse</code>. The command is reactive: when dependencies in condition or selected branch change, the output is updated.</p>
+                    <p>Conditions are typically boolean variables produced by <code>assert</code>, but literals and other values can be used as condition inputs according to their truthiness semantics.</p>
+                </section>
+
+                <section>
+                    <h2>Sub-Commands</h2>
+                    <p>Sub-commands are denoted by enclosing a command and its parameters within square brackets: <code>[command parameters]</code>. If a command is invoked without an explicitly declared output variable, the system automatically generates a temporary variable to hold the result.</p>
+                    <p>These expressions are preprocessed and substituted before the outer command is evaluated. This allows concise composition for assertions, math, and nested command calls.</p>
+                    <pre><code class="language-sop">@userAge := 25
+@minAge := 18
+@accountBalance := 1500
+@minBalance := 1000
+
+@eligibilityStatus if [assert $userAge &gt;= $minAge &amp;&amp; $accountBalance &gt;= $minBalance] then "Fully Eligible" else "Not Eligible"
+@creditLimit if [assert $accountBalance &gt; 2000] then [math $accountBalance * 2] else 500
+
+@productName := "Gizmo"
+@basePrice := 100
+@taxRate := 0.07
+@productReport assign "Product: " $productName ", Price with Tax: $" [math $basePrice + ( $basePrice * $taxRate )]</code></pre>
+                </section>
+
+                <section>
+                    <h2>Conditional Execution with ?</h2>
+                    <p>In SOP Lang, managing asynchronous data flow and undefined values is crucial, especially for commands with side effects. Prefixing a command with <code>?</code> makes execution conditional on all direct inputs being defined and non-empty.</p>
+                    <p>In the current runtime, this conditional marker is accepted as prefix and suffix for command names (<code>?command</code> and <code>command?</code>). For member calls, it is supported as <code>object.?method</code>.</p>
+                    <pre><code class="language-sop">@creditCardNumber
+@expiryDate
+@cvvCode
+@amount := 100.00
+
+@paymentStatus ?processPayment $creditCardNumber $expiryDate $cvvCode $amount
+@confirmationMessage if [assert $paymentStatus == "SUCCESS"] then "Payment Confirmed!" else "Payment Pending or Failed"</code></pre>
+                    <p>If any guarded input is undefined at evaluation time, guarded execution is skipped and the output remains undefined until a future reactive pass where all required inputs are present.</p>
+                    <p>This mechanism acts as a practical safeguard in dependency chains where values may be populated by user input, asynchronous system updates, or delayed computations.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

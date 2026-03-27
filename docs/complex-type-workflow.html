@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Workflow Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html" aria-current="page">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Workflow Type</h1>
+                    <p>The <code>Workflow</code> type orchestrates multi-step field collection by iterating through configured <code>Form</code> instances. It tracks missing fields, current form index, and completion status.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@agentName := "Assistant"
+@cars form currentUser
+    carName : "Car name of" $currentUser
+    color : "the color of the car for" $currentUser
+    year : "year of production of the car for" $currentUser
+end
+
+@workflowAgent new Workflow $agentName
+workflowAgent.configure "Use " $cars " to find the favorite car for the user"</code></pre>
+                    <p>This setup is based on <code>tests/pipelines/customTypes/workFlowAgent.mjs</code>. The workflow stores form references and uses them to derive questions and missing fields.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@workflowAgent new Workflow $agentName
+workflowAgent.configure "Use " $cars " to find the favorite car for the user"</code></pre>
+                    <p>After configuration, host code repeatedly asks workflow for the next question and acknowledges responses until completion.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The workflow instance is typically used from host code by repeatedly calling:</p>
+                    <p>The host asks the workflow for the next prompt by calling <code>getQuestion()</code>, and that call inspects current forms and current answer state to compute the next missing field. After the user or external component provides a structured response object, the host submits it through <code>acknowledgeResponse(response)</code>, which merges valid fields and advances workflow state. The host continues this loop until the workflow reports completion through <code>isCompleted</code>, and at that point the consolidated payload is available through <code>answers</code>. Internally, the object also exposes utility methods such as <code>getMissingFields</code> and <code>getCurrentRequiredFields</code>, plus optional LLM forwarding methods such as <code>getTextResponse</code> and <code>getChatCompletionResponse</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <p><code>Workflow</code> is an orchestration adapter for form-driven conversational data collection. It coordinates form state, missing fields, and optional agent calls within one object reference.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

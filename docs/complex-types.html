@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complex Types · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html" aria-current="page">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>The new Command and Complex Types</h1>
+                    <p>SOP Lang extends beyond simple variable declarations and commands through its support for Complex Types, instantiated using the <code>new</code> command. These Complex Types represent more structured entities and support both data fields and methods.</p>
+                </section>
+
+                <section>
+                    <h2>Conceptual Role</h2>
+                    <p>Complex Types serve a dual role: they organise related commands and data into logical namespaces, and they function similarly to instances in object-oriented paradigms. Internally, these objects can possess fields and methods scoped to the instance.</p>
+                    <p>In runtime terms, object methods are invoked through dot syntax and participate in the same dependency graph model as any other command execution.</p>
+                </section>
+
+                <section>
+                    <h2>Current Type Families</h2>
+                    <p>Complex Types represent SOP-Lang entities that are both data carriers and behaviour containers. This dual role allows object-like modelling while preserving reactive dependency semantics.</p>
+                    <ul>
+                        <li><a href="complex-type-document.html"><code>Document</code> Type</a>: document metadata and chapter/paragraph command APIs.</li>
+                        <li><a href="complex-type-table.html"><code>Table</code> Type</a>: tabular rows, computed columns, upsert and exwipe flows.</li>
+                        <li><a href="complex-type-set.html"><code>Set</code> Type</a>: variable collections with <code>map</code>/<code>filter</code>/<code>reduce</code> methods.</li>
+                        <li><a href="complex-type-workflow.html"><code>Workflow</code> Type</a>: multi-form question/answer orchestration.</li>
+                        <li><a href="complex-type-chat.html"><code>Chat</code> Type</a>: context and history driven conversation orchestration.</li>
+                        <li><a href="complex-type-form.html"><code>Form</code> Type</a>: structured field definitions for workflow interactions.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Object-Style Invocation</h2>
+                    <p>Complex-type methods are invoked with dot syntax, such as <code>@result table.upsert ...</code> or <code>@value set.getAt 0</code>. This style preserves the same dependency-driven execution model while offering a more structured interaction layer.</p>
+                    <pre><code class="language-sop">@t1 new Table "c1" "c2" "c3"
+@row t1.upsert "a" 2 5
+
+@world0 := "World 0"
+@world1 := "World 1"
+@worldSet new Set world0 world1
+@firstWorld worldSet.first</code></pre>
+                </section>
+
+                <section>
+                    <h2>new and lookup</h2>
+                    <p>Complex Type instances are created with <code>new</code>. Existing persistent instances can be resolved with <code>lookup</code> when the type implements lookup semantics. This pairing allows SOP-Lang code to work both with newly instantiated entities and with previously stored entities.</p>
+                    <pre><code class="language-sop">@agent1 new FakeAgent 007Agent
+@agent2 lookup FakeAgent Einstein
+@resp1 agent1.ask "What is your name?"
+@resp2 agent2.ask "What is your name?"</code></pre>
+                    <p>Because these objects live in the same graph, method calls, aliases, and downstream assignments still follow the same recomputation rules as primitive variables and expression commands. Detailed command-level semantics for <code>new</code> and <code>lookup</code> are documented in <a href="runtime-command-new-lookup.html">runtime command chapter</a>.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

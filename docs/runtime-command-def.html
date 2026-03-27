@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>def / define · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"def / define"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog" open>
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html" aria-current="page">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>def / define</h1>
+                    <p><code>def</code> (alias <code>define</code>) creates a lightweight JavaScript-backed command. The command name is the output variable name, and the body receives all call arguments as <code>args</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Syntax</h2>
+                    <pre><code class="language-sop">@commandName def 'return args.join("|")'
+@result commandName $v1 $v2 literal</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@v1 := Hello
+@pipeConcat def 'return args.join("|")'
+@v2 ?pipeConcat $v1 World!
+@v3 ?:= $v1 World!</code></pre>
+                    <p>This example is based on <code>tests/pipelines/basic/implicitConditionalsTest.mjs</code>. <code>pipeConcat</code> becomes a callable command after definition and can be guarded with <code>?</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The line <code>@pipeConcat def ...</code> creates a new command entry named <code>pipeConcat</code> in the command registry, and the runtime keeps that function available for subsequent command calls in the same execution context. The line <code>@v2 ?pipeConcat $v1 World!</code> then invokes that newly declared command in guarded mode, which means execution only proceeds when every direct input is both defined and non-empty. The line <code>@v3 ?:= $v1 World!</code> demonstrates the same guarded execution rule on the built-in assign alias, so the example shows that guarded semantics are not limited to user-defined commands.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Behavior Notes</h2>
+                    <p>The runtime wraps the definition payload into a JavaScript function that receives an <code>args</code> array, and then it stores that function under the output variable name as a callable command symbol. This mechanism is intentionally lightweight and works well for short utility commands. When a workflow needs explicit named parameters, context imports via <code>~</code>, or richer execution context handling, the runtime provides <code>jsdef</code> as the more expressive command-definition surface.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

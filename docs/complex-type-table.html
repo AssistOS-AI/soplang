@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Table Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html" aria-current="page">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Table Type</h1>
+                    <p>The <code>Table</code> Complex Type stores rows with named columns and supports schema-defined computed columns. It is used for structured data transformation pipelines inside SOP-Lang flows.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@t1 new Table "c1" "c2" "c3"
+@t1_insights new Table "c1" "c2" "c3" "c4: math c2 * c3"</code></pre>
+                    <p>The second table includes a computed column <code>c4</code>, which is evaluated from each row using command expression semantics.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@t1 new Table "c1" "c2" "c3"
+@row1 t1.upsert "x" 2 5
+@row2 t1.upsert "a" 3 5
+
+@rows := $t1.data</code></pre>
+                    <p><code>upsert</code> accepts values, objects, or another table. If the row includes an existing <code>truid</code>, it updates; otherwise it inserts. Runtime behavior is validated in <code>tests/pipelines/tables/tableProcessingTest.mjs</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>A typical table workflow begins when the script declares schema columns through <code>new Table</code>. The script then inserts or updates rows by calling <code>upsert</code>, either with positional values, objects, or table-derived records. Once source rows are present, the script can select and transfer subsets by combining predicate commands with <code>exwipe</code>, and it can merge the extracted rows into a second table that carries computed columns. This sequence allows one table to capture raw intake while another table captures transformed analytical output in the same reactive flow.</p>
+                    <pre><code class="language-sop">@testEntry macro item
+    @c1 := $item.c1
+    @res if [ assert $c1 == "a" ] then true else false
+    return $res
+end
+
+@t1_newData new Table "c1" "c2" "c3"
+@t1_insights new Table "c1" "c2" "c3" "c4: math c2 * c3"
+@picked t1_newData.exwipe testEntry
+t1_insights.upsert $picked</code></pre>
+                    <p><code>exwipe</code> builds a new table from rows that satisfy a predicate command and clears them from the source table. This pattern is used in the table processing test pipeline.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <pre><code class="language-sop">@table new Table from message
+table.upsert "Jhon" "Hello world"
+@rows := $table.data</code></pre>
+                    <p>The <code>Table</code> type acts as a stateful row container that still remains compatible with variable-level reactivity. Field-style access through <code>$table.data</code> uses chain-alias resolution, so scripts can expose raw row arrays as normal variables and feed them into macros, predicates, export logic, or external integration code.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

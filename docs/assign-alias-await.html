@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign, Alias, Await · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Assign, Alias, Await"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html" aria-current="page">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Basic Predefined Commands: Assign and Aliases</h1>
+                    <p>Among SOP Lang's simplest yet most fundamental commands are <code>assign</code> and <code>alias</code>. The <code>assign</code> command is engineered to accept multiple parameters, whether existing variables or literal text segments, and concatenate them into a single, more comprehensive string. This capability is crucial for dynamically constructing detailed and context-rich prompts. For conciseness and enhanced readability, <code>assign</code> can also be expressed using the special operator <code>:=</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Example 1: Basic Prompt Construction Using assign</h2>
+                    <p>In this example, several variables are declared and combined with literal text to form a complete prompt segment.</p>
+                    <pre><code class="language-sop">@modelRole := "You are a helpful and expert AI research assistant."
+@userQueryTopic := "the impact of quantum computing on cryptography"
+
+assign @promptIntroduction $modelRole " The user is asking about " $userQueryTopic ". Provide a concise overview."
+
+# @promptIntroduction:
+# "You are a helpful and expert AI research assistant. The user is asking about the impact of quantum computing on cryptography. Provide a concise overview."</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example 2: Using := for Compact Concatenation</h2>
+                    <p>This example demonstrates the <code>:=</code> operator in a compact form and combines multiple pieces of contextual information in one assignment.</p>
+                    <pre><code class="language-sop">@userName := "Dr. Evelyn Reed"
+@specificInstruction := "focus on potential vulnerabilities in current encryption standards"
+@outputLength := "a summary of no more than 200 words"
+
+@detailedPrompt := "The request comes from " $userName ". Specifically, " $specificInstruction ". Deliver " $outputLength "."
+
+# @detailedPrompt:
+# "The request comes from Dr. Evelyn Reed. Specifically, focus on potential vulnerabilities in current encryption standards. Deliver a summary of no more than 200 words."</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example 3: Simple String Concatenation</h2>
+                    <p>This illustrates straightforward concatenation for labels and filenames, a common pattern when assembling textual artefacts in SOP documents.</p>
+                    <pre><code class="language-sop">@projectID := "QuantumLeap_2025"
+@status := "InProgress"
+@fileExtension := ".txt"
+
+@statusLabel := "Project: " $projectID " - Status: " $status
+@documentFileName := $projectID "_" $status $fileExtension
+
+# @statusLabel => "Project: QuantumLeap_2025 - Status: InProgress"
+# @documentFileName => "QuantumLeap_2025_InProgress.txt"</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example 4: alias Across Documents</h2>
+                    <p>The preceding examples abstracted the fact that SOP Lang commands reside within documents. For scenarios requiring access to a variable defined in a different document, the special <code>alias</code> command establishes an equivalence, effectively creating a local alias that points to a variable declared elsewhere.</p>
+                    <p>This mechanism is crucial for modularity, reusability, and better organisation of complex projects. It resembles symbol resolution across modules more than a typical import statement in imperative languages.</p>
+                    <pre><code class="language-sop"># Document: definitions
+@greetingPart := "Hello"
+
+# Document: app
+alias @localGreeting "definitions" greetingPart
+@message := $localGreeting ", World!"
+
+# @message => "Hello, World!"</code></pre>
+                    <p>This minimalist pattern demonstrates the core function of alias: a variable is defined in one document, another document creates a local name that refers to it, and that local alias can be used as if it were defined directly in the local command context.</p>
+                </section>
+
+                <section>
+                    <h2>Additional Dependencies with await</h2>
+                    <p>In SOP Lang, the reactive re-evaluation of a variable is typically triggered by changes in the input variables directly used in the command that defines it. However, there are scenarios where a variable's update should also be conditioned by changes in other variables, even if those variables do not directly contribute to its computed value. The <code>await</code> keyword addresses this need by allowing explicit declaration of such additional dependencies.</p>
+                    <p>When <code>await</code> is used, the command will re-execute if any direct input variable changes or if any variable listed after the <code>await</code> clause changes. This extends the dependency list of the defined variable and enables explicit synchronisation points in a reactive script.</p>
+                    <p>Syntax pattern: <code>@outputVariable command expression await $dependency1 $dependency2 ...</code>.</p>
+                    <p>Typical use cases are explicit trigger variables, synchronisation boundaries, and indirect reactive links where update responsibility should not be encoded directly as a value input.</p>
+                    <pre><code class="language-sop">@var1 := v1
+@var2 := v2
+@var3 := $var1 await $var2
+
+# @var3 takes its value from $var1.
+# @var3 re-evaluates when either $var1 or $var2 changes.</code></pre>
+                    <p>This mechanism is particularly useful when computations involve side effects, or when a value needs to be refreshed because an environment variable or trigger variable changed.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

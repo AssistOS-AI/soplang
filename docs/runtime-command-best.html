@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>best · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"best"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog" open>
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html" aria-current="page">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>best</h1>
+                    <p><code>best</code> executes a work command multiple times, scores each output through a scoring command, and returns the highest-scoring result.</p>
+                </section>
+
+                <section>
+                    <h2>Syntax</h2>
+                    <pre><code class="language-sop">@result best retriesNo scoreCommand workCommand arg1 arg2 ...</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@counter jsdef
+if(global.counter === undefined){ global.counter = 0; }
+global.counter++;
+return global.counter;
+end
+
+@generate macro hello ~world
+    @orderNumber counter
+    @res := $hello $world $orderNumber
+    return $res
+end
+
+@verify jsdef value
+    if (value === "Hello World 5") { return 10; }
+    return 1;
+end
+
+@result best 7 verify generate Hello</code></pre>
+                    <p>Validated in <code>tests/pipelines/macros/basic/bestCommandTest.mjs</code>. The command retries generation up to 7 times and picks <code>Hello World 5</code> because its score reaches 10.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The command starts by reading the retry count, the scoring command name, the work command name, and any additional arguments that should be forwarded to the work command. For every iteration, the runtime executes the work command, then immediately executes the scoring command using the work result as scoring input. The runtime compares the numeric score with the current best score and keeps the highest-scoring result across the loop. When score reaches the terminal threshold value <code>10</code>, the loop exits early and returns the current best result.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Behavior Notes</h2>
+                    <p>The first argument must be a valid numeric retry count, otherwise the command records an invalid syntax error and produces undefined output. The scorer output is parsed as floating-point value so ranking works for both integer and decimal scores. The implementation intentionally catches iteration-level execution errors, logs them for diagnostics, and continues with remaining attempts instead of aborting the full command. This behavior gives <code>best</code> a robust search profile for non-deterministic generation tasks.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

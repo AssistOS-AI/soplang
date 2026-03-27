@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macros and JSDEF · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Macros & JS Logic"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html" aria-current="page">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Macros</h1>
+                    <p>Macros are a fundamental feature in SOP Lang for creating abstractions and achieving modular programming. They allow grouping multiple SOP Lang commands into a reusable unit, which can accept input parameters and return an explicit output value.</p>
+                </section>
+
+                <section>
+                    <h2>Macro Definition and Invocation</h2>
+                    <pre><code class="language-sop">@world_val := "World"
+
+@runTest macro hello world_param
+  @res := $hello $world_param
+  return $res
+end
+
+@intResult runTest "Hello" $world_val</code></pre>
+                    <p>A macro is defined as <code>@MacroName macro parameter1 parameter2 ... end</code>. The parameter names are plain identifiers; inside the body they are referenced with <code>$</code>. The <code>return</code> statement specifies the macro output.</p>
+                    <p>Macros are expanded directly into the call location. Their generated variables are integrated into the same dependency graph and remain fully reactive. This model differs from traditional call-stack invocation: expansion instantiates command lines and variable declarations for each call site.</p>
+                    <p>When invocation arguments change, expanded macro internals are re-evaluated, and the designated return output updates reactively.</p>
+                    <p>If a macro path does not designate a valid return value, the resolved result may remain <code>undefined</code>. This is relevant for dependency tracking and is an area where runtime signalling mechanisms are continuously refined.</p>
+                </section>
+
+                <section>
+                    <h2>Custom Commands with JSDEF</h2>
+                    <p>SOP Lang provides a mechanism to define custom commands using JavaScript via <code>jsdef</code>. This is structurally similar to macros, but the body is JavaScript code.</p>
+                    <p>Parameters listed plainly are direct JavaScript variables, while context-bound parameters prefixed with <code>~</code> are accessible through <code>this</code>. The JavaScript <code>return</code> value is propagated back as the SOP-Lang command output.</p>
+                    <pre><code class="language-sop">@concatAB jsdef a b
+    console.debug(">>> Executing function:concatAB with args:", a, b, this.__currentDocId);
+    return a + " " + b;
+end
+
+@hello := "Hello"
+@world := "World"
+
+@runTest jsdef hello ~world ~concatAB
+    let res = this.concatAB(hello, this.world);
+    return res;
+end
+
+@result1 concatAB $hello $world
+@result2 runTest $hello</code></pre>
+                    <p>Commands defined with <code>jsdef</code> are reactive in the same way as other SOP-Lang constructs: changes in direct arguments or in bound context variables trigger re-execution.</p>
+                </section>
+
+                <section>
+                    <h2>Context-Bound Parameters for Macros</h2>
+                    <p>Context-bound parameters, identified by the tilde prefix in a macro parameter list, are resolved against the macro definition context rather than the invocation context. This is particularly useful when a macro defined in one document is called from a different document.</p>
+                    <p>By using these parameters, a macro can directly access variables from its home document without requiring explicit alias declarations at each call site.</p>
+                    <pre><code class="language-sop">@composeMessage macro ~modelRole userTopic
+    @res := $modelRole " Topic: " $userTopic
+    return $res
+end</code></pre>
+                </section>
+
+                <section>
+                    <h2>Advanced Macro Patterns</h2>
+                    <p>Macros represent a fundamental mechanism for extending SOP Lang with custom primitives. By integrating them with map-like operations over collections, they support functional-style patterns and declarative generation of derived artefacts.</p>
+                    <p>Macros are also relevant in orchestration scenarios where external callers trigger macro execution. In practical deployments, this capability is used by environments such as Achilles IDE and can be connected with higher-level agent workflows managed through libraries like AchillesAgentLib.</p>
+                    <p>They are instrumental in reactive logic for external events and can orchestrate heterogeneous agents and tools in complex conversational systems, including scenarios where multiple LLMs and specialised knowledge layers are involved.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

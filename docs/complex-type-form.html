@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Form Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html" aria-current="page">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Form Type</h1>
+                    <p>The <code>Form</code> type stores structured field metadata used by workflows and conversational interfaces. It is usually created through the <code>form</code> block command rather than direct <code>new Form</code> invocation.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@currentUser := "Michael"
+@favCar form currentUser
+    modelName : "modelName"
+    color : "color"
+    currentUser : $currentUser
+end</code></pre>
+                    <p>This shape is validated in <code>tests/chat/formTest.mjs</code>. The block lines are parsed as <code>fieldName : fieldDescriptor</code> pairs and stored inside the resulting Form instance.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <p><code>Form</code> values are typically passed into a <code>Workflow</code> instance through <code>workflow.configure ... $form ...</code>. The workflow reads <code>formData</code> and determines which answers are missing before generating the next question.</p>
+                    <pre><code class="language-sop">@cars form currentUser
+    carName : "Car name of" $currentUser
+    color : "Color of car for" $currentUser
+end
+
+@workflowAgent new Workflow "Assistant"
+workflowAgent.configure "Use " $cars " to collect user preferences"</code></pre>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The interaction begins when the script declares optional form parameters after the <code>form</code> keyword, because those parameters can be referenced inside field descriptors. The script then defines fields line by line using the <code>name : descriptor</code> pattern until <code>end</code> closes the form block. Once runtime creates the form object, the script passes that variable into workflow or chat orchestration objects that can drive field-by-field collection. At execution time, host logic or user interaction supplies answer objects keyed by field names, and orchestration layers validate and merge those answers against the form definition.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <p>The <code>Form</code> type is a declarative schema container for question/answer workflows. It separates field specification from execution strategy, which is handled by <code>Workflow</code> or chat orchestration layers.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

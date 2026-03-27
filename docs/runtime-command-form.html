@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>form · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"form"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog" open>
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html" aria-current="page">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>form</h1>
+                    <p><code>form</code> is a block command that creates a <code>Form</code> Complex Type instance. Each line in the block defines a field as <code>name : descriptor</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Syntax</h2>
+                    <pre><code class="language-sop">@formVar form param1 param2
+    field1 : "description"
+    field2 : "description" $param1
+end</code></pre>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@currentUser := "Michael"
+@favCar form currentUser
+    modelName : "modelName"
+    color : "color"
+    currentUser : $currentUser
+end</code></pre>
+                    <p>Validated in <code>tests/chat/formTest.mjs</code>.</p>
+                    <pre><code class="language-sop">@cars form currentUser
+    carName : "Car name of" $currentUser
+    color : "the color of the car for" $currentUser
+    year : "year of production of the car for" $currentUser
+end
+@workflowAgent new Workflow "Assistant"
+workflowAgent.configure "Use " $cars " to find the favorite car for the user"</code></pre>
+                    <p>Validated in <code>tests/pipelines/customTypes/workFlowAgent.mjs</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The first line declares the output variable and optional parameter names that can be interpolated inside field descriptors. Each non-empty body line must follow the <code>fieldName : fieldDescriptor</code> convention, and the parser converts those lines into a structured field map. After parsing completes, the runtime creates a <code>Form</code> instance and injects the parsed field metadata as initialization input. Higher-level orchestration types, especially <code>Workflow</code>, then consume this form object to ask targeted questions and to validate completion state.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Behavior Notes</h2>
+                    <p>If a line does not respect the required <code>name : value</code> structure, the runtime records an error and treats that definition as invalid. The command result is always a <code>Form</code> object rather than a plain string, because downstream components expect object-level access to field metadata. When initialization parameters change and the underlying instance supports reinitialization, the runtime can refresh the form object to keep schema content synchronized with current inputs.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

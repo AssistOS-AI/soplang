@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Document Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html" aria-current="page">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Document Type</h1>
+                    <p>The <code>Document</code> Complex Type provides programmatic control over document title, chapter titles, paragraph text, and command blocks. It is used when SOP code needs to create or mutate structured document content inside the same reactive graph.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@doc new Document "doc1"
+@titleRes doc.setTitle "Demo Document"
+@titleNow doc.getTitle</code></pre>
+                    <p><code>@doc new Document "doc1"</code> creates or restores a document handle bound to id <code>doc1</code>. The method calls <code>setTitle</code> and <code>getTitle</code> interact with persistent document metadata.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@doc new Document "doc1"
+@par1 := "content_1"
+@par21 := "content_2_1"
+
+doc.setChapterTitle 1 "Title for chapter 1"
+doc.setChapterTitle 2 "Title for chapter 2"
+doc.setParagraphText 1 1 $par1 "and some other content"
+
+@parText doc.getParagraphText 1 1
+doc.setParagraphText 1 1 $parText $par21</code></pre>
+                    <p>This pattern is taken from <code>tests/pipelines/documents/workWithDocsTest.mjs</code>. The <code>Document</code> methods auto-create missing chapters/paragraphs where needed and then update values.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <p>The interaction usually starts with document-level metadata methods such as <code>setTitle</code> and <code>getTitle</code>, or with info-level methods such as <code>setInfoText</code> and <code>getInfoText</code>. After document metadata is in place, scripts move to chapter-level methods where <code>setChapterTitle</code>, <code>getChapterTitle</code>, <code>setChapterCommands</code>, and <code>getChapterCommands</code> shape chapter structure and chapter command blocks. Finally, paragraph-level methods such as <code>setParagraphText</code>, <code>getParagraphText</code>, <code>setParagraphCommands</code>, and <code>getParagraphCommands</code> control local text and local executable instructions within each chapter branch.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <p>The <code>Document</code> type bridges SOP execution with mutable document structures managed by the Documents plugin. It is designed for workflows where content and commands are generated or transformed in-place.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

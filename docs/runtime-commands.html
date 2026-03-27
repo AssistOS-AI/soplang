@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runtime Commands · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog" open>
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html" aria-current="page">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Runtime Commands and Execution Semantics</h1>
+                    <p>This page documents the operational command surface of the current SOP-Lang runtime. Each command listed below links to a detailed chapter with syntax, examples, and interaction patterns.</p>
+                </section>
+
+                <section>
+                    <h2>Command Catalog</h2>
+                    <ul>
+                        <li><a href="runtime-command-def.html"><code>def</code> / <code>define</code></a>: lightweight JavaScript-backed command definitions using function bodies.</li>
+                        <li><a href="runtime-command-prompt.html"><code>prompt</code></a>: block command for multi-line prompt declarations terminated by <code>end</code>.</li>
+                        <li><a href="runtime-command-form.html"><code>form</code></a>: block command parsed into structured field specifications and exposed as <code>Form</code> objects.</li>
+                        <li><a href="runtime-command-new-lookup.html"><code>new</code> / <code>lookup</code></a>: creation and retrieval of custom type instances.</li>
+                        <li><a href="runtime-command-overwrite.html"><code>overwrite</code></a>: controlled mutation of simple assign-derived values and aliases.</li>
+                        <li><a href="runtime-command-file.html"><code>file</code></a>: file state probe returning stat metadata (<code>mtimeMs</code>, <code>ctimeMs</code>) and retriggering dependent computations on change.</li>
+                        <li><a href="runtime-command-best.html"><code>best</code></a>: retry-and-score loop command (<code>retries</code>, <code>scoreCommand</code>, <code>workCommand</code>, <code>args...</code>) for selecting best result.</li>
+                        <li><a href="runtime-command-currentdocid-import.html"><code>currentDocId</code> and <code>import</code></a>: current document context and script import behavior.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Conditional Execution Details</h2>
+                    <p>Conditional execution with <code>?</code> is accepted both as a prefix and as a suffix on command names (for example <code>?cmd</code> and <code>cmd?</code>). For member calls, conditional form is supported as <code>object.?method</code>. Guarded commands execute only when all direct inputs are defined and non-empty.</p>
+                </section>
+
+                <section>
+                    <h2>Member Access and Chain Aliases</h2>
+                    <p>Dot-notation variable references such as <code>$item.field</code> are preprocessed into internal chain-alias variables. This allows field-style access inside commands while keeping dependencies explicit in the graph.</p>
+                </section>
+
+                <section>
+                    <h2>Built-In Custom Type Runtime</h2>
+                    <ul>
+                        <li><code>Document</code>: document metadata and structural operations for titles, commands, and paragraph text/commands.</li>
+                        <li><code>Table</code>: table row insertion and merge semantics with computed columns and row identifiers.</li>
+                        <li><code>Set</code>: container operations plus macro-driven mapping and jsdef-based filtering/reduction semantics.</li>
+                        <li><code>Workflow</code>, <code>Chat</code>, <code>Form</code>: orchestration entities for interactive workflows and conversation handling.</li>
+                    </ul>
+                    <pre><code class="language-sop">@doc new Document "doc1"
+doc.setChapterTitle 1 "Title for chapter 1"
+
+@t1 new Table "c1" "c2" "c3" "c4: math c2 * c3"
+@rowsSet new Set world0 world1 world2
+
+@agentWorkflow new Workflow "OnboardingAgent"
+@chat new Chat history context mainAgent</code></pre>
+                </section>
+
+                <section>
+                    <h2>Execution Model Notes</h2>
+                    <p>Runtime execution is graph-based and clock-driven: variables are recomputed when dependency clocks indicate stale outputs. Aliases, macro expansions, and special commands such as <code>file</code> and <code>import</code> are integrated into this same build cycle.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

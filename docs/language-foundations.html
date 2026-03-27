@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Foundations · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Foundations & Syntax"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html" aria-current="page">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects">
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Language Foundations</h1>
+                    <p>At the heart of SOP Lang lies the command, its central construct. Each command is dedicated to defining a single variable. Conceptually, this variable (the subject) is brought into existence or modified by an essential verb, the command itself, which can accept multiple parameters.</p>
+                </section>
+
+                <section>
+                    <h2>Reactive Declarative Model</h2>
+                    <p>While one might draw parallels between a command and a traditional function call, SOP Lang introduces a crucial distinction from imperative languages: the function embodied by the command can be invoked automatically whenever the value of the variable it defines requires recomputation. Consequently, should the values of any variables serving as parameters to the command change, the command re-executes autonomously. It is precisely this intrinsic, automatic re-evaluation that elegantly reveals the declarative and reactive nature of SOP Lang.</p>
+                    <p>In SOP Lang, concurrency is implicit. In principle, variables that do not depend on each other can be computed in parallel. External side effects and external changes to variables can alter the effective scheduling, and these semantics are part of the broader runtime model still being refined.</p>
+                </section>
+
+                <section>
+                    <h2>Variable Markers and Literals</h2>
+                    <p>Syntactically, variable names in SOP Lang adhere to common programming language conventions: a sequence of alphanumeric characters commencing with a letter. To maintain a lean syntax with minimal keywords, variable declarations are distinguished by prefixing the variable name with an <code>@</code> symbol. Conversely, referencing or using a variable requires prefixing its name with a <code>$</code> symbol.</p>
+                    <p>This prefixing approach was deliberately chosen because SOP Lang is engineered to facilitate user-friendly prompt engineering, a context where natural language text is anticipated to be statistically more prevalent than variable interpolations.</p>
+                    <p>Within the parameters of a command, one can directly use literal string values (enclosed in single or double quotes) and numeric literals, in addition to variable references denoted by the <code>$variable</code> syntax.</p>
+                </section>
+
+                <section>
+                    <h2>Documents and Scope</h2>
+                    <p>Commands in SOP Lang are invariably declared within documents, a concept that extends and enriches the traditional notion of a file by imbuing it with inherent structure. This framework facilitates the declaration of variables at various scopes: global (document-wide), chapter-level, or paragraph-level.</p>
+                    <p>This hierarchical approach serves a dual purpose: on one hand, it allows structuring and prioritisation of variables based on pragmatic importance; on the other, it enables user interfaces that seamlessly blend paragraph content with commands. This is especially relevant for generative scenarios where natural language specifications and executable commands coexist.</p>
+                    <p>Such commands can encompass generation and processing of text, images, videos, test data, test suites, scripts, and, in general, any artefact representable as a variable in SOP Lang.</p>
+                    <p>The organisation of variables, sometimes referred to as artefacts, at global, chapter, or paragraph scope affords both a top-down and a bottom-up mode of interaction: users can inspect a high-level map of artefacts and also traverse from local detail toward broader context through dependency links.</p>
+                </section>
+
+                <section>
+                    <h2>Accessing Structured Values</h2>
+                    <p>SOP Lang supports dot-style member references such as <code>$item.field</code> in command parameters. At runtime, these references are normalised into internal chain-alias variables so that member access remains explicit in the dependency graph while preserving concise syntax in user code.</p>
+                </section>
+
+                <section>
+                    <h2>Ecosystem Context</h2>
+                    <p>SOP Lang is designed as an independent yet integrable orchestration component. In current development practice, it is expected to interoperate with containerised Ploinky agents and to expose or consume orchestration surfaces through libraries such as AchillesAgentLib where agent execution layers require declarative coordination.</p>
+                    <p>In practical terms, this means SOP-Lang can be used where teams need a declarative and reactive artefact graph, while imperative orchestration layers from AchillesAgentLib or project-specific code can still coexist as complementary execution paths.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Type · SOP-Lang Docs</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Set Type"}]'></div>
+
+    <main class="content content--with-sidebar">
+        <div class="doc-layout">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">The Basics</p>
+                    <nav>
+                        <a href="index.html">Home</a>
+                        <a href="language-foundations.html">Foundations & Syntax</a>
+                        <a href="assign-alias-await.html">Assign, Alias, Await</a>
+                    </nav>
+                </div>
+
+                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Logic & Control</p>
+                    <nav>
+                        <a href="expressions-conditionals.html">Math & Conditionals</a>
+                        <a href="macros-jsdef.html">Macros & JS Logic</a>
+                    </nav>
+                </div>
+
+                                <div class="doc-sidebar__group">
+                    <p class="doc-sidebar__group-title">Command Reference</p>
+                    <nav>
+                        <details id="details-catalog">
+                            <summary>Full Command Catalog</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="runtime-commands.html">Overview</a>
+                                <a href="runtime-command-def.html">def / define</a>
+                                <a href="runtime-command-prompt.html">prompt</a>
+                                <a href="runtime-command-form.html">form</a>
+                                <a href="runtime-command-new-lookup.html">new / lookup</a>
+                                <a href="runtime-command-overwrite.html">overwrite</a>
+                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-best.html">best</a>
+                                <a href="runtime-command-currentdocid-import.html">context / import</a>
+                            </div>
+                        </details>
+                        <details id="details-objects" open>
+                            <summary>Built-in Objects</summary>
+                            <div class="doc-sidebar__nested">
+                                <a href="complex-types.html">Overview</a>
+                                <a href="complex-type-document.html">Document</a>
+                                <a href="complex-type-table.html">Table</a>
+                                <a href="complex-type-set.html" aria-current="page">Set</a>
+                                <a href="complex-type-workflow.html">Workflow</a>
+                                <a href="complex-type-chat.html">Chat</a>
+                                <a href="complex-type-form.html">Form</a>
+                            </div>
+                        </details>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="doc-main">
+                <section class="lead">
+                    <h1>Set Type</h1>
+                    <p>The <code>Set</code> Complex Type stores a collection of variable ids and exposes functional-style operations such as <code>map</code>, <code>filter</code>, and <code>reduce</code>. It is especially useful for reactive batch processing over variable groups.</p>
+                </section>
+
+                <section>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@world0 := "World 0"
+@world1 := "World 1"
+@world2 := "World 2"
+@worldSet new Set world0 world1 world2
+
+@firstWorld worldSet.first
+@secondWorld worldSet.getAt 1
+@restSet worldSet.rest
+@exported worldSet.export</code></pre>
+                    <p><code>first</code> and <code>getAt</code> expose element references. <code>rest</code> returns a new Set. <code>export</code> returns a comma-separated list of member variable ids.</p>
+                </section>
+
+                <section>
+                    <h2>Example</h2>
+                    <pre><code class="language-sop">@sayHello macro world hello
+    @res := $hello $world
+    return $res
+end
+
+@hello := Hello
+@result worldSet.map sayHello $hello
+@res0 result.getAt 0
+@res1 result.getAt 1</code></pre>
+                    <p>This pattern comes from <code>tests/pipelines/set/containersTest.mjs</code>. <code>map</code> expands the macro per set member and creates output variables that stay linked to source members.</p>
+                </section>
+
+                <section>
+                    <h2>Step-by-Step Interaction</h2>
+                    <pre><code class="language-sop">@worldFilter jsdef item
+    return item === "World 1" || item === "World 2";
+end
+@filtered worldSet.filter worldFilter
+
+@count jsdef item result
+    if(result === undefined){ result = 0; }
+    result++;
+    return result;
+end
+@counter worldSet.reduce count</code></pre>
+                    <p>The interaction flow starts when a set is declared from variable ids and then transformed by higher-order methods. The <code>map</code> method executes a macro or jsdef function for each member and stores mapped outputs in a derived set. The <code>filter</code> method evaluates a predicate and retains members for which the predicate does not return false. The <code>reduce</code> method folds members into an accumulator in iteration order and returns one final value. These behaviors are validated in <code>tests/pipelines/macros/advanced/filterTest.mjs</code> and <code>tests/pipelines/macros/advanced/reduceTest.mjs</code>.</p>
+                </section>
+
+                <section>
+                    <h2>Runtime Role Notes</h2>
+                    <p>The <code>Set</code> type is the main collection primitive for macro/jsdef-based iteration. Because members are variable ids, updates to underlying variables propagate through mapped/filtered derived outputs.</p>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>
