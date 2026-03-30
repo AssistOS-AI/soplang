@@ -285,34 +285,60 @@ function replaceDotVariables(inputString, detectedVars = {}) {
 function breakComplexLineInSimpleLines(input, makeVarName) {
     let transformedText = input;
     const result = {};
-    const regex = /\[(.*?)]/g;
-    let match;
     let matches = [];
 
-    // build a set of character positions that are inside quoted strings ('...' or "...")
-    const insideString = new Set();
-    let inStr = false, strChar = '';
-    for (let i = 0; i < input.length; i++) {
-        const c = input[i];
-        if (!inStr && (c === "'" || c === '"')) { inStr = true; strChar = c; }
-        else if (inStr && c === strChar) { inStr = false; }
-        else if (inStr) { insideString.add(i); }
-    }
+    let inString = false;
+    let stringQuote = "";
+    let depth = 0;
+    let blockStart = -1;
 
-    while ((match = regex.exec(input)) !== null) {
-        if (insideString.has(match.index)) continue;
-        matches.push({
-            fullMatch: match[0],
-            innerContent: match[1].trim(),
-            index: match.index
-        });
+    for (let i = 0; i < input.length; i++) {
+        const ch = input[i];
+
+        if (inString) {
+            if (ch === "\\" && i + 1 < input.length) {
+                i++;
+                continue;
+            }
+            if (ch === stringQuote) {
+                inString = false;
+                stringQuote = "";
+            }
+            continue;
+        }
+
+        if (ch === "'" || ch === '"') {
+            inString = true;
+            stringQuote = ch;
+            continue;
+        }
+
+        if (ch === "[") {
+            if (depth === 0) {
+                blockStart = i;
+            }
+            depth++;
+            continue;
+        }
+
+        if (ch === "]" && depth > 0) {
+            depth--;
+            if (depth === 0 && blockStart >= 0) {
+                matches.push({
+                    start: blockStart,
+                    end: i,
+                    innerContent: input.slice(blockStart + 1, i).trim()
+                });
+                blockStart = -1;
+            }
+        }
     }
 
     for (let i = matches.length - 1; i >= 0; i--) {
-        const { fullMatch, innerContent } = matches[i];
+        const { start, end, innerContent } = matches[i];
         const varName = makeVarName();
         result[varName] = innerContent;
-        transformedText = transformedText.replace(fullMatch, `$${varName}`);
+        transformedText = transformedText.slice(0, start) + `$${varName}` + transformedText.slice(end + 1);
     }
     //console.debug("Parsed line:",  transformedText, "Variables:", result);
     return {

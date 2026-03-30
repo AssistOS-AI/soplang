@@ -70,4 +70,16 @@ let parsedEscape = util.parseCommandBlock(undefined, undefined, blockEscape);
 let cmdEscape = util.parseCommandLine(parsedEscape[0]);
 $$.checkValue(cmdEscape.inputVars, ["line with ` escaped\nand more"]);
 
+// array literal in string should not break embedded command parsing
+let arrayLiteralBlock = `
+@srcProbe := "[]"
+@shouldGenerate if [ assert $srcProbe == "[]" ] then true else false
+`;
+let parsedArrayLiteral = util.parseCommandBlock(undefined, undefined, arrayLiteralBlock);
+$$.checkValue(parsedArrayLiteral, [
+    '@____TMP1 assert $srcProbe == "[]"',
+    '@srcProbe := "[]"',
+    '@shouldGenerate if $____TMP1 then true else false'
+]);
+
 await $$.exit();
