@@ -41,7 +41,7 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html">file</a>
+                                <a href="runtime-command-file.html">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
@@ -76,7 +76,7 @@
                         <li><a href="runtime-command-form.html"><code>form</code></a>: block command parsed into structured field specifications and exposed as <code>Form</code> objects.</li>
                         <li><a href="runtime-command-new-lookup.html"><code>new</code> / <code>lookup</code></a>: creation and retrieval of custom type instances.</li>
                         <li><a href="runtime-command-overwrite.html"><code>overwrite</code></a>: controlled mutation of simple assign-derived values and aliases.</li>
-                        <li><a href="runtime-command-file.html"><code>file</code></a>: file state probe returning stat metadata (<code>mtimeMs</code>, <code>ctimeMs</code>) and retriggering dependent computations on change.</li>
+                        <li><a href="runtime-command-file.html"><code>files</code> / <code>glob</code></a>: file-set probe that expands a Unix glob pattern and returns sorted metadata objects (<code>path</code>, <code>mtimeMs</code>, <code>ctimeMs</code>).</li>
                         <li><a href="runtime-command-best.html"><code>best</code></a>: retry-and-score loop command (<code>retries</code>, <code>scoreCommand</code>, <code>workCommand</code>, <code>args...</code>) for selecting best result.</li>
                         <li><a href="runtime-command-currentdocid-import.html"><code>currentDocId</code> and <code>import</code></a>: current document context and script import behavior.</li>
                     </ul>
@@ -112,7 +112,7 @@ doc.setChapterTitle 1 "Title for chapter 1"
 
                 <section>
                     <h2>Execution Model Notes</h2>
-                    <p>Runtime execution is graph-based and clock-driven: variables are recomputed when dependency clocks indicate stale outputs. Aliases, macro expansions, and special commands such as <code>file</code> and <code>import</code> are integrated into this same build cycle.</p>
+                    <p>Runtime execution is graph-based and clock-driven: variables are recomputed when dependency clocks indicate stale outputs. Aliases, macro expansions, and special commands such as <code>files</code>/<code>glob</code> and <code>import</code> are integrated into this same build cycle.</p>
                 </section>
             </div>
         </div>

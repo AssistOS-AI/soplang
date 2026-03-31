@@ -547,7 +547,7 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
-        if(variable.parsedCommand.command === "import" || variable.parsedCommand.command === "file"){
+        if(variable.parsedCommand.command === "import" || variable.parsedCommand.command === "files" || variable.parsedCommand.command === "glob"){
             mustRecompute = true;
         }
         if (mustRecompute) {

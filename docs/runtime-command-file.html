@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>file · SOP-Lang Docs</title>
+    <title>files / glob · SOP-Lang Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"file"}]'></div>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"files / glob"}]'></div>
 
     <main class="content content--with-sidebar">
         <div class="doc-layout">
@@ -41,7 +41,7 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html" aria-current="page">file</a>
+                                <a href="runtime-command-file.html" aria-current="page">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
@@ -64,32 +64,34 @@
 
             <div class="doc-main">
                 <section class="lead">
-                    <h1>file</h1>
-                    <p><code>file</code> tracks filesystem state of a path and returns stat metadata (<code>mtimeMs</code>, <code>ctimeMs</code>). It is used as reactive trigger for pipelines depending on file changes.</p>
+                    <h1>files / glob</h1>
+                    <p><code>files</code> (alias <code>glob</code>) resolves a Unix glob pattern and returns an array of file metadata objects (<code>path</code>, <code>mtimeMs</code>, <code>ctimeMs</code>). It is used as reactive trigger for pipelines depending on file set and content changes.</p>
                 </section>
 
                 <section>
                     <h2>Syntax</h2>
-                    <pre><code class="language-sop">@fileState file "/absolute/or/relative/path.txt"</code></pre>
+                    <pre><code class="language-sop">@matches files "./data/**/*.txt"
+@sameResult glob "/tmp/logs/*.{txt,log}"</code></pre>
                 </section>
 
                 <section>
                     <h2>Example</h2>
-                    <pre><code class="language-sop">@content file "/tmp/inputA.txt"
+                    <pre><code class="language-sop">@topLevel files "./fixtures/*.txt"
+@recursive glob "./fixtures/**/*.txt"
 
-# later, command is replaced:
-@content file "/tmp/inputB.txt"</code></pre>
-                    <p>Validated in <code>tests/pipelines/basic/fileCommandTest.mjs</code>. The test checks that variable clock remains stable if file is unchanged and advances when stat metadata changes.</p>
+# later, pattern is replaced:
+@topLevel files "./fixtures/nested/*.txt"</code></pre>
+                    <p>Validated in <code>tests/pipelines/basic/filesCommandTest.mjs</code>. The test covers both <code>files</code> and <code>glob</code>, using different patterns (<code>*</code>, <code>**</code>, <code>?</code>, brace expansion) and checking clock behavior when matches change.</p>
                 </section>
 
                 <section>
                     <h2>Step-by-Step Interaction</h2>
-                    <p>The runtime resolves the file path either relative to the document source path, when that context exists, or relative to the current working directory otherwise. After path resolution, the command reads filesystem stat metadata and extracts the <code>mtimeMs</code> and <code>ctimeMs</code> pair used as reactive signal. When those values change, the runtime updates the output variable and invalidates dependents that rely on this file state. When the values remain unchanged, the runtime keeps the previous object to avoid unnecessary graph recomputation.</p>
+                    <p>The runtime resolves the glob pattern either relative to the document source path, when that context exists, or relative to the current working directory otherwise. It then expands matches and reads stat metadata for every matched file, producing a sorted array of objects with <code>path</code>, <code>mtimeMs</code>, and <code>ctimeMs</code>. When file metadata or the matched set changes, dependent variables are invalidated and recomputed.</p>
                 </section>
 
                 <section>
                     <h2>Runtime Behavior Notes</h2>
-                    <p>The command expects exactly one non-empty string argument, and the runtime records an error if that contract is not respected. Relative paths are resolved deterministically according to document path first and process directory second. Stable stat metadata leads to value reuse by design, while stat failures produce undefined outputs accompanied by explicit error information. This behavior makes the command safe as both a file watcher trigger and a build dependency anchor.</p>
+                    <p>The command expects exactly one non-empty string argument (Unix glob pattern), and the runtime records an error if that contract is not respected. Relative patterns are resolved deterministically according to document path first and process directory second. Stable metadata leads to value reuse by design, while filesystem failures produce undefined outputs accompanied by explicit error information. This behavior makes the command safe as both a watcher trigger and a build dependency anchor.</p>
                 </section>
             </div>
         </div>
