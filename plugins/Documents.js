@@ -210,6 +210,10 @@ async function Documents(){
 
     self.deleteParagraph = async function (chapterId, paragraphId) {
         let chapter = await persistence.getChapter(chapterId);
+        let paragraph = await persistence.getParagraph(paragraphId);
+        // For delete cleanup we only remove vars from old commands; no new commands are defined,
+        // so docPath resolution is not needed here.
+        await graph.analiseCommandSection(chapter.docId, chapterId, paragraphId, "", paragraph.commands || "");
         let paragraphs = chapter.paragraphs.filter(p => p !== paragraphId);
         await persistence.updateChapter(chapterId, {paragraphs});
         return await persistence.deleteParagraph(paragraphId);
@@ -288,6 +292,14 @@ async function Documents(){
     }
     self.deleteChapter = async function (documentId, chapterId) {
         let document = await persistence.getDocument(documentId);
+        let chapter = await persistence.getChapter(chapterId);
+        // For delete cleanup we only remove vars from old commands; no new commands are defined,
+        // so docPath resolution is not needed here.
+        await graph.analiseCommandSection(document.docId, chapterId, undefined, "", chapter.commands || "");
+        for(let paragraphId of chapter.paragraphs || []){
+            let paragraph = await persistence.getParagraph(paragraphId);
+            await graph.analiseCommandSection(document.docId, chapterId, paragraphId, "", paragraph.commands || "");
+        }
         let chapters = document.chapters.filter(c => c !== chapterId);
         await persistence.updateDocument(documentId, {chapters});
         return await persistence.deleteChapter(chapterId);

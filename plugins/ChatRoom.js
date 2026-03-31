@@ -77,7 +77,7 @@ async function ChatRoom() {
         } else {
             code += ("@arg1 := " + args + "\n");
         }
-        code += `@source import ${appName} ${scriptName} \n`
+        code += `@source !import ${appName} ${scriptName} \n`
         await documentsPlugin.updateDocument(document.id, document.title, docId, document.category, document.infoText, code, document.comments);
         await documentsPlugin.createChapter(document.id, 'Chapter 1', '');
         let buildSuccess = await workspace.buildOnlyForDocument(docId);
