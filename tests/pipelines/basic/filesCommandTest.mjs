@@ -31,14 +31,14 @@ await fsPromises.mkdir(nestedDir, { recursive: true });
 await fsPromises.writeFile(pathA, "Initial content A", "utf8");
 await fsPromises.writeFile(pathB, "Initial content B", "utf8");
 await fsPromises.writeFile(pathC, "Initial content C", "utf8");
-await fsPromises.writeFile(sourceDocPath, "@content files \"./filesCommand?.txt\"\n@nested glob \"./nested/*.txt\"\n", "utf8");
+await fsPromises.writeFile(sourceDocPath, "@content !files \"./filesCommand?.txt\"\n@nested !glob \"./nested/*.txt\"\n", "utf8");
 
 let script = `
-    @single files "${pathA}"
-    @topTxt files "${fixturesDir}/*.txt"
-    @question files "${fixturesDir}/filesCommand?.txt"
-    @nested glob "${fixturesDir}/**/*.txt"
-    @brace glob "${fixturesDir}/filesCommand{A,B}.txt"
+    @single !files "${pathA}"
+    @topTxt !files "${fixturesDir}/*.txt"
+    @question !files "${fixturesDir}/filesCommand?.txt"
+    @nested !glob "${fixturesDir}/**/*.txt"
+    @brace !glob "${fixturesDir}/filesCommand{A,B}.txt"
 `;
 try {
     let docId = await workspace.runCode(script);
@@ -75,7 +75,7 @@ try {
 
     let topTxtVarId = getVarID(docId, "topTxt");
     let topTxtClockBeforePatternChange = await getVarClock(topTxtVarId);
-    await workspace.insertCode(docId, `@topTxt files "${fixturesDir}/nested/*.txt"`);
+    await workspace.insertCode(docId, `@topTxt !files "${fixturesDir}/nested/*.txt"`);
     await workspace.buildOnlyForDocument(docId);
 
     await $$.checkDocVar(docId, "topTxt", await expectedMatches([pathC]));

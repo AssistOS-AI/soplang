@@ -85,6 +85,7 @@
                 <section>
                     <h2>Conditional Execution Details</h2>
                     <p>Conditional execution with <code>?</code> is accepted both as a prefix and as a suffix on command names (for example <code>?cmd</code> and <code>cmd?</code>). For member calls, conditional form is supported as <code>object.?method</code>. Guarded commands execute only when all direct inputs are defined and non-empty.</p>
+                    <p>Forced execution with <code>!</code> is accepted both as prefix and suffix on command names (for example <code>!cmd</code> and <code>cmd!</code>). A forced command is evaluated on every build pass even when dependency clocks did not change. This replaces prior hardcoded always-recompute exceptions and makes polling semantics explicit in script code.</p>
                 </section>
 
                 <section>

@@ -114,6 +114,38 @@ allOk |=compareObjects(parseCommandLine("tableFrom @tableName $inputTable newTab
     varTypes: ["var", "text", "embeddedCommand", "text", "embeddedCommand"]
 });
 
+allOk |= compareObjects(parseCommandLine("@result !assign value"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["value"],
+    varTypes: ["text"],
+    forceExecution: true
+});
+
+allOk |= compareObjects(parseCommandLine("@result assign! value"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["value"],
+    varTypes: ["text"],
+    forceExecution: true
+});
+
+allOk |= compareObjects(parseCommandLine("@result ?assign $input"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["input"],
+    varTypes: ["var"],
+    conditional: true
+});
+
+allOk |= compareObjects(parseCommandLine("@result assign? $input"), {
+    command: "assign",
+    outputVars: ["result"],
+    inputVars: ["input"],
+    varTypes: ["var"],
+    conditional: true
+});
+
 // multiline backtick tests — full flow: collapseBacktickTokens then parseCommandLine
 // (util already imported at top of file)
 let { collapseBacktickTokens } = util;

@@ -138,6 +138,11 @@ function parseCommandLine(commandLine) {
              $$.throwErrorSync("Invalid command name: '" + token + "'Got token type'" + tokenType + "' instead. Expected text" );
         }
         command = token;
+        let commandConfig = parseExecutionConfig(command);
+        command = commandConfig.command;
+        if(command.length === 0){
+            $$.throwErrorSync("Invalid command name: missing command after execution modifiers");
+        }
 
         while(pos < commandLine.length){
             let {token, position, tokenType} = getNextToken(commandLine, pos);
@@ -171,13 +176,55 @@ function parseCommandLine(commandLine) {
             }
         }
         //console.debug("Command:", command, "InputVars:", inputVars, "OutputVars:", outputVars, "VarTypes:", varTypes);
-        return {
+        let result = {
             command,
             inputVars,
             outputVars,
             varTypes
+        };
+        if(commandConfig.conditional){
+            result.conditional = true;
+        }
+        if(commandConfig.forceExecution){
+            result.forceExecution = true;
+        }
+        return result;
+    }
+
+function parseExecutionConfig(rawCommand){
+    let command = rawCommand;
+    let conditional = false;
+    let forceExecution = false;
+    let changed = true;
+    while(changed){
+        changed = false;
+        if(command.startsWith("!")){
+            forceExecution = true;
+            command = command.slice(1);
+            changed = true;
+        }
+        if(command.endsWith("!")){
+            forceExecution = true;
+            command = command.slice(0, -1);
+            changed = true;
+        }
+        if(command.startsWith("?")){
+            conditional = true;
+            command = command.slice(1);
+            changed = true;
+        }
+        if(command.endsWith("?")){
+            conditional = true;
+            command = command.slice(0, -1);
+            changed = true;
         }
     }
+    return {
+        command,
+        conditional,
+        forceExecution
+    };
+}
 
 
 function findFirstDifference(str1, str2) {
@@ -721,11 +768,15 @@ function parseCommandsForUI(commandsBlock, chapterId, paragraphId) {
         let varName = splitCommand.splice(0, 1)[0];
         parsedCommand.varName = varName.slice(1);
         let command = splitCommand.splice(0, 1)[0];
-        if (command.startsWith("?")){
-            command = command.slice(1);
+        let commandConfig = parseExecutionConfig(command);
+        parsedCommand.command = commandConfig.command;
+        if(commandConfig.conditional){
             parsedCommand.conditional = true;
         }
-        parsedCommand.command = command;
+        if(commandConfig.forceExecution){
+            parsedCommand.forceExecution = true;
+        }
+        command = parsedCommand.command;
         if(command === "new"){
             parsedCommand.customType = splitCommand.splice(0, 1)[0];
         }

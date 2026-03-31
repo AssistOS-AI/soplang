@@ -79,13 +79,14 @@
                     <pre><code class="language-sop">@v1 := Hello
 @pipeConcat def 'return args.join("|")'
 @v2 ?pipeConcat $v1 World!
-@v3 ?:= $v1 World!</code></pre>
-                    <p>This example is based on <code>tests/pipelines/basic/implicitConditionalsTest.mjs</code>. <code>pipeConcat</code> becomes a callable command after definition and can be guarded with <code>?</code>.</p>
+@v3 ?:= $v1 World!
+@v4 !pipeConcat $v1 World!</code></pre>
+                    <p>This example is based on <code>tests/pipelines/basic/implicitConditionalsTest.mjs</code> and runtime behavior validated by <code>tests/pipelines/basic/forceExecutionTest.mjs</code>. <code>pipeConcat</code> becomes a callable command after definition and can be guarded with <code>?</code> or forced with <code>!</code>.</p>
                 </section>
 
                 <section>
                     <h2>Step-by-Step Interaction</h2>
-                    <p>The line <code>@pipeConcat def ...</code> creates a new command entry named <code>pipeConcat</code> in the command registry, and the runtime keeps that function available for subsequent command calls in the same execution context. The line <code>@v2 ?pipeConcat $v1 World!</code> then invokes that newly declared command in guarded mode, which means execution only proceeds when every direct input is both defined and non-empty. The line <code>@v3 ?:= $v1 World!</code> demonstrates the same guarded execution rule on the built-in assign alias, so the example shows that guarded semantics are not limited to user-defined commands.</p>
+                    <p>The line <code>@pipeConcat def ...</code> creates a new command entry named <code>pipeConcat</code> in the command registry, and the runtime keeps that function available for subsequent command calls in the same execution context. The line <code>@v2 ?pipeConcat $v1 World!</code> then invokes that newly declared command in guarded mode, which means execution only proceeds when every direct input is both defined and non-empty. The line <code>@v3 ?:= $v1 World!</code> demonstrates the same guarded execution rule on the built-in assign alias, while <code>@v4 !pipeConcat ...</code> shows forced execution where command evaluation is attempted on every build pass.</p>
                 </section>
 
                 <section>

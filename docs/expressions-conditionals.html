@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expressions and Conditionals · SOP-Lang Docs</title>
+    <title>Expressions, Conditionals, and Execution Modifiers · SOP-Lang Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -64,7 +64,7 @@
 
             <div class="doc-main">
                 <section class="lead">
-                    <h1>Asserts, Math, if, Sub-Commands, and ?</h1>
+                    <h1>Asserts, Math, if, Sub-Commands, ?, and !</h1>
                     <p>
                         SOP Lang includes a set of expression-oriented primitives that define boolean or numeric variables directly, and conditional constructs that preserve the reactive properties of the language.
                     </p>
@@ -149,6 +149,26 @@
 @confirmationMessage if [assert $paymentStatus == "SUCCESS"] then "Payment Confirmed!" else "Payment Pending or Failed"</code></pre>
                     <p>If any guarded input is undefined at evaluation time, guarded execution is skipped and the output remains undefined until a future reactive pass where all required inputs are present.</p>
                     <p>This mechanism acts as a practical safeguard in dependency chains where values may be populated by user input, asynchronous system updates, or delayed computations.</p>
+                </section>
+
+                <section>
+                    <h2>Forced Execution with !</h2>
+                    <p>Forced execution is accepted with <code>!</code> as both prefix and suffix (<code>!command</code> and <code>command!</code>). It forces evaluation on every build pass, even when the variable dependency clocks did not change. This is useful when command outputs depend on external state that is not visible in graph dependencies (for example filesystem polling or external script reload checks).</p>
+                    <pre><code class="language-sop">@snapshot !files "./incoming/*.json"
+@scriptState !import "MyApp" "MainScript"
+
+@counter jsdef
+    if(globalThis.counter === undefined){
+        globalThis.counter = 0
+    }
+    globalThis.counter++
+    return globalThis.counter
+end
+
+@normal counter
+@forced !counter
+@forcedSuffix counter!</code></pre>
+                    <p>In this model, recomputation policy becomes explicit in script code: commands run reactively by default, and <code>!</code> is the opt-in override for always-execute semantics.</p>
                 </section>
             </div>
         </div>

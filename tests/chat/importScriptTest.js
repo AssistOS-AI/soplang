@@ -15,7 +15,7 @@ let mockScriptPath = path.join(scriptsPath, "MockChatScript.sop");
 await fsPromises.mkdir(scriptsPath, { recursive: true });
 await fsPromises.writeFile(mockScriptPath, mockChatScript);
 
-let scriptImport = `@source import TestApp MockChatScript`;
+let scriptImport = `@source !import TestApp MockChatScript`;
 let docId = await workspace.runCode(scriptImport);
 
 let modifiedDefaultScript = `

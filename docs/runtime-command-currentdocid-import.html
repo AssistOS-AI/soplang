@@ -71,7 +71,10 @@
                 <section>
                     <h2>Syntax</h2>
                     <pre><code class="language-sop">@curDocId currentDocId
-import "myApp" "mainChatScript"</code></pre>
+import "myApp" "mainChatScript"
+
+# force import check each build pass
+!import "myApp" "mainChatScript"</code></pre>
                 </section>
 
                 <section>
@@ -79,8 +82,9 @@ import "myApp" "mainChatScript"</code></pre>
                     <pre><code class="language-sop">@curDocId currentDocId
 @agent7 alias $curDocId agent1</code></pre>
                     <p>Example based on <code>tests/pipelines/customTypes/fakeAgentTest.mjs</code>. <code>currentDocId</code> returns the current document id string and is useful for dynamic aliasing or contextual method calls.</p>
-                    <pre><code class="language-sop">import "myApp" "mainChatScript"</code></pre>
-                    <p><code>import</code> expects two arguments: <code>appName</code> and <code>scriptName</code>. Runtime loads script text via CodeManager, parses commands, defines variables in current document, and restarts build if definitions changed.</p>
+                    <pre><code class="language-sop">import "myApp" "mainChatScript"
+!import "myApp" "mainChatScript"</code></pre>
+                    <p><code>import</code> expects two arguments: <code>appName</code> and <code>scriptName</code>. Runtime loads script text via CodeManager, parses commands, defines variables in current document, and restarts build if definitions changed. Use <code>!import</code> when external script state must be rechecked on every build cycle.</p>
                 </section>
 
                 <section>
@@ -90,7 +94,7 @@ import "myApp" "mainChatScript"</code></pre>
 
                 <section>
                     <h2>Runtime Behavior Notes</h2>
-                    <p>The <code>currentDocId</code> command is intentionally minimal and deterministic, because its only responsibility is to expose document context as data. The <code>import</code> command is structural and potentially disruptive by design, because it can redefine variables and commands inside the active graph. For that reason, missing import parameters raise runtime errors immediately, and successful imports can trigger a controlled rebuild phase to keep graph state coherent.</p>
+                    <p>The <code>currentDocId</code> command is intentionally minimal and deterministic, because its only responsibility is to expose document context as data. The <code>import</code> command is structural and potentially disruptive by design, because it can redefine variables and commands inside the active graph. For that reason, missing import parameters raise runtime errors immediately, and successful imports can trigger a controlled rebuild phase to keep graph state coherent. Use <code>!import</code> or <code>import!</code> to force import execution on every build pass.</p>
                 </section>
             </div>
         </div>

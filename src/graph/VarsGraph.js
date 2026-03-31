@@ -402,6 +402,42 @@ function VarsGraph(commandsRegistry) {
         }
         return false;
     }
+
+    function parseExecutionFlags(parsedCommand){
+        let intendedCommand = parsedCommand.command;
+        let conditional = parsedCommand.conditional === true;
+        let forceExecution = parsedCommand.forceExecution === true;
+        let changed = true;
+        while(changed){
+            changed = false;
+            if(intendedCommand.startsWith("!")){
+                forceExecution = true;
+                intendedCommand = intendedCommand.slice(1);
+                changed = true;
+            }
+            if(intendedCommand.endsWith("!")){
+                forceExecution = true;
+                intendedCommand = intendedCommand.slice(0, -1);
+                changed = true;
+            }
+            if(intendedCommand.startsWith("?")){
+                conditional = true;
+                intendedCommand = intendedCommand.slice(1);
+                changed = true;
+            }
+            if(intendedCommand.endsWith("?")){
+                conditional = true;
+                intendedCommand = intendedCommand.slice(0, -1);
+                changed = true;
+            }
+        }
+        return {
+            intendedCommand,
+            conditional,
+            forceExecution
+        };
+    }
+
     async function runCommand(targetVar, buildInstance) {
         function isChain(command) {
             return command.includes(".");
@@ -428,7 +464,8 @@ function VarsGraph(commandsRegistry) {
         let inputValues = []
         let debugActivatedForCommand = false;
 
-        let intendedCommand = parsedCommand.command;
+        let executionFlags = parseExecutionFlags(parsedCommand);
+        let intendedCommand = executionFlags.intendedCommand;
 
         if(targetVar.referencedVariable){
             let isSafeToReturnTheValueOfTheAlias = true;
@@ -481,12 +518,7 @@ function VarsGraph(commandsRegistry) {
             return await resolveValue(targetVar.varId);
         }
 
-        if (intendedCommand.startsWith("?") || intendedCommand.endsWith("?")) {
-            if (intendedCommand.startsWith("?")) {
-                intendedCommand = intendedCommand.substring(1);
-            } else {
-                intendedCommand = intendedCommand.slice(0, -1);
-            }
+        if (executionFlags.conditional) {
             for (let i = 0; i < inputValues.length; i++) {
                 if (inputValues[i] === null || inputValues[i] === "" || inputValues[i] === undefined) {
                     return undefined;
@@ -547,7 +579,8 @@ function VarsGraph(commandsRegistry) {
                 }
             }
         }
-        if(variable.parsedCommand.command === "import" || variable.parsedCommand.command === "files" || variable.parsedCommand.command === "glob"){
+        let executionFlags = parseExecutionFlags(variable.parsedCommand);
+        if(executionFlags.forceExecution){
             mustRecompute = true;
         }
         if (mustRecompute) {

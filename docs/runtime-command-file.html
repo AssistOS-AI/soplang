@@ -71,7 +71,10 @@
                 <section>
                     <h2>Syntax</h2>
                     <pre><code class="language-sop">@matches files "./data/**/*.txt"
-@sameResult glob "/tmp/logs/*.{txt,log}"</code></pre>
+@sameResult glob "/tmp/logs/*.{txt,log}"
+
+# force refresh each build pass
+@pollingSnapshot !files "./data/**/*.txt"</code></pre>
                 </section>
 
                 <section>
@@ -91,7 +94,7 @@
 
                 <section>
                     <h2>Runtime Behavior Notes</h2>
-                    <p>The command expects exactly one non-empty string argument (Unix glob pattern), and the runtime records an error if that contract is not respected. Relative patterns are resolved deterministically according to document path first and process directory second. Stable metadata leads to value reuse by design, while filesystem failures produce undefined outputs accompanied by explicit error information. This behavior makes the command safe as both a watcher trigger and a build dependency anchor.</p>
+                    <p>The command expects exactly one non-empty string argument (Unix glob pattern), and the runtime records an error if that contract is not respected. Relative patterns are resolved deterministically according to document path first and process directory second. Stable metadata leads to value reuse by design, while filesystem failures produce undefined outputs accompanied by explicit error information. Use <code>!files</code>/<code>files!</code> or <code>!glob</code>/<code>glob!</code> when you need forced polling semantics on every build pass.</p>
                 </section>
             </div>
         </div>

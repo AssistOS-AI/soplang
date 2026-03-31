@@ -17,6 +17,8 @@ const commands = `
        return 1;
     end
     @result ?verify $docVar1
+    @forcedResult !verify $docVar1
+    @forcedSuffixResult verify! $docVar1
 `;
 
 let docId = await workspace.runCode(commands);
@@ -26,6 +28,15 @@ await $$.checkValue(parsedCommands[0].varName, "docVar1");
 await $$.checkValue(parsedCommands[1].command, "new");
 await $$.checkValue(parsedCommands[1].customType, "Table");
 await $$.checkValue(parsedCommands[2].params, ["hello", "~world"]);
+let guardedResult = parsedCommands.find((cmd) => cmd.varName === "result");
+await $$.checkValue(guardedResult.command, "verify");
+await $$.checkValue(guardedResult.conditional, true);
+let forcedResult = parsedCommands.find((cmd) => cmd.varName === "forcedResult");
+await $$.checkValue(forcedResult.command, "verify");
+await $$.checkValue(forcedResult.forceExecution, true);
+let forcedSuffixResult = parsedCommands.find((cmd) => cmd.varName === "forcedSuffixResult");
+await $$.checkValue(forcedSuffixResult.command, "verify");
+await $$.checkValue(forcedSuffixResult.forceExecution, true);
 
 let chapterCommands = `
     @ch0 := "ch var 0"
