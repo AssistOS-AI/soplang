@@ -41,7 +41,6 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
@@ -56,6 +55,7 @@
                                 <a href="complex-type-workflow.html">Workflow</a>
                                 <a href="complex-type-chat.html">Chat</a>
                                 <a href="complex-type-form.html">Form</a>
+                                <a href="complex-type-folder.html">Folder</a>
                             </div>
                         </details>
                     </nav>
@@ -76,7 +76,6 @@
                         <li><a href="runtime-command-form.html"><code>form</code></a>: block command parsed into structured field specifications and exposed as <code>Form</code> objects.</li>
                         <li><a href="runtime-command-new-lookup.html"><code>new</code> / <code>lookup</code></a>: creation and retrieval of custom type instances.</li>
                         <li><a href="runtime-command-overwrite.html"><code>overwrite</code></a>: controlled mutation of simple assign-derived values and aliases.</li>
-                        <li><a href="runtime-command-file.html"><code>files</code> / <code>glob</code></a>: file-set probe that expands a Unix glob pattern and returns sorted metadata objects (<code>path</code>, <code>mtimeMs</code>, <code>ctimeMs</code>).</li>
                         <li><a href="runtime-command-best.html"><code>best</code></a>: retry-and-score loop command (<code>retries</code>, <code>scoreCommand</code>, <code>workCommand</code>, <code>args...</code>) for selecting best result.</li>
                         <li><a href="runtime-command-currentdocid-import.html"><code>currentDocId</code> and <code>import</code></a>: current document context and script import behavior.</li>
                     </ul>
@@ -100,6 +99,7 @@
                         <li><code>Table</code>: table row insertion and merge semantics with computed columns and row identifiers.</li>
                         <li><code>Set</code>: container operations plus macro-driven mapping and jsdef-based filtering/reduction semantics.</li>
                         <li><code>Workflow</code>, <code>Chat</code>, <code>Form</code>: orchestration entities for interactive workflows and conversation handling.</li>
+                        <li><code>Folder</code>: filesystem-aware helper object for absolute-path resolution and change detection with <code>folder.newer</code>.</li>
                     </ul>
                     <pre><code class="language-sop">@doc new Document "doc1"
 doc.setChapterTitle 1 "Title for chapter 1"
@@ -113,7 +113,7 @@ doc.setChapterTitle 1 "Title for chapter 1"
 
                 <section>
                     <h2>Execution Model Notes</h2>
-                    <p>Runtime execution is graph-based and clock-driven: variables are recomputed when dependency clocks indicate stale outputs. Aliases, macro expansions, and special commands such as <code>files</code>/<code>glob</code> and <code>import</code> are integrated into this same build cycle.</p>
+                    <p>Runtime execution is graph-based and clock-driven: variables are recomputed when dependency clocks indicate stale outputs. Aliases, macro expansions, object methods such as <code>folder.newer</code>, and commands such as <code>import</code> are integrated into this same build cycle.</p>
                 </section>
             </div>
         </div>

@@ -351,6 +351,7 @@ const createRegistry = async function (workspace) {
     await import("../predefined/Workflow.js");
     await import("../predefined/Form.js");
     await import("../predefined/Chat.js");
+    await import("../predefined/Folder.js");
 
     let {ifCommand} = await import("../predefined/ifCommand.js");
     registry.registerCommand("ifCommand", ifCommand);
@@ -365,10 +366,6 @@ const createRegistry = async function (workspace) {
     let {math, assert} = await import("../predefined/evalCommands.js");
     registry.registerCommand("math", math);
     registry.registerCommand("assert", assert);
-
-    let {files, glob} = await import("../predefined/filesCommand.js");
-    registry.registerCommand("files", files);
-    registry.registerCommand("glob", glob);
 
     return registry;
 }

@@ -94,7 +94,7 @@ const lookupInstance = async (currentDocId,  typeName, outputVarName, primaryKey
     return instance;
 }
 const getTypes = () => {
-    return ["Document", "Table", "Agent", "Set"]
+    return ["Document", "Table", "Agent", "Set", "Folder"]
 }
 
 $$.registerCustomType = registerType;

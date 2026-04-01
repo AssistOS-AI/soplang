@@ -41,7 +41,6 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
@@ -56,6 +55,7 @@
                                 <a href="complex-type-workflow.html">Workflow</a>
                                 <a href="complex-type-chat.html">Chat</a>
                                 <a href="complex-type-form.html">Form</a>
+                                <a href="complex-type-folder.html">Folder</a>
                             </div>
                         </details>
                     </nav>
@@ -84,6 +84,7 @@
                         <li><a href="complex-type-workflow.html"><code>Workflow</code> Type</a>: multi-form question/answer orchestration.</li>
                         <li><a href="complex-type-chat.html"><code>Chat</code> Type</a>: context and history driven conversation orchestration.</li>
                         <li><a href="complex-type-form.html"><code>Form</code> Type</a>: structured field definitions for workflow interactions.</li>
+                        <li><a href="complex-type-folder.html"><code>Folder</code> Type</a>: path resolution and filesystem change detection through <code>newer</code>.</li>
                     </ul>
                 </section>
 
@@ -96,7 +97,10 @@
 @world0 := "World 0"
 @world1 := "World 1"
 @worldSet new Set world0 world1
-@firstWorld worldSet.first</code></pre>
+@firstWorld worldSet.first
+
+@specsFolder new Folder "./specs"
+@specsChanged !specsFolder.newer "./specs"</code></pre>
                 </section>
 
                 <section>

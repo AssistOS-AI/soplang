@@ -41,7 +41,6 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
@@ -56,6 +55,7 @@
                                 <a href="complex-type-workflow.html">Workflow</a>
                                 <a href="complex-type-chat.html">Chat</a>
                                 <a href="complex-type-form.html">Form</a>
+                                <a href="complex-type-folder.html">Folder</a>
                             </div>
                         </details>
                     </nav>
@@ -154,7 +154,8 @@
                 <section>
                     <h2>Forced Execution with !</h2>
                     <p>Forced execution is accepted with <code>!</code> as both prefix and suffix (<code>!command</code> and <code>command!</code>). It forces evaluation on every build pass, even when the variable dependency clocks did not change. This is useful when command outputs depend on external state that is not visible in graph dependencies (for example filesystem polling or external script reload checks).</p>
-                    <pre><code class="language-sop">@snapshot !files "./incoming/*.json"
+                    <pre><code class="language-sop">@watcher new Folder "./incoming"
+@snapshot !watcher.newer "./incoming"
 @scriptState !import "MyApp" "MainScript"
 
 @counter jsdef

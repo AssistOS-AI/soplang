@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>files / glob · SOP-Lang Docs</title>
+    <title>Folder Type · SOP-Lang Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Full Command Catalog","href":"runtime-commands.html"},{"label":"files / glob"}]'></div>
+    <div id="site-header" data-breadcrumb='[{"label":"Home","href":"index.html"},{"label":"Built-in Objects","href":"complex-types.html"},{"label":"Folder Type"}]'></div>
 
     <main class="content content--with-sidebar">
         <div class="doc-layout">
@@ -32,7 +32,7 @@
                                 <div class="doc-sidebar__group">
                     <p class="doc-sidebar__group-title">Command Reference</p>
                     <nav>
-                        <details id="details-catalog" open>
+                        <details id="details-catalog">
                             <summary>Full Command Catalog</summary>
                             <div class="doc-sidebar__nested">
                                 <a href="runtime-commands.html">Overview</a>
@@ -41,12 +41,11 @@
                                 <a href="runtime-command-form.html">form</a>
                                 <a href="runtime-command-new-lookup.html">new / lookup</a>
                                 <a href="runtime-command-overwrite.html">overwrite</a>
-                                <a href="runtime-command-file.html" aria-current="page">files / glob</a>
                                 <a href="runtime-command-best.html">best</a>
                                 <a href="runtime-command-currentdocid-import.html">context / import</a>
                             </div>
                         </details>
-                        <details id="details-objects">
+                        <details id="details-objects" open>
                             <summary>Built-in Objects</summary>
                             <div class="doc-sidebar__nested">
                                 <a href="complex-types.html">Overview</a>
@@ -56,6 +55,7 @@
                                 <a href="complex-type-workflow.html">Workflow</a>
                                 <a href="complex-type-chat.html">Chat</a>
                                 <a href="complex-type-form.html">Form</a>
+                                <a href="complex-type-folder.html" aria-current="page">Folder</a>
                             </div>
                         </details>
                     </nav>
@@ -64,37 +64,29 @@
 
             <div class="doc-main">
                 <section class="lead">
-                    <h1>files / glob</h1>
-                    <p><code>files</code> (alias <code>glob</code>) resolves a Unix glob pattern and returns an array of file metadata objects (<code>path</code>, <code>mtimeMs</code>, <code>ctimeMs</code>). It is used as reactive trigger for pipelines depending on file set and content changes.</p>
+                    <h1>Folder Type</h1>
+                    <p>The <code>Folder</code> Complex Type resolves document-relative paths and tracks filesystem changes with <code>newer</code>. It works for both folder paths and file paths.</p>
                 </section>
 
                 <section>
-                    <h2>Syntax</h2>
-                    <pre><code class="language-sop">@matches files "./data/**/*.txt"
-@sameResult glob "/tmp/logs/*.{txt,log}"
-
-# force refresh each build pass
-@pollingSnapshot !files "./data/**/*.txt"</code></pre>
+                    <h2>Creation Syntax</h2>
+                    <pre><code class="language-sop">@specsFolder new Folder "./test-skill/specs"
+@specsPath := $specsFolder.path</code></pre>
+                    <p>The <code>path</code> property returns the absolute path resolved from document path + constructor relative path.</p>
                 </section>
 
                 <section>
-                    <h2>Example</h2>
-                    <pre><code class="language-sop">@topLevel files "./fixtures/*.txt"
-@recursive glob "./fixtures/**/*.txt"
-
-# later, pattern is replaced:
-@topLevel files "./fixtures/nested/*.txt"</code></pre>
-                    <p>Validated in <code>tests/pipelines/basic/filesCommandTest.mjs</code>. The test covers both <code>files</code> and <code>glob</code>, using different patterns (<code>*</code>, <code>**</code>, <code>?</code>, brace expansion) and checking clock behavior when matches change.</p>
+                    <h2>Change Detection</h2>
+                    <pre><code class="language-sop">@specsFolder new Folder "./test-skill/specs"
+@specsChanged !specsFolder.newer "./test-skill/specs"
+@indexChanged !specsFolder.newer "./test-skill/specs/index.md"</code></pre>
+                    <p><code>newer</code> receives one relative path argument and resolves it against document path. It returns <code>true</code> when the tracked target changed since the previous check, including mtime/ctime updates, file creation, and file deletion.</p>
                 </section>
 
                 <section>
                     <h2>Step-by-Step Interaction</h2>
-                    <p>The runtime resolves the glob pattern either relative to the document source path, when that context exists, or relative to the current working directory otherwise. It then expands matches and reads stat metadata for every matched file, producing a sorted array of objects with <code>path</code>, <code>mtimeMs</code>, and <code>ctimeMs</code>. When file metadata or the matched set changes, dependent variables are invalidated and recomputed.</p>
-                </section>
-
-                <section>
-                    <h2>Runtime Behavior Notes</h2>
-                    <p>The command expects exactly one non-empty string argument (Unix glob pattern), and the runtime records an error if that contract is not respected. Relative patterns are resolved deterministically according to document path first and process directory second. Stable metadata leads to value reuse by design, while filesystem failures produce undefined outputs accompanied by explicit error information. Use <code>!files</code>/<code>files!</code> or <code>!glob</code>/<code>glob!</code> when you need forced polling semantics on every build pass.</p>
+                    <p>The first check for a specific target path returns <code>true</code> and initializes the baseline snapshot. Subsequent checks return <code>false</code> while the snapshot is unchanged, then return <code>true</code> again after any detected filesystem change. For directories, detection is recursive and includes appearance/disappearance of files in subfolders.</p>
+                    <p>This behavior is validated in <code>tests/pipelines/customTypes/FolderTest.mjs</code>, including relative <code>docPath</code> resolution and file/folder change scenarios.</p>
                 </section>
             </div>
         </div>
