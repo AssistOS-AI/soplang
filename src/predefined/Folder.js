@@ -138,18 +138,22 @@ function Folder(docId, varName) {
             return undefined;
         }
 
-        let inputPath = inputValues[0];
-        if (typeof inputPath !== "string" || inputPath.trim().length === 0) {
-            await updateErrorInfo(outputVarId, "Invalid Folder.newer call. Path must be a non-empty string");
-            return undefined;
-        }
-
         let baseDir = self.baseDir;
         if (docPath) {
             baseDir = await resolveDocBaseDir(docPath);
         }
 
-        let absolutePath = path.resolve(baseDir, inputPath.trim());
+        let inputPath = inputValues[0];
+        let absolutePath;
+        if (typeof inputPath === "string" && inputPath.trim().length > 0) {
+            absolutePath = path.resolve(baseDir, inputPath.trim());
+        } else if (inputPath && inputPath.__type === "Folder" && typeof inputPath.path === "string" && inputPath.path.trim().length > 0) {
+            absolutePath = path.isAbsolute(inputPath.path) ? inputPath.path : path.resolve(baseDir, inputPath.path);
+        } else {
+            await updateErrorInfo(outputVarId, "Invalid Folder.newer call. Argument must be a non-empty path string or a Folder instance");
+            return undefined;
+        }
+
         let currentSnapshot = await buildFolderSnapshot(absolutePath);
         let previousSnapshot = self.snapshots[absolutePath];
         let changed = previousSnapshot === undefined ? true : !sameValue(previousSnapshot, currentSnapshot);

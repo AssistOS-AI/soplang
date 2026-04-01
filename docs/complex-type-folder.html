@@ -78,9 +78,11 @@
                 <section>
                     <h2>Change Detection</h2>
                     <pre><code class="language-sop">@specsFolder new Folder "./test-skill/specs"
+@nestedFolder new Folder "./test-skill/specs/nested"
 @specsChanged !specsFolder.newer "./test-skill/specs"
-@indexChanged !specsFolder.newer "./test-skill/specs/index.md"</code></pre>
-                    <p><code>newer</code> receives one relative path argument and resolves it against document path. It returns <code>true</code> when the tracked target changed since the previous check, including mtime/ctime updates, file creation, and file deletion.</p>
+@indexChanged !specsFolder.newer "./test-skill/specs/index.md"
+@nestedChanged !specsFolder.newer $nestedFolder</code></pre>
+                    <p><code>newer</code> receives one argument that can be either a relative path string (resolved against document path) or a <code>Folder</code> instance (in which case it uses that instance's <code>path</code> property). It returns <code>true</code> when the tracked target changed since the previous check, including mtime/ctime updates, file creation, and file deletion.</p>
                 </section>
 
                 <section>

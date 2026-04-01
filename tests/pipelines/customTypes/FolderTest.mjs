@@ -29,9 +29,11 @@ await fsPromises.writeFile(pathA, "Initial content A", "utf8");
 await fsPromises.writeFile(pathB, "Initial content B", "utf8");
 
 let sourceDocCommands = `@specsFolder new Folder "./tracked"
+@nestedFolder new Folder "./tracked/nested"
 @resolvedPath := $specsFolder.path
 @dirChanged !specsFolder.newer "./tracked"
 @fileChanged !specsFolder.newer "./tracked/fileA.txt"
+@fromFolderArg !specsFolder.newer $nestedFolder
 `;
 
 await fsPromises.writeFile(sourceDocPath, sourceDocCommands, "utf8");
@@ -59,16 +61,19 @@ try {
     await $$.checkDocVar(relativeDocId, "resolvedPath", expectedFolderPath);
     await $$.checkDocVar(relativeDocId, "dirChanged", true);
     await $$.checkDocVar(relativeDocId, "fileChanged", true);
+    await $$.checkDocVar(relativeDocId, "fromFolderArg", true);
 
     await workspace.buildOnlyForDocument(relativeDocId);
     await $$.checkDocVar(relativeDocId, "dirChanged", false);
     await $$.checkDocVar(relativeDocId, "fileChanged", false);
+    await $$.checkDocVar(relativeDocId, "fromFolderArg", false);
 
     await waitForFsTick();
     await fsPromises.writeFile(pathB, "Initial content B\nchanged", "utf8");
     await workspace.buildOnlyForDocument(relativeDocId);
     await $$.checkDocVar(relativeDocId, "dirChanged", true);
     await $$.checkDocVar(relativeDocId, "fileChanged", false);
+    await $$.checkDocVar(relativeDocId, "fromFolderArg", true);
 
     await workspace.buildOnlyForDocument(relativeDocId);
     await $$.checkDocVar(relativeDocId, "dirChanged", false);
