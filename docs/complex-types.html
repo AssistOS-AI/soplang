@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complex Types · SOP-Lang Docs</title>
+    <title>Complex Types · SOP-Lang Pipeline Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 
     <main class="content content--with-sidebar">
         <div class="doc-layout">
-                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang Pipeline documentation groups">
                 <div class="doc-sidebar__group">
                     <p class="doc-sidebar__group-title">The Basics</p>
                     <nav>
@@ -65,7 +65,7 @@
             <div class="doc-main">
                 <section class="lead">
                     <h1>The new Command and Complex Types</h1>
-                    <p>SOP Lang extends beyond simple variable declarations and commands through its support for Complex Types, instantiated using the <code>new</code> command. These Complex Types represent more structured entities and support both data fields and methods.</p>
+                    <p>SOP Lang Pipeline extends beyond simple variable declarations and commands through its support for Complex Types, instantiated using the <code>new</code> command. These Complex Types represent more structured entities and support both data fields and methods.</p>
                 </section>
 
                 <section>
@@ -76,7 +76,7 @@
 
                 <section>
                     <h2>Current Type Families</h2>
-                    <p>Complex Types represent SOP-Lang entities that are both data carriers and behaviour containers. This dual role allows object-like modelling while preserving reactive dependency semantics.</p>
+                    <p>Complex Types represent SOP-Lang Pipeline entities that are both data carriers and behaviour containers. This dual role allows object-like modelling while preserving reactive dependency semantics.</p>
                     <ul>
                         <li><a href="complex-type-document.html"><code>Document</code> Type</a>: document metadata and chapter/paragraph command APIs.</li>
                         <li><a href="complex-type-table.html"><code>Table</code> Type</a>: tabular rows, computed columns, upsert and exwipe flows.</li>
@@ -105,7 +105,7 @@
 
                 <section>
                     <h2>new and lookup</h2>
-                    <p>Complex Type instances are created with <code>new</code>. Existing persistent instances can be resolved with <code>lookup</code> when the type implements lookup semantics. This pairing allows SOP-Lang code to work both with newly instantiated entities and with previously stored entities.</p>
+                    <p>Complex Type instances are created with <code>new</code>. Existing persistent instances can be resolved with <code>lookup</code> when the type implements lookup semantics. This pairing allows SOP-Lang Pipeline code to work both with newly instantiated entities and with previously stored entities.</p>
                     <pre><code class="language-sop">@agent1 new FakeAgent 007Agent
 @agent2 lookup FakeAgent Einstein
 @resp1 agent1.ask "What is your name?"

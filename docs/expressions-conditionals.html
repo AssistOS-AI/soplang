@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expressions, Conditionals, and Execution Modifiers · SOP-Lang Docs</title>
+    <title>Expressions, Conditionals, and Execution Modifiers · SOP-Lang Pipeline Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 
     <main class="content content--with-sidebar">
         <div class="doc-layout">
-                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang Pipeline documentation groups">
                 <div class="doc-sidebar__group">
                     <p class="doc-sidebar__group-title">The Basics</p>
                     <nav>
@@ -66,13 +66,13 @@
                 <section class="lead">
                     <h1>Asserts, Math, if, Sub-Commands, ?, and !</h1>
                     <p>
-                        SOP Lang includes a set of expression-oriented primitives that define boolean or numeric variables directly, and conditional constructs that preserve the reactive properties of the language.
+                        SOP Lang Pipeline includes a set of expression-oriented primitives that define boolean or numeric variables directly, and conditional constructs that preserve the reactive properties of the language.
                     </p>
                 </section>
 
                 <section>
                     <h2>assert Expressions</h2>
-                    <p>In SOP Lang, the <code>assert</code> command defines a variable that holds the boolean result of an expression. Its syntax is <code>@booleanVariable assert boolean_expression</code>.</p>
+                    <p>In SOP Lang Pipeline, the <code>assert</code> command defines a variable that holds the boolean result of an expression. Its syntax is <code>@booleanVariable assert boolean_expression</code>.</p>
                     <pre><code class="language-sop">@temperature := 22
 @isGoodWeather assert $temperature &gt; 20
 
@@ -87,13 +87,13 @@
 
                 <section>
                     <h2>math Expressions</h2>
-                    <p>In SOP Lang, the <code>math</code> command defines a variable that holds the numeric result of a mathematical expression. Its syntax is <code>@numericVariable math numerical_expression</code>.</p>
+                    <p>In SOP Lang Pipeline, the <code>math</code> command defines a variable that holds the numeric result of a mathematical expression. Its syntax is <code>@numericVariable math numerical_expression</code>.</p>
                     <pre><code class="language-sop">@length := 10
 @width := 5
 @area math $length * $width
 
 # @area => 50</code></pre>
-                    <p>Like <code>assert</code>, this command is reactive and recalculates when dependencies change. SOP Lang's <code>math</code> command supports standard JavaScript mathematical operators and parenthesised grouping.</p>
+                    <p>Like <code>assert</code>, this command is reactive and recalculates when dependencies change. SOP Lang Pipeline's <code>math</code> command supports standard JavaScript mathematical operators and parenthesised grouping.</p>
                     <pre><code class="language-sop">@itemPrice := 75
 @quantity := 2
 @discountPercentage := 10
@@ -138,7 +138,7 @@
 
                 <section>
                     <h2>Conditional Execution with ?</h2>
-                    <p>In SOP Lang, managing asynchronous data flow and undefined values is crucial, especially for commands with side effects. Prefixing a command with <code>?</code> makes execution conditional on all direct inputs being defined and non-empty.</p>
+                    <p>In SOP Lang Pipeline, managing asynchronous data flow and undefined values is crucial, especially for commands with side effects. Prefixing a command with <code>?</code> makes execution conditional on all direct inputs being defined and non-empty.</p>
                     <p>In the current runtime, this conditional marker is accepted as prefix and suffix for command names (<code>?command</code> and <code>command?</code>). For member calls, it is supported as <code>object.?method</code>.</p>
                     <pre><code class="language-sop">@creditCardNumber
 @expiryDate

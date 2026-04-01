@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Macros and JSDEF · SOP-Lang Docs</title>
+    <title>Macros and JSDEF · SOP-Lang Pipeline Docs</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 
     <main class="content content--with-sidebar">
         <div class="doc-layout">
-                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang documentation groups">
+                        <aside class="doc-sidebar doc-sidebar--dense" aria-label="SOP-Lang Pipeline documentation groups">
                 <div class="doc-sidebar__group">
                     <p class="doc-sidebar__group-title">The Basics</p>
                     <nav>
@@ -65,7 +65,7 @@
             <div class="doc-main">
                 <section class="lead">
                     <h1>Macros</h1>
-                    <p>Macros are a fundamental feature in SOP Lang for creating abstractions and achieving modular programming. They allow grouping multiple SOP Lang commands into a reusable unit, which can accept input parameters and return an explicit output value.</p>
+                    <p>Macros are a fundamental feature in SOP Lang Pipeline for creating abstractions and achieving modular programming. They allow grouping multiple SOP Lang Pipeline commands into a reusable unit, which can accept input parameters and return an explicit output value.</p>
                 </section>
 
                 <section>
@@ -86,8 +86,8 @@ end
 
                 <section>
                     <h2>Custom Commands with JSDEF</h2>
-                    <p>SOP Lang provides a mechanism to define custom commands using JavaScript via <code>jsdef</code>. This is structurally similar to macros, but the body is JavaScript code.</p>
-                    <p>Parameters listed plainly are direct JavaScript variables, while context-bound parameters prefixed with <code>~</code> are accessible through <code>this</code>. The JavaScript <code>return</code> value is propagated back as the SOP-Lang command output.</p>
+                    <p>SOP Lang Pipeline provides a mechanism to define custom commands using JavaScript via <code>jsdef</code>. This is structurally similar to macros, but the body is JavaScript code.</p>
+                    <p>Parameters listed plainly are direct JavaScript variables, while context-bound parameters prefixed with <code>~</code> are accessible through <code>this</code>. The JavaScript <code>return</code> value is propagated back as the SOP-Lang Pipeline command output.</p>
                     <pre><code class="language-sop">@concatAB jsdef a b
     console.debug(">>> Executing function:concatAB with args:", a, b, this.__currentDocId);
     return a + " " + b;
@@ -103,7 +103,7 @@ end
 
 @result1 concatAB $hello $world
 @result2 runTest $hello</code></pre>
-                    <p>Commands defined with <code>jsdef</code> are reactive in the same way as other SOP-Lang constructs: changes in direct arguments or in bound context variables trigger re-execution.</p>
+                    <p>Commands defined with <code>jsdef</code> are reactive in the same way as other SOP-Lang Pipeline constructs: changes in direct arguments or in bound context variables trigger re-execution.</p>
                 </section>
 
                 <section>
@@ -118,7 +118,7 @@ end</code></pre>
 
                 <section>
                     <h2>Advanced Macro Patterns</h2>
-                    <p>Macros represent a fundamental mechanism for extending SOP Lang with custom primitives. By integrating them with map-like operations over collections, they support functional-style patterns and declarative generation of derived artefacts.</p>
+                    <p>Macros represent a fundamental mechanism for extending SOP Lang Pipeline with custom primitives. By integrating them with map-like operations over collections, they support functional-style patterns and declarative generation of derived artefacts.</p>
                     <p>Macros are also relevant in orchestration scenarios where external callers trigger macro execution. In practical deployments, this capability is used by environments such as Achilles IDE and can be connected with higher-level agent workflows managed through libraries like AchillesAgentLib.</p>
                     <p>They are instrumental in reactive logic for external events and can orchestrate heterogeneous agents and tools in complex conversational systems, including scenarios where multiple LLMs and specialised knowledge layers are involved.</p>
                 </section>
