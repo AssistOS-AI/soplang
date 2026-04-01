@@ -92,6 +92,8 @@
                 <section>
                     <h2>Accessing Structured Values</h2>
                     <p>SOP Lang supports dot-style member references such as <code>$item.field</code> in command parameters. At runtime, these references are normalised into internal chain-alias variables so that member access remains explicit in the dependency graph while preserving concise syntax in user code.</p>
+                    <p>If a variable holds a JSON-like object, its properties can be accessed directly with dot notation (for example <code>$result.age</code> or <code>$result.profile.name</code>).</p>
+                    <p>For custom type instances, dot notation has two roles: method invocation uses command-style member calls such as <code>@changed folder.newer "./specs"</code>, while instance properties are read through variable references such as <code>@absolutePath := $folder.path</code>.</p>
                 </section>
 
                 <section>
