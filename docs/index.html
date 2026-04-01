@@ -66,19 +66,21 @@
                 <section class="lead">
                     <h1>SOP-Lang Pipeline Current Specifications</h1>
                     <p>SOP-Lang Pipeline is a Domain-Specific Language (DSL) designed to be the glue of the ACHILLES IDE, orchestrating complex agent behaviours and build processes. Its parser and runtime are developed as a back-end concern, while complementary UI tools such as variable-state visualisation are developed in UI layers.</p>
-                    <p>This documentation describes the current state of SOP-Lang Pipeline as implemented in this repository. The material is sectioned into pages, but the writing style and conceptual order remain aligned with the original specification text.</p>
+                    <p>At a high level, SOP-Lang Pipeline is useful when you need to coordinate agent workflows declaratively instead of wiring imperative scripts by hand. It targets AI-agent build systems, reusable behaviour definitions, and structured document-driven automation where commands, data, and generated artefacts evolve together.</p>
+                    <p>The language is built for long-running, inspectable automation flows: each document can hold specifications, commands, and generated artefacts in one place, so teams can evolve behaviour incrementally without losing traceability.</p>
+                    <p>Within ACHILLES context, SOP-Lang Pipeline supports DSL-based agent behaviour design and build orchestration, the structured document concept, and variable-state visibility in the workspace UI.</p>
                     <p class="reading-path">
                         Recommended order: <a href="language-foundations.html">Foundations & Syntax</a> → <a href="assign-alias-await.html">Assign, Alias, Await</a> → <a href="expressions-conditionals.html">Math & Conditionals</a> → <a href="macros-jsdef.html">Macros & JS Logic</a> → <a href="complex-types.html">Built-in Objects</a> → <a href="runtime-commands.html">Full Command Catalog</a>.
                     </p>
                 </section>
 
                 <section class="highlight-box">
-                    <h3>Quick Start: Reactive Thinking</h3>
-                    <p>In SOP-Lang Pipeline, you don't call functions; you define variables that stay up-to-date automatically.</p>
+                    <h3>Quick Start: First Script</h3>
+                    <p>Minimal example for composing values through variables. Detailed execution semantics are covered in <a href="language-foundations.html">Language Foundations</a>.</p>
                     <pre><code class="language-sop">@name := "World"
 @greeting := "Hello, " $name
 
-# If @name changes elsewhere, @greeting re-evaluates instantly!</code></pre>
+# Basic variable composition</code></pre>
                     <p>Ready to dive in? Start with the <a href="language-foundations.html">Language Foundations</a>.</p>
                 </section>
 
@@ -106,7 +108,7 @@
 
                 <section>
                     <h2>Design Philosophy</h2>
-                    <p>SOP-Lang Pipeline prioritizes <strong>Prompt Engineering</strong>. Variable markers like <code>@</code> and <code>$</code> are chosen to avoid conflicts with natural language, making the scripts easy to read and write alongside LLM instructions.</p>
+                    <p>SOP-Lang Pipeline prioritizes <strong>Prompt Engineering</strong> and document-centered orchestration, so natural language intent and executable commands can coexist in the same workflow.</p>
                     <p>It is designed to interoperate with containerized agents and reactive UI layers, providing a stable execution model for non-deterministic AI tasks.</p>
                 </section>
             </div>
