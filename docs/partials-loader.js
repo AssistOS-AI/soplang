@@ -18,6 +18,7 @@ async function loadPartial(targetSelector, partialPath) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    injectSpecificationsSidebarLink();
     (async () => {
         const headerTarget = await loadPartial('#site-header', 'partials/header.html');
         if (headerTarget) {
@@ -26,6 +27,42 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
     loadPartial('#site-footer', 'partials/footer.html');
 });
+
+function injectSpecificationsSidebarLink() {
+    const sidebars = document.querySelectorAll('.doc-sidebar');
+    if (!sidebars.length) {
+        return;
+    }
+
+    const specsHref = 'specsLoader.html?spec=matrix.md';
+    const currentPage = window.location.pathname.split('/').pop() || '';
+
+    sidebars.forEach((sidebar) => {
+        if (sidebar.querySelector(`a[href="${specsHref}"]`)) {
+            return;
+        }
+
+        const group = document.createElement('div');
+        group.className = 'doc-sidebar__group';
+
+        const title = document.createElement('p');
+        title.className = 'doc-sidebar__group-title';
+        title.textContent = 'Specifications';
+
+        const nav = document.createElement('nav');
+        const link = document.createElement('a');
+        link.href = specsHref;
+        link.textContent = 'Design Specifications';
+        if (currentPage === 'specsLoader.html') {
+            link.setAttribute('aria-current', 'page');
+        }
+
+        nav.appendChild(link);
+        group.appendChild(title);
+        group.appendChild(nav);
+        sidebar.appendChild(group);
+    });
+}
 
 function enhancePageHeader(container) {
     let breadcrumbs = [];

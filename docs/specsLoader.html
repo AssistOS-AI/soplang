@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Specification Matrix - SOP-Lang Pipeline Docs</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .page { max-width: 1280px; margin: 0 auto; padding: 24px 20px 48px; }
+        .nav-header { margin-bottom: 16px; }
+        .nav-header h1 { margin: 0 0 8px; color: #0a1c3d; }
+        .spec-container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+        .spec-nav { background: #f5f5f5; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        #content { background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .error { color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div id="site-header"></div>
+    <div class="page">
+        <div class="nav-header">
+            <h1>Specification Matrix</h1>
+            <small>
+                <a href="index.html">Home</a> ·
+                <a href="specsLoader.html?spec=matrix.md">Specs</a> ·
+                <span id="current-spec">Loading...</span>
+            </small>
+        </div>
+
+        <div class="spec-container">
+            <div id="content">
+                <div class="loading">Loading specification...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SpecsLoader {
+            constructor() {
+                this.content = document.getElementById('content');
+                this.currentSpecSpan = document.getElementById('current-spec');
+                this.specPath = this.getSpecPath();
+                this.load();
+            }
+
+            getSpecPath() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('spec');
+            }
+
+            async load() {
+                if (!this.specPath) {
+                    window.location.href = 'specsLoader.html?spec=matrix.md';
+                    return;
+                }
+
+                try {
+                    this.currentSpecSpan.textContent = `Loading: ${this.specPath}`;
+                    const response = await fetch(`specs/${this.specPath}`);
+                    if (!response.ok) {
+                        throw new Error(`Specification not found: ${this.specPath}`);
+                    }
+                    const markdown = await response.text();
+                    const html = this.markdownToHtml(markdown);
+                    this.content.innerHTML = html;
+                    this.currentSpecSpan.textContent = this.specPath;
+                    this.scrollToHash();
+                    const titleMatch = markdown.match(/^#\s+(.+)$/m);
+                    if (titleMatch) {
+                        document.title = `${titleMatch[1]} - SOP-Lang Pipeline Docs`;
+                    }
+                } catch (error) {
+                    this.showError(error.message);
+                }
+            }
+
+            scrollToHash() {
+                const hash = decodeURIComponent(window.location.hash.slice(1));
+                if (!hash) return;
+                const target = document.getElementById(hash);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            showError(message) {
+                this.content.innerHTML = `
+                    <div class="error">
+                        <h3>Error Loading Specification</h3>
+                        <p>${message}</p>
+                        <p><a href="specsLoader.html?spec=matrix.md">Return to Specification Matrix</a></p>
+                    </div>
+                `;
+                this.currentSpecSpan.textContent = 'Error';
+            }
+
+            markdownToHtml(markdown) {
+                const escapeHtml = (text) => text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+
+                const renderStatus = (status) => {
+                    const normalized = status.toLowerCase();
+                    const labels = {
+                        passed: 'Passed',
+                        failed: 'Failed',
+                        partial: 'Partial',
+                        unknown: 'Unknown'
+                    };
+                    const className = labels[normalized] ? normalized : 'unknown';
+                    const label = labels[normalized] || status;
+                    return `<span class="test-status status-${className}">${label}</span>`;
+                };
+
+                const renderCoverage = (coverage) => {
+                    const normalized = coverage.toLowerCase();
+                    const labels = {
+                        full: 'Full',
+                        partial: 'Partial',
+                        none: 'None'
+                    };
+                    const className = labels[normalized] ? normalized : 'partial';
+                    const label = labels[normalized] || coverage;
+                    return `<span class="coverage-${className}">${label}</span>`;
+                };
+
+                const applyInline = (text) => {
+                    const codeStore = [];
+                    const withPlaceholders = text.replace(/`([^`]+)`/g, (_, code) => {
+                        codeStore.push(code);
+                        return `@@CODE_PLACEHOLDER_${codeStore.length - 1}@@`;
+                    });
+
+                    let escaped = escapeHtml(withPlaceholders)
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                        .replace(/(^|[\\s(])_(.+?)_(?=[\\s).]|$)/g, '$1<em>$2</em>')
+                        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+                    escaped = escaped.replace(/\[\[(status|coverage):([a-z-]+)\]\]/gi, (_, type, value) => {
+                        if (type.toLowerCase() === 'status') {
+                            return renderStatus(value);
+                        }
+                        return renderCoverage(value);
+                    });
+
+                    escaped = escaped.replace(/\[\[id:([A-Z0-9\-\/_.]+)\]\]/g,
+                        '<span class="spec-id">$1</span>');
+
+                    escaped = escaped.replace(/@@CODE_PLACEHOLDER_(\d+)@@/g, (_, idx) =>
+                        `<code>${escapeHtml(codeStore[idx])}</code>`);
+
+                    return escaped;
+                };
+
+                const parseTable = (startIndex, linesRef) => {
+                    const headerLine = linesRef[startIndex];
+                    const dividerLine = linesRef[startIndex + 1];
+                    const rowPattern = /^\s*\|(.+)\|\s*$/;
+                    const dividerPattern = /^\s*\|?[\s:|\-]+\|?\s*$/;
+
+                    if (!rowPattern.test(headerLine) || !dividerLine || !dividerPattern.test(dividerLine)) {
+                        return null;
+                    }
+
+                    const headers = headerLine.trim().slice(1, -1).split('|').map(cell => applyInline(cell.trim()));
+                    const rows = [];
+                    let cursor = startIndex + 2;
+
+                    while (cursor < linesRef.length && rowPattern.test(linesRef[cursor])) {
+                        const cells = linesRef[cursor].trim().slice(1, -1).split('|').map(cell => applyInline(cell.trim()));
+                        rows.push(cells);
+                        cursor += 1;
+                    }
+
+                    const thead = `<thead><tr>${headers.map(cell => `<th>${cell}</th>`).join('')}</tr></thead>`;
+                    const tbody = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+                    return { html: `<div class="table-wrap"><table class="spec-table">${thead}<tbody>${tbody}</tbody></table></div>`, nextIndex: cursor - 1 };
+                };
+
+                const lines = markdown.split('\n');
+                const htmlParts = [];
+                let paragraph = [];
+                let listItems = [];
+                let inCode = false;
+                let codeBuffer = [];
+
+                const flushParagraph = () => {
+                    if (!paragraph.length) return;
+                    const content = paragraph.map(applyInline).join('<br>');
+                    htmlParts.push(`<p>${content}</p>`);
+                    paragraph = [];
+                };
+
+                const flushList = () => {
+                    if (!listItems.length) return;
+                    htmlParts.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+                    listItems = [];
+                };
+
+                const flushCode = () => {
+                    if (!codeBuffer.length) return;
+                    htmlParts.push(`<pre><code>${escapeHtml(codeBuffer.join('\n'))}</code></pre>`);
+                    codeBuffer = [];
+                };
+
+                for (let i = 0; i < lines.length; i += 1) {
+                    const rawLine = lines[i];
+                    const line = rawLine.trimEnd();
+                    const trimmed = line.trim();
+
+                    if (trimmed.startsWith('```')) {
+                        if (inCode) {
+                            flushCode();
+                            inCode = false;
+                        } else {
+                            flushParagraph();
+                            flushList();
+                            inCode = true;
+                            codeBuffer = [];
+                        }
+                        continue;
+                    }
+
+                    if (inCode) {
+                        codeBuffer.push(rawLine);
+                        continue;
+                    }
+
+                    if (!trimmed) {
+                        flushParagraph();
+                        flushList();
+                        continue;
+                    }
+
+                    if (trimmed.startsWith(':::')) {
+                        const calloutMatch = trimmed.match(/^:::\s*([a-zA-Z0-9_-]+)?\s*(.*)$/);
+                        const type = (calloutMatch?.[1] || 'note').toLowerCase();
+                        const title = (calloutMatch?.[2] || '').trim();
+                        const innerLines = [];
+                        let cursor = i + 1;
+
+                        while (cursor < lines.length && lines[cursor].trim() !== ':::') {
+                            innerLines.push(lines[cursor]);
+                            cursor += 1;
+                        }
+
+                        if (cursor < lines.length) {
+                            flushParagraph();
+                            flushList();
+                            const innerHtml = this.markdownToHtml(innerLines.join('\n'));
+                            const titleHtml = title ? `<div class="callout-title">${applyInline(title)}</div>` : '';
+                            htmlParts.push(`<div class="callout callout-${type}">${titleHtml}<div class="callout-body">${innerHtml}</div></div>`);
+                            i = cursor;
+                            continue;
+                        }
+                    }
+
+                    if (trimmed.startsWith('|') && trimmed.endsWith('|') && i + 1 < lines.length) {
+                        const parsedTable = parseTable(i, lines);
+                        if (parsedTable) {
+                            flushParagraph();
+                            flushList();
+                            htmlParts.push(parsedTable.html);
+                            i = parsedTable.nextIndex;
+                            continue;
+                        }
+                    }
+
+                    const headingMatch = trimmed.match(/^(#{1,4})\s+(.+)$/);
+                    if (headingMatch) {
+                        flushParagraph();
+                        flushList();
+                        const level = headingMatch[1].length;
+                        const text = applyInline(headingMatch[2]);
+                        const idMatch = headingMatch[2].match(/\b([A-Z]{2,3}-\d{3})\b/);
+                        const idAttr = idMatch ? ` id="${idMatch[1]}"` : '';
+                        htmlParts.push(`<h${level}${idAttr}>${text}</h${level}>`);
+                        continue;
+                    }
+
+                    const listMatch = trimmed.match(/^-\s+(.+)/);
+                    if (listMatch) {
+                        flushParagraph();
+                        listItems.push(applyInline(listMatch[1]));
+                        continue;
+                    }
+
+                    flushList();
+                    paragraph.push(line);
+                }
+
+                flushCode();
+                flushList();
+                flushParagraph();
+
+                let html = htmlParts.join('');
+                html = html.replace(/\*\*ID:\*\* ([A-Z0-9\-\/_.]+)/g,
+                    '<strong>ID:</strong> <span class="spec-id">$1</span>');
+                html = html.replace(/<a ([^>]*?)>([A-Z]{2,3}-\d{3})<\/a>/g,
+                    '<a $1><span class="spec-id">$2</span></a>');
+                return html;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new SpecsLoader());
+    </script>
+    <div id="site-footer"></div>
+    <script src="partials-loader.js"></script>
+</body>
+</html>
