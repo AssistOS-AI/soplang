@@ -11,3 +11,5 @@ Each DS document must preserve a rule-focused structure and must keep Requiremen
 Relationships between DS documents must remain explicit. When a rule in one document depends on terminology, architecture, or behavior defined in another DS document, the text must state that relationship clearly so readers can trace design intent across the full specification set.
 
 Specification updates must keep consistency across DS01 through DS07, and every change should preserve semantic alignment between language model behavior, graph reactivity, plugin contracts, persistence guarantees, and operational validation gates.
+
+Any code change must be reflected in both the HTML documentation and the DS specifications. Every code change must also be covered by tests, either by adding new tests or by updating existing tests to validate the new behavior.
